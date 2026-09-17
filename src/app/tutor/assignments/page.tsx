@@ -2,29 +2,16 @@ import type { Metadata } from "next"
 
 import { Band, Container, EmptyState, PageHeader } from "@/components/brand/primitives"
 import { ButtonLink } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { StatusDot } from "@/components/brand/primitives"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/brand/table"
+  AssignmentBrowser,
+  type QueuedRow,
+} from "@/components/assignments/assignment-browser"
 import { requireRole } from "@/lib/auth/session"
 import { createClient } from "@/lib/supabase/server"
-import { formatDue, isOverdue, relativeToNow } from "@/lib/assignments/dates"
+import { asStage, type AssignmentRow } from "@/lib/assignments/model"
 
 export const metadata: Metadata = { title: "Assignments · Maths Tasks" }
 export const dynamic = "force-dynamic"
-
-const STAGE_ACCENT = {
-  assigned: "mute",
-  opened: "dusk",
-  submitted: "breeze",
-  reviewed: "twilight",
-} as const
 
 export default async function AssignmentsPage() {
   await requireRole("tutor")
@@ -34,7 +21,9 @@ export default async function AssignmentsPage() {
     supabase
       .from("assignments")
       .select(
-        "id, title, type, due_at, stage, verdict, profiles!assignments_student_id_fkey(full_name)"
+        `id, title, type, due_at, stage, verdict, submitted_at, student_opened_at,
+         categories(name, accent_key),
+         profiles!assignments_student_id_fkey(id, full_name, email)`
       )
       .order("due_at", { ascending: true }),
     supabase
@@ -43,7 +32,30 @@ export default async function AssignmentsPage() {
       .order("due_at", { ascending: true }),
   ])
 
-  const hasAny = (assignments?.length ?? 0) + (pending?.length ?? 0) > 0
+  const rows: AssignmentRow[] = (assignments ?? []).map((assignment) => ({
+    id: assignment.id,
+    title: assignment.title,
+    type: assignment.type,
+    dueAt: assignment.due_at,
+    stage: asStage(assignment.stage),
+    verdict: assignment.verdict,
+    studentId: assignment.profiles?.id ?? "",
+    studentName:
+      assignment.profiles?.full_name ||
+      assignment.profiles?.email ||
+      "Unknown student",
+    topic: assignment.categories?.name ?? null,
+    topicAccent: assignment.categories?.accent_key ?? "mute",
+    submittedAt: assignment.submitted_at,
+    openedAt: assignment.student_opened_at,
+  }))
+
+  const queued: QueuedRow[] = (pending ?? []).map((task) => ({
+    id: task.id,
+    title: task.title,
+    dueAt: task.due_at,
+    inviteeName: task.student_invites?.full_name || "Invited student",
+  }))
 
   return (
     <Band>
@@ -51,7 +63,7 @@ export default async function AssignmentsPage() {
         <PageHeader
           eyebrow="Assignments"
           title="All work"
-          description="Filters, search and bulk actions arrive in the next phase."
+          description="Start with Attention — it holds anything handed in, returned, or past due."
           action={
             <ButtonLink variant="primary" href="/tutor/assignments/new">
               New task
@@ -59,7 +71,7 @@ export default async function AssignmentsPage() {
           }
         />
 
-        {!hasAny ? (
+        {rows.length === 0 && queued.length === 0 ? (
           <EmptyState
             title="No tasks yet"
             description="Set your first piece of work and it will show up here."
@@ -70,65 +82,7 @@ export default async function AssignmentsPage() {
             }
           />
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Task</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead>Stage</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(assignments ?? []).map((assignment) => {
-                const stage = (assignment.stage ??
-                  "assigned") as keyof typeof STAGE_ACCENT
-                const overdue =
-                  isOverdue(assignment.due_at) && stage !== "reviewed"
-                return (
-                  <TableRow key={assignment.id}>
-                    <TableCell className="text-ink">{assignment.title}</TableCell>
-                    <TableCell>
-                      {assignment.profiles?.full_name || "—"}
-                    </TableCell>
-                    <TableCell className="numeric">
-                      <span className={overdue ? "text-destructive" : "text-body-mid"}>
-                        {formatDue(assignment.due_at)}
-                      </span>
-                      <span className="ml-2 text-body-mid">
-                        {relativeToNow(assignment.due_at)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="eyebrow-sm inline-flex items-center gap-2 text-body">
-                        <StatusDot accent={STAGE_ACCENT[stage]} />
-                        {assignment.verdict === "changes_requested"
-                          ? "Changes requested"
-                          : assignment.verdict === "approved"
-                            ? "Approved"
-                            : stage}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-
-              {(pending ?? []).map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell className="text-ink">{task.title}</TableCell>
-                  <TableCell>
-                    {task.student_invites?.full_name || "Invited student"}
-                  </TableCell>
-                  <TableCell className="numeric text-body-mid">
-                    {formatDue(task.due_at)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge>Queued until they join</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <AssignmentBrowser rows={rows} queued={queued} />
         )}
       </Container>
     </Band>
