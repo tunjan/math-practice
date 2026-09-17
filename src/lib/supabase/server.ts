@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr"
 
 import type { Database } from "./database.types"
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from "./env"
+import { PERSIST_COOKIE, shouldPersist, withPersistence } from "./cookies"
 
 /**
  * Request-scoped client that reads the session from cookies and refreshes it
@@ -21,9 +22,14 @@ export async function createClient() {
           return cookieStore.getAll()
         },
         setAll(cookiesToSet) {
+          // Read the preference here rather than at client construction: during
+          // sign-in the flag is written moments before Supabase sets its auth
+          // cookies, and this is the point where it has to be current.
+          const persist = shouldPersist(cookieStore.get(PERSIST_COOKIE)?.value)
+
           try {
             for (const { name, value, options } of cookiesToSet) {
-              cookieStore.set(name, value, options)
+              cookieStore.set(name, value, withPersistence(options, persist))
             }
           } catch {
             // Server Components cannot set cookies. The middleware refreshes

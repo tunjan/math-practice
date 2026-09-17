@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import type * as React from "react";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -37,11 +36,7 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
