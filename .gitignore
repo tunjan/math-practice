@@ -50,3 +50,6 @@ supabase/.temp
 
 # build artefacts
 tsconfig.tsbuildinfo
+
+# throwaway e2e helpers
+scripts/e2e-seed.mjs
