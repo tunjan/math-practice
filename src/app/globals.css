@@ -1,0 +1,284 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------------
+   Maths Tasks — design tokens
+   Source of truth: DESIGN-x.ai.md (xAI design language).
+   Dark canvas only. There is no light mode by design.
+   --------------------------------------------------------------------------- */
+
+@theme inline {
+  /* shadcn semantic surface mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Brand surfaces — use these directly when the semantic name would lie */
+  --color-canvas: var(--canvas);
+  --color-canvas-soft: var(--canvas-soft);
+  --color-canvas-card: var(--canvas-card);
+  --color-canvas-mid: var(--canvas-mid);
+  --color-hairline: var(--hairline);
+  --color-ink: var(--ink);
+  --color-body: var(--body-text);
+  --color-body-mid: var(--body-mid);
+
+  /* Accents. Illustration / companion / status-dot use ONLY.
+     Never a button fill, never a badge fill. See DESIGN-NOTES.md. */
+  --color-sunset: var(--accent-sunset);
+  --color-sunset-soft: var(--accent-sunset-soft);
+  --color-dusk: var(--accent-dusk);
+  --color-twilight: var(--accent-twilight);
+  --color-breeze: var(--accent-breeze);
+  --color-midnight: var(--accent-midnight);
+
+  --color-chart-1: var(--accent-sunset);
+  --color-chart-2: var(--accent-breeze);
+  --color-chart-3: var(--accent-twilight);
+  --color-chart-4: var(--accent-dusk);
+  --color-chart-5: var(--body-mid);
+
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* The brand has exactly three radii: 0, 8px, pill. Every step resolves to 8px
+     so a stray `rounded-xl` from a shadcn component still lands on-brand. */
+  --radius-xs: var(--radius);
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+}
+
+:root {
+  color-scheme: dark;
+
+  /* ── Brand palette (DESIGN-x.ai.md front-matter) ── */
+  --canvas: #0a0a0a;
+  --canvas-soft: #1a1c20;
+  --canvas-card: #191919;
+  --canvas-mid: #363a3f;
+  --hairline: #212327;
+
+  --ink: #ffffff;
+  --ink-hover: #fafaf7;
+  --body-text: #dadbdf;
+  --body-mid: #7d8187;
+
+  --accent-sunset: #ff7a17;
+  --accent-sunset-soft: #ffc285;
+  --accent-dusk: #7c3aed;
+  --accent-twilight: #c4b5fd;
+  --accent-breeze: #a0c3ec;
+  --accent-midnight: #0d1726;
+
+  /* The outline-pill border. Translucent white, never solid. */
+  --pill-border: rgba(255, 255, 255, 0.25);
+
+  /* ── shadcn semantic tokens, resolved onto the brand palette ── */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--canvas-card);
+  --card-foreground: var(--ink);
+  --popover: var(--canvas-soft);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--canvas);
+  --secondary: var(--canvas-soft);
+  --secondary-foreground: var(--ink);
+  --muted: var(--canvas-soft);
+  --muted-foreground: var(--body-mid);
+  --accent: var(--canvas-soft);
+  --accent-foreground: var(--ink);
+
+  /* The brand publishes no semantic palette. Destructive is held to text and
+     hairline borders only — it is never a filled surface. */
+  --destructive: #f0523f;
+  --destructive-foreground: var(--ink);
+
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: rgba(255, 255, 255, 0.4);
+
+  --radius: 8px;
+
+  --sidebar: var(--canvas);
+  --sidebar-foreground: var(--body-text);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: var(--canvas);
+  --sidebar-accent: var(--canvas-soft);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--hairline);
+  --sidebar-ring: rgba(255, 255, 255, 0.4);
+}
+
+/* ---------------------------------------------------------------------------
+   Type ladder. Weight 400 throughout — the brand never bolds. Hierarchy comes
+   from size and negative tracking. These are utilities so they take variants
+   (`md:display-lg`).
+   --------------------------------------------------------------------------- */
+
+@utility display-xl {
+  font-family: var(--font-sans);
+  font-size: 96px;
+  line-height: 96px;
+  letter-spacing: -2.4px;
+  font-weight: 400;
+}
+@utility display-lg {
+  font-family: var(--font-sans);
+  font-size: 72px;
+  line-height: 72px;
+  letter-spacing: -1.8px;
+  font-weight: 400;
+}
+@utility display-md {
+  font-family: var(--font-sans);
+  font-size: 48px;
+  line-height: 48px;
+  letter-spacing: -1.2px;
+  font-weight: 400;
+}
+@utility display-sm {
+  font-family: var(--font-sans);
+  font-size: 32px;
+  line-height: 36px;
+  letter-spacing: -0.6px;
+  font-weight: 400;
+}
+@utility display-xs {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.2px;
+  font-weight: 400;
+}
+@utility body-lg {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 400;
+}
+@utility body-md {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+@utility body-sm {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+/* The signature label style: Geist Mono, uppercase, positively tracked, so it
+   reads as a code comment rather than a marketing label. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+@utility eyebrow-sm {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+/* Counters and any number that changes in place — stops digits jittering. */
+@utility numeric {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    background-color: var(--canvas);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-size: 16px;
+    line-height: 24px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* The brand carries elevation on hairlines. Nothing casts a shadow. */
+  ::selection {
+    background-color: rgba(255, 255, 255, 0.16);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.55);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Hairline rule between section bands. */
+  .rule {
+    border-top: 1px solid var(--hairline);
+  }
+
+  /* The universal interactive border. */
+  .pill-edge {
+    border: 1px solid var(--pill-border);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
