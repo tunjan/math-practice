@@ -62,16 +62,11 @@ export async function consume(
     const admin = createAdminClient()
     // A thin public wrapper around private.consume_rate_limit, executable by
     // the service role only — see migration 0007.
-    const { data, error } = await admin.rpc(
-      // @ts-expect-error — intentionally absent from the generated types: it is
-      // not callable with a publishable key, so no client code should see it.
-      "consume_rate_limit",
-      {
-        p_key: key,
-        p_limit: rule.limit,
-        p_window_secs: rule.windowSecs,
-      }
-    )
+    const { data, error } = await admin.rpc("consume_rate_limit", {
+      p_key: key,
+      p_limit: rule.limit,
+      p_window_secs: rule.windowSecs,
+    })
 
     if (error) {
       // A limiter that errors must not become an open door.

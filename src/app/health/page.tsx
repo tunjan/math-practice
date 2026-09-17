@@ -72,11 +72,13 @@ export default async function HealthPage() {
 
     // The rate limiter lives in a schema PostgREST does not publish, so this
     // must fail. A success here would mean a browser could burn the budget.
-    const { error: rpcError } = await supabase.rpc(
-      // @ts-expect-error — deliberately not in the generated types; that is the point.
-      "consume_rate_limit",
-      { p_key: "health", p_limit: 1, p_window_secs: 60 }
-    )
+    // The wrapper is typed (it lives in `public`), but EXECUTE is granted to
+    // service_role alone, so a publishable key must be refused here.
+    const { error: rpcError } = await supabase.rpc("consume_rate_limit", {
+      p_key: "health",
+      p_limit: 1,
+      p_window_secs: 60,
+    })
     checks.push({
       name: "Rate limiter not exposed over HTTP",
       ok: !!rpcError,

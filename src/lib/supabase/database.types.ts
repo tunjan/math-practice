@@ -209,6 +209,105 @@ export type Database = {
           },
         ]
       }
+      pending_assignment_files: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          mime_type: string
+          pending_assignment_id: string
+          size_bytes: number | null
+          sort_order: number
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type: string
+          pending_assignment_id: string
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          mime_type?: string
+          pending_assignment_id?: string
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_assignment_files_pending_assignment_id_fkey"
+            columns: ["pending_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "pending_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pending_assignments: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          due_at: string
+          id: string
+          invite_id: string
+          title: string
+          tutor_id: string
+          type: Database["public"]["Enums"]["assignment_type"]
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_at: string
+          id: string
+          invite_id: string
+          title: string
+          tutor_id: string
+          type?: Database["public"]["Enums"]["assignment_type"]
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_at?: string
+          id?: string
+          invite_id?: string
+          title?: string
+          tutor_id?: string
+          type?: Database["public"]["Enums"]["assignment_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_assignments_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_assignments_invite_id_fkey"
+            columns: ["invite_id"]
+            isOneToOne: false
+            referencedRelation: "student_invites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pending_assignments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           calendar_token: string
@@ -259,6 +358,57 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      student_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_user_id: string | null
+          created_at: string
+          created_by: string
+          expires_at: string
+          full_name: string
+          id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          created_at?: string
+          created_by: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_user_id?: string | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string
+          full_name?: string
+          id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_invites_accepted_user_id_fkey"
+            columns: ["accepted_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_invites_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       submissions: {
         Row: {
@@ -342,7 +492,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      consume_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_secs: number }
+        Returns: boolean
+      }
+      redeem_invite: {
+        Args: { p_token_hash: string; p_user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       assignment_type: "problem_set" | "reading_notes"
