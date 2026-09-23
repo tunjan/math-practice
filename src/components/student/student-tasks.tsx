@@ -1,17 +1,23 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import { TaskList, type BoardTask } from "@/components/student/task-board"
 import { TaskDialogBody, TaskUnavailable } from "@/components/student/task-dialog"
 import { TaskDialogShell } from "@/components/student/task-dialog-frame"
 import { isOverdue } from "@/lib/assignments/dates"
+import { formatDayShort, type DayKey } from "@/lib/calendar/dates"
 import { recordOpen } from "@/lib/student/actions"
 import type { StudentTask } from "@/lib/student/load-task"
 
 /** Signed file URLs last an hour; refresh them quietly before they rot. */
 const STALE_AFTER_MS = 50 * 60_000
+
+/** The unit the student is on, for the link to their plan. */
+export type PlanGlance = { unitTitle: string; dueOn: DayKey; selfPct: number | null }
 
 /**
  * The student's task page. The list and every task's detail arrive together,
@@ -22,10 +28,12 @@ const STALE_AFTER_MS = 50 * 60_000
 export function StudentTasks({
   firstName,
   tasks,
+  plan = null,
   timeZone,
 }: {
   firstName: string
   tasks: StudentTask[]
+  plan?: PlanGlance | null
   timeZone: string
 }) {
   const router = useRouter()
@@ -87,6 +95,26 @@ export function StudentTasks({
           >
             {summarise(tasks)}
           </p>
+          {plan ? (
+            <Link
+              href="/student/plan"
+              style={{ animationDelay: "120ms" }}
+              className="group/plan mt-1 flex w-fit max-w-full animate-slide-up-fade items-center gap-3 rounded-full border border-outline py-1.5 pr-3 pl-4 text-sm transition-colors hover:bg-surface-sunken"
+            >
+              <span className="truncate">
+                <span className="text-on-surface-muted">Now </span>
+                <span className="font-medium text-on-surface">{plan.unitTitle}</span>
+              </span>
+              <span className="shrink-0 font-mono text-xs text-on-surface-muted">
+                due {formatDayShort(plan.dueOn)}
+                {plan.selfPct !== null ? ` · ${plan.selfPct}%` : null}
+              </span>
+              <ArrowRight
+                aria-hidden
+                className="size-4 shrink-0 text-on-surface-muted transition-transform group-hover/plan:translate-x-0.5"
+              />
+            </Link>
+          ) : null}
         </header>
 
         {tasks.length > 0 ? (

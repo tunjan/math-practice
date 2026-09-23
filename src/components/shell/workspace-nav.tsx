@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   ListTodo,
   LogOut,
+  Route,
   Users,
   X,
   type LucideIcon,
@@ -41,6 +42,7 @@ const ICONS = {
   students: Users,
   tasks: ListTodo,
   calendar: CalendarDays,
+  plan: Route,
 } satisfies Record<string, LucideIcon>
 
 export type NavItem = {
