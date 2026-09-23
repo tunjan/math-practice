@@ -10,6 +10,7 @@ import {
   ImageIcon,
   LoaderCircle,
   Plus,
+  Route,
   Sigma,
   UserRound,
   X,
@@ -35,7 +36,7 @@ import {
   resolvedTimeZone,
   toDateTimeLocalValue,
 } from "@/lib/assignments/dates"
-import type { Recipient, Topic } from "@/lib/assignments/task-options"
+import type { PlanUnitOption, Recipient, Topic } from "@/lib/assignments/task-options"
 
 import type { UploadItem } from "./material-uploader"
 
@@ -309,6 +310,38 @@ export function TopicChip({
           <Plus aria-hidden />
           New topic
         </SelectItem>
+      </SelectContent>
+    </Select>
+  )
+}
+
+// ── Plan unit ───────────────────────────────────────────────────────────────
+
+/** The unit of the student's plan this task belongs to. */
+export function UnitChip({
+  units,
+  value,
+  onValueChange,
+}: {
+  units: PlanUnitOption[]
+  value: string | null
+  onValueChange: (value: string | null) => void
+}) {
+  const selected = units.find((u) => u.id === value)
+
+  return (
+    <Select value={value} onValueChange={(next) => onValueChange(next as string | null)}>
+      <SelectTrigger aria-label="Plan unit" className={chipClass}>
+        <Route aria-hidden />
+        <ChipText empty={!selected}>{selected?.title ?? "Unit"}</ChipText>
+      </SelectTrigger>
+      <SelectContent className="min-w-52">
+        <SelectItem value={null}>No unit</SelectItem>
+        {units.map((unit) => (
+          <SelectItem key={unit.id} value={unit.id}>
+            {unit.title}
+          </SelectItem>
+        ))}
       </SelectContent>
     </Select>
   )

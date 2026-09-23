@@ -4,7 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin"
 import { buildCalendar, type CalendarEvent } from "@/lib/calendar/ics"
 import { EVENT_KIND_LABEL } from "@/lib/calendar/model"
 import { TYPE_LABEL } from "@/lib/assignments/model"
-import { dayKeyOf, utcDayKey } from "@/lib/calendar/dates"
+import { addDays, dayKeyOf, utcDayKey, utcMidnight } from "@/lib/calendar/dates"
+import { MASTERY } from "@/lib/plans/model"
 
 /**
  * A subscribable calendar feed: /api/calendar/<token>.ics
@@ -13,7 +14,7 @@ import { dayKeyOf, utcDayKey } from "@/lib/calendar/dates"
  * in, so the token in the path IS the credential. It is an unguessable uuid
  * held only by its owner, rotatable without touching their password, and it
  * grants read access to nothing but what their own calendar page shows:
- * deadlines, their own events, and events shared with them.
+ * deadlines, plan unit due dates, their own events, and events shared with them.
  *
  * Worth being clear-eyed about the trade: subscribing in Google Calendar means
  * Google's servers fetch this URL, so titles leave our infrastructure. That is
@@ -57,7 +58,17 @@ export async function GET(
   const isTutor = profile.role === "tutor"
   const since = new Date(Date.now() - HISTORY_DAYS * 86_400_000).toISOString()
 
-  const [{ data: assignments }, { data: calendarEvents }] = await Promise.all([
+  let unitQuery = admin
+    .from("plan_units")
+    .select(
+      `id, title, due_on, mastery, updated_at,
+       learning_plans!inner(student_id, profiles(full_name))`
+    )
+    .gte("due_on", since.slice(0, 10))
+    .order("due_on", { ascending: true })
+  if (!isTutor) unitQuery = unitQuery.eq("learning_plans.student_id", profile.id)
+
+  const [{ data: assignments }, { data: calendarEvents }, { data: units }] = await Promise.all([
     admin
       .from("assignments")
       .select(
@@ -76,6 +87,7 @@ export async function GET(
       .or(`owner_id.eq.${profile.id},shared_with.eq.${profile.id}`)
       .gte("ends_at", since)
       .order("starts_at", { ascending: true }),
+    unitQuery,
   ])
 
   const origin =
@@ -138,12 +150,29 @@ export async function GET(
     }
   })
 
+  const milestones: CalendarEvent[] = (units ?? []).map((unit) => {
+    const secure = unit.mastery === "secure"
+    const student = isTutor ? unit.learning_plans.profiles?.full_name : undefined
+    return {
+      uid: `unit-${unit.id}@maths-tasks`,
+      start: new Date(utcMidnight(unit.due_on)),
+      end: new Date(utcMidnight(addDays(unit.due_on, 1))),
+      allDay: true,
+      summary: `${secure ? "✓ " : ""}${unit.title} due${student ? ` (${student})` : ""}`,
+      description: `Plan unit · ${MASTERY[unit.mastery].label}`,
+      url: isTutor
+        ? `${origin}/tutor/students/${unit.learning_plans.student_id}`
+        : `${origin}/student/plan`,
+      sequence: Math.floor(new Date(unit.updated_at).getTime() / 1000),
+    }
+  })
+
   const body = buildCalendar({
     name: `Maths Tasks: ${profile.full_name || (isTutor ? "tutor" : "deadlines")}`,
     description: isTutor
       ? "Deadlines you've set and your calendar events."
       : "Deadlines from your tutor and your calendar events.",
-    events: [...deadlines, ...events],
+    events: [...deadlines, ...milestones, ...events],
   })
 
   return new NextResponse(body, {

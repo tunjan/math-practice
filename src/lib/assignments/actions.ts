@@ -66,6 +66,25 @@ function parseFiles(raw: string, assignmentId: string): UploadedFile[] {
   })
 }
 
+/**
+ * The plan unit a task goes under, if it is one of this student's own. A unit
+ * from someone else's plan is dropped rather than refused: it is only a label.
+ */
+async function resolvePlanUnit(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  unitId: string,
+  studentId: string
+): Promise<string | null> {
+  if (!UUID.test(unitId)) return null
+  const { data } = await supabase
+    .from("plan_units")
+    .select("id, learning_plans!inner(student_id)")
+    .eq("id", unitId)
+    .eq("learning_plans.student_id", studentId)
+    .maybeSingle()
+  return data?.id ?? null
+}
+
 export async function createAssignment(
   _prev: CreateAssignmentState,
   formData: FormData
@@ -128,6 +147,7 @@ export async function createAssignment(
   const files = parseFiles(String(formData.get("files") ?? ""), assignmentId)
 
   if (targetKind === "student") {
+    const planUnitId = await resolvePlanUnit(supabase, String(formData.get("plan_unit_id") ?? ""), targetId!)
     const { error } = await supabase.from("assignments").insert({
       id: assignmentId,
       tutor_id: tutor.id,
@@ -136,6 +156,7 @@ export async function createAssignment(
       title,
       description: description || null,
       category_id: resolvedCategoryId,
+      plan_unit_id: planUnitId,
       due_at: dueAt.toISOString(),
     })
     if (error) return { error: error.message }
@@ -369,6 +390,21 @@ export async function updateAssignment(
     }
   }
 
+  // Only forms that offer the plan unit field may change it.
+  let planUnit: { plan_unit_id: string | null } | object = {}
+  if (formData.has("plan_unit_id")) {
+    const { data: current } = await supabase
+      .from("assignments")
+      .select("student_id")
+      .eq("id", assignmentId)
+      .maybeSingle()
+    planUnit = {
+      plan_unit_id: current
+        ? await resolvePlanUnit(supabase, String(formData.get("plan_unit_id") ?? ""), current.student_id)
+        : null,
+    }
+  }
+
   const { error } = await supabase
     .from("assignments")
     .update({
@@ -377,6 +413,7 @@ export async function updateAssignment(
       type,
       due_at: dueAt.toISOString(),
       category_id: resolvedCategoryId,
+      ...planUnit,
     })
     .eq("id", assignmentId)
 

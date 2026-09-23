@@ -4,8 +4,8 @@ import { formatDayLong, WEEKDAYS } from "@/lib/calendar/dates"
 import type { WeekStatus } from "@/lib/plans/streak"
 
 /**
- * This week, Monday to Sunday: a filled dot for each study day. Orange is the
- * progress colour; future days are hollow so the week reads as time passing.
+ * This week, Monday to Sunday: a filled dot for each study day. Future days
+ * are dashed so the week reads as time passing.
  */
 export function WeekDots({ week, className }: { week: WeekStatus; className?: string }) {
   return (
@@ -16,7 +16,7 @@ export function WeekDots({ week, className }: { week: WeekStatus; className?: st
             className={cn(
               "size-3 rounded-full border",
               d.active
-                ? "border-accent-orange bg-accent-orange"
+                ? "border-on-surface bg-on-surface"
                 : d.isFuture
                   ? "border-dashed border-outline-strong"
                   : "border-outline-strong bg-surface-sunken",

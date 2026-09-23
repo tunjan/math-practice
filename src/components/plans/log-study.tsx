@@ -17,7 +17,7 @@ export function LogStudy({ todayCounted }: { todayCounted: boolean }) {
   if (todayCounted) {
     return (
       <span className="flex h-8 items-center gap-1.5 text-sm text-on-surface-secondary">
-        <Check className="size-4 text-accent-orange" aria-hidden />
+        <Check className="size-4 text-on-surface" aria-hidden />
         Today counts
       </span>
     )

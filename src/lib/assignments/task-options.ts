@@ -13,7 +13,10 @@ export type Recipient = {
 
 export type Topic = { id: string; name: string }
 
-export type TaskOptions = { recipients: Recipient[]; topics: Topic[] }
+/** A unit of a student's learning plan, which a task can sit under. */
+export type PlanUnitOption = { id: string; title: string; studentId: string }
+
+export type TaskOptions = { recipients: Recipient[]; topics: Topic[]; units: PlanUnitOption[] }
 
 /**
  * Everything the New task dialog offers to choose from. Loaded by each page
@@ -22,7 +25,7 @@ export type TaskOptions = { recipients: Recipient[]; topics: Topic[] }
 export async function loadTaskOptions(
   supabase: Awaited<ReturnType<typeof createClient>>
 ): Promise<TaskOptions> {
-  const [{ data: students }, { data: invites }, { data: categories }] = await Promise.all([
+  const [{ data: students }, { data: invites }, { data: categories }, { data: units }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name, email")
@@ -35,6 +38,10 @@ export async function loadTaskOptions(
       .is("revoked_at", null)
       .order("created_at", { ascending: false }),
     supabase.from("categories").select("id, name").order("name"),
+    supabase
+      .from("plan_units")
+      .select("id, title, position, learning_plans(student_id)")
+      .order("position"),
   ])
 
   return {
@@ -51,5 +58,8 @@ export async function loadTaskOptions(
       })),
     ],
     topics: (categories ?? []).map((c) => ({ id: c.id, name: c.name })),
+    units: (units ?? []).flatMap((u) =>
+      u.learning_plans ? [{ id: u.id, title: u.title, studentId: u.learning_plans.student_id }] : []
+    ),
   }
 }

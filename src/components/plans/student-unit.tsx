@@ -59,7 +59,7 @@ export function StudentUnit({
           className={cn(
             "relative mt-1.5 flex size-5 items-center justify-center rounded-full border",
             secure
-              ? "border-accent-orange bg-accent-orange text-white"
+              ? "border-on-surface bg-on-surface text-surface"
               : isFocus
                 ? "border-on-surface bg-surface ring-4 ring-on-surface/10"
                 : "border-outline-strong bg-surface"

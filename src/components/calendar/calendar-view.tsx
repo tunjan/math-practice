@@ -403,7 +403,7 @@ function Legend() {
   )
 }
 
-/** "4 deadlines and 2 events in September." Counts each item once. */
+/** "4 deadlines, 1 unit due and 2 events in September." Counts each item once. */
 function summarise(
   placements: Map<DayKey, DayPlacement[]>,
   month: MonthKey,
@@ -411,6 +411,7 @@ function summarise(
 ): string {
   const seen = new Set<string>()
   let deadlines = 0
+  let units = 0
   let events = 0
   for (const [day, list] of placements) {
     if (!day.startsWith(month)) continue
@@ -419,16 +420,19 @@ function summarise(
       if (seen.has(key)) continue
       seen.add(key)
       if (item.type === "deadline") deadlines++
+      else if (item.type === "milestone") units++
       else events++
     }
   }
 
   const monthName = formatMonth(month).split(" ")[0]
   const scope = studentName ? ` for ${studentName}` : ""
-  if (deadlines + events === 0) return `Nothing in ${monthName}${scope} yet.`
+  if (deadlines + units + events === 0) return `Nothing in ${monthName}${scope} yet.`
 
   const parts: string[] = []
   if (deadlines) parts.push(`${deadlines} ${deadlines === 1 ? "deadline" : "deadlines"}`)
+  if (units) parts.push(`${units} ${units === 1 ? "unit" : "units"} due`)
   if (events) parts.push(`${events} ${events === 1 ? "event" : "events"}`)
-  return `${parts.join(" and ")} in ${monthName}${scope}.`
+  const list = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}` : parts[0]
+  return `${list} in ${monthName}${scope}.`
 }

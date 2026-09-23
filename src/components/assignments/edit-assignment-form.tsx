@@ -10,6 +10,7 @@ import { Button, ButtonLink } from "@/components/ui/button"
 import { Card, CardFooter } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { NativeSelect } from "@/components/ui/select"
 import { Field } from "@/components/ui/label"
 import {
   removeAssignmentFile,
@@ -92,6 +93,7 @@ export function EditAssignmentForm({
   initial,
   existingFiles,
   topics,
+  units = [],
 }: {
   assignmentId: string
   initial: {
@@ -100,9 +102,12 @@ export function EditAssignmentForm({
     type: AssignmentType
     dueAt: string
     categoryId: string | null
+    planUnitId?: string | null
   }
   existingFiles: SignedFile[]
   topics: Topic[]
+  /** The student's plan units; the field only appears when there are some. */
+  units?: { id: string; title: string }[]
 }) {
   const [state, action, pending] = useActionState<UpdateAssignmentState, FormData>(
     updateAssignment,
@@ -145,6 +150,18 @@ export function EditAssignmentForm({
 
         <FormSection title="Schedule">
           <TopicField topics={topics} defaultValue={initial.categoryId ?? ""} />
+          {units.length > 0 ? (
+            <Field label="Plan unit" htmlFor="plan_unit_id">
+              <NativeSelect id="plan_unit_id" name="plan_unit_id" defaultValue={initial.planUnitId ?? ""}>
+                <option value="">None</option>
+                {units.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.title}
+                  </option>
+                ))}
+              </NativeSelect>
+            </Field>
+          ) : null}
           <DuePicker name="due_at" defaultValue={initial.dueAt} />
         </FormSection>
 

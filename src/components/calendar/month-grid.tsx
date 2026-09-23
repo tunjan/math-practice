@@ -133,10 +133,12 @@ function sameDayInMonth(day: DayKey, delta: number): DayKey {
 
 function describe(placements: DayPlacement[]): string {
   const deadlines = placements.filter((p) => p.item.type === "deadline").length
-  const events = placements.length - deadlines
+  const units = placements.filter((p) => p.item.type === "milestone").length
+  const events = placements.length - deadlines - units
   if (placements.length === 0) return "Nothing scheduled"
   const parts: string[] = []
   if (deadlines) parts.push(`${deadlines} ${deadlines === 1 ? "deadline" : "deadlines"}`)
+  if (units) parts.push(`${units} ${units === 1 ? "unit" : "units"} due`)
   if (events) parts.push(`${events} ${events === 1 ? "event" : "events"}`)
   return parts.join(", ")
 }
@@ -229,12 +231,16 @@ const DayCell = React.memo(function DayCell({
 })
 
 /**
- * A deadline is a filled dot in its status colour; an event is a hollow
- * neutral ring. Colour stays a statement about state, and events have none.
+ * A deadline is a filled dot in its status colour; a plan unit's due date is a
+ * diamond in its rating's colour; an event is a hollow neutral ring. Colour
+ * stays a statement about state, and events have none.
  */
 export function Marker({ placement, className }: { placement: DayPlacement; className?: string }) {
   if (placement.item.type === "deadline") {
     return <StatusDot tone={placement.item.status.tone} className={className} />
+  }
+  if (placement.item.type === "milestone") {
+    return <StatusDot tone={placement.item.status.tone} className={cn("rotate-45 rounded-none", className)} />
   }
   return (
     <span
@@ -247,6 +253,17 @@ export function Marker({ placement, className }: { placement: DayPlacement; clas
 /** A miniature of the item: a hairline chip, or a tinted bar when all day. */
 function Chip({ placement }: { placement: DayPlacement }) {
   const { item } = placement
+
+  if (item.type === "milestone") {
+    return (
+      <li className="flex min-w-0 items-center gap-1.5 rounded-xs bg-surface-sunken px-1.5 py-0.5">
+        <Marker placement={placement} />
+        <span className="min-w-0 truncate text-[11px] leading-4 font-medium text-on-surface-secondary">
+          {item.title}
+        </span>
+      </li>
+    )
+  }
 
   if (placement.allDay) {
     return (

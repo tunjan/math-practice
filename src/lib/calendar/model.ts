@@ -53,7 +53,20 @@ export type EventItem = {
   from: string | null
 }
 
-export type CalendarItem = DeadlineItem | EventItem
+/** A plan unit's due date. A floating date, like an all-day event. */
+export type MilestoneItem = {
+  type: "milestone"
+  id: string
+  title: string
+  dueOn: DayKey
+  href: string
+  /** The tutor's rating, so a secure unit reads as done. */
+  status: { label: string; tone: StatusTone }
+  /** The student it is for, on the tutor's calendar. */
+  person: string | null
+}
+
+export type CalendarItem = DeadlineItem | EventItem | MilestoneItem
 
 export type Person = { id: string; name: string }
 
@@ -63,6 +76,7 @@ const MAX_SPAN_DAYS = 31
 /** Every day an item appears on, in the viewer's zone. */
 export function itemDays(item: CalendarItem, timeZone: string): DayKey[] {
   if (item.type === "deadline") return [dayKeyOf(item.dueAt, timeZone)]
+  if (item.type === "milestone") return [item.dueOn]
 
   let first: DayKey
   let last: DayKey
@@ -101,7 +115,7 @@ function placementFor(item: CalendarItem, day: DayKey, timeZone: string): DayPla
     const time = timeOf(item.dueAt, timeZone)
     return { item, time, until: null, allDay: false, continues: false, order: minutes(time) }
   }
-  if (item.allDay) {
+  if (item.type === "milestone" || item.allDay) {
     return { item, time: null, until: null, allDay: true, continues: false, order: -1 }
   }
 
@@ -130,9 +144,11 @@ function minutes(time: string): number {
   return h! * 60 + m!
 }
 
+const TYPE_RANK: Record<CalendarItem["type"], number> = { deadline: 0, milestone: 1, event: 2 }
+
 /**
  * Items keyed by the day they appear on, each day in reading order: all-day
- * first, then by time, deadlines before events at the same minute.
+ * first, then by time; deadlines, then unit due dates, then events.
  */
 export function placeByDay(items: CalendarItem[], timeZone: string): Map<DayKey, DayPlacement[]> {
   const byDay = new Map<DayKey, DayPlacement[]>()
@@ -147,7 +163,7 @@ export function placeByDay(items: CalendarItem[], timeZone: string): Map<DayKey,
     list.sort(
       (a, b) =>
         a.order - b.order ||
-        (a.item.type === b.item.type ? 0 : a.item.type === "deadline" ? -1 : 1) ||
+        TYPE_RANK[a.item.type] - TYPE_RANK[b.item.type] ||
         a.item.title.localeCompare(b.item.title)
     )
   }

@@ -24,7 +24,7 @@ export default async function EditAssignmentPage({
   const [{ data: assignment }, { data: categories }, { data: fileRows }] = await Promise.all([
     supabase
       .from("assignments")
-      .select("id, title, description, type, due_at, category_id")
+      .select("id, title, description, type, due_at, category_id, plan_unit_id, student_id")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("categories").select("id, name").order("name"),
@@ -36,6 +36,13 @@ export default async function EditAssignmentPage({
   ])
 
   if (!assignment) notFound()
+
+  const { data: unitRows } = await supabase
+    .from("plan_units")
+    .select("id, title, learning_plans!inner(student_id)")
+    .eq("learning_plans.student_id", assignment.student_id)
+    .order("position")
+  const units = (unitRows ?? []).map((u) => ({ id: u.id, title: u.title }))
 
   const existingFiles = await signFiles(supabase, MATERIALS_BUCKET, fileRows ?? [])
   const topics: Topic[] = (categories ?? []).map((c) => ({ id: c.id, name: c.name }))
@@ -54,9 +61,11 @@ export default async function EditAssignmentPage({
           type: assignment.type,
           dueAt: assignment.due_at,
           categoryId: assignment.category_id,
+          planUnitId: assignment.plan_unit_id,
         }}
         existingFiles={existingFiles}
         topics={topics}
+        units={units}
       />
     </Page>
   )

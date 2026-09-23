@@ -161,6 +161,32 @@ function Row({
     )
   }
 
+  if (item.type === "milestone") {
+    return (
+      <Link href={item.href} className={cn(cardClass, interactiveClass)}>
+        {time}
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex items-start justify-between gap-2">
+            <span className="line-clamp-2 text-sm leading-5 font-medium text-pretty text-on-surface">
+              {item.title}
+            </span>
+            <span
+              className={cn(
+                "mt-px shrink-0 rounded-full border px-2 py-px text-xs leading-4 font-medium",
+                TONE_PILL[item.status.tone]
+              )}
+            >
+              {item.status.label}
+            </span>
+          </span>
+          <span className="truncate text-xs text-on-surface-muted">
+            {["Unit due", item.person].filter(Boolean).join(" · ")}
+          </span>
+        </span>
+      </Link>
+    )
+  }
+
   const body = (
     <>
       {time}
