@@ -64,6 +64,7 @@ export type Database = {
           due_at: string
           feedback: string | null
           id: string
+          plan_unit_id: string | null
           reviewed_at: string | null
           stage: string | null
           student_id: string
@@ -87,6 +88,7 @@ export type Database = {
           due_at: string
           feedback?: string | null
           id?: string
+          plan_unit_id?: string | null
           reviewed_at?: string | null
           student_id: string
           student_opened_at?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           due_at?: string
           feedback?: string | null
           id?: string
+          plan_unit_id?: string | null
           reviewed_at?: string | null
           student_id?: string
           student_opened_at?: string | null
@@ -129,6 +132,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignments_plan_unit_id_fkey"
+            columns: ["plan_unit_id"]
+            isOneToOne: false
+            referencedRelation: "plan_units"
             referencedColumns: ["id"]
           },
           {
@@ -281,6 +291,50 @@ export type Database = {
           },
         ]
       }
+      learning_plans: {
+        Row: {
+          created_at: string
+          ends_on: string
+          goal: string | null
+          id: string
+          starts_on: string
+          student_id: string
+          title: string
+          updated_at: string
+          weekly_goal_days: number
+        }
+        Insert: {
+          created_at?: string
+          ends_on: string
+          goal?: string | null
+          id?: string
+          starts_on: string
+          student_id: string
+          title: string
+          updated_at?: string
+          weekly_goal_days?: number
+        }
+        Update: {
+          created_at?: string
+          ends_on?: string
+          goal?: string | null
+          id?: string
+          starts_on?: string
+          student_id?: string
+          title?: string
+          updated_at?: string
+          weekly_goal_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_plans_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_assignment_files: {
         Row: {
           created_at: string
@@ -377,6 +431,107 @@ export type Database = {
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_objectives: {
+        Row: {
+          checked_at: string | null
+          confidence: number
+          created_at: string
+          id: string
+          position: number
+          statement: string
+          unit_id: string
+        }
+        Insert: {
+          checked_at?: string | null
+          confidence?: number
+          created_at?: string
+          id?: string
+          position: number
+          statement: string
+          unit_id: string
+        }
+        Update: {
+          checked_at?: string | null
+          confidence?: number
+          created_at?: string
+          id?: string
+          position?: number
+          statement?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_objectives_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "plan_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_units: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          due_on: string
+          id: string
+          mastered_at: string | null
+          mastery: Database["public"]["Enums"]["plan_mastery"]
+          mastery_note: string | null
+          plan_id: string
+          position: number
+          starts_on: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_on: string
+          id?: string
+          mastered_at?: string | null
+          mastery?: Database["public"]["Enums"]["plan_mastery"]
+          mastery_note?: string | null
+          plan_id: string
+          position: number
+          starts_on: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_on?: string
+          id?: string
+          mastered_at?: string | null
+          mastery?: Database["public"]["Enums"]["plan_mastery"]
+          mastery_note?: string | null
+          plan_id?: string
+          position?: number
+          starts_on?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_units_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_units_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "learning_plans"
             referencedColumns: ["id"]
           },
         ]
@@ -483,6 +638,32 @@ export type Database = {
           },
         ]
       }
+      study_days: {
+        Row: {
+          day: string
+          sources: string[]
+          student_id: string
+        }
+        Insert: {
+          day: string
+          sources?: string[]
+          student_id: string
+        }
+        Update: {
+          day?: string
+          sources?: string[]
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_days_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       submissions: {
         Row: {
           assignment_id: string
@@ -572,6 +753,7 @@ export type Database = {
         Args: { p_key: string; p_limit: number; p_window_secs: number }
         Returns: boolean
       }
+      log_study_session: { Args: never; Returns: undefined }
       redeem_invite: {
         Args: { p_token_hash: string; p_user_id: string }
         Returns: Json
@@ -580,6 +762,7 @@ export type Database = {
     Enums: {
       assignment_type: "problem_set" | "reading_notes"
       calendar_event_kind: "lesson" | "exam" | "study" | "other"
+      plan_mastery: "not_started" | "developing" | "secure"
       review_verdict: "approved" | "changes_requested"
       user_role: "tutor" | "student"
     }
@@ -694,6 +877,7 @@ export const Constants = {
     Enums: {
       assignment_type: ["problem_set", "reading_notes"],
       calendar_event_kind: ["lesson", "exam", "study", "other"],
+      plan_mastery: ["not_started", "developing", "secure"],
       review_verdict: ["approved", "changes_requested"],
       user_role: ["tutor", "student"],
     },
