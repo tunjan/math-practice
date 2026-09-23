@@ -20,6 +20,7 @@ export function SegmentedControl<T extends string>({
   onValueChange,
   options,
   hideLegend = false,
+  size = "default",
   className,
 }: {
   legend: string
@@ -29,6 +30,8 @@ export function SegmentedControl<T extends string>({
   options: readonly { value: T; label: string; icon?: LucideIcon }[]
   /** For screen readers only, when the options already say what they are. */
   hideLegend?: boolean
+  /** `sm` is 32px, for controls that sit inside a list row. */
+  size?: "default" | "sm"
   className?: string
 }) {
   return (
@@ -38,7 +41,10 @@ export function SegmentedControl<T extends string>({
       </legend>
       <div
         data-slot="segmented-control"
-        className="grid h-10 gap-1 rounded-full bg-surface-sunken p-1"
+        className={cn(
+          "grid rounded-full bg-surface-sunken",
+          size === "sm" ? "h-8 gap-0.5 p-0.5" : "h-10 gap-1 p-1"
+        )}
         style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
       >
         {options.map((option) => {
@@ -50,7 +56,8 @@ export function SegmentedControl<T extends string>({
               data-slot="segmented-control-item"
               data-checked={checked || undefined}
               className={cn(
-                "flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border px-2 label-md",
+                "flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border px-2",
+                size === "sm" ? "label-sm" : "label-md",
                 "transition-[background-color,border-color,color] duration-150",
                 "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-on-surface",
                 checked

@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { Users } from "lucide-react"
 
 import { Avatar, EmptyState, Page, PageHeader } from "@/components/brand/primitives"
@@ -102,13 +103,18 @@ export default async function StudentsPage() {
                     const counts = tally.get(student.id) ?? { active: 0, toReview: 0 }
                     const name = student.full_name || "Unnamed student"
                     return (
-                      <TableRow key={student.id}>
+                      <TableRow key={student.id} className="relative">
                         <TableCell className="w-full max-w-0">
-                          <TableIdentity
-                            leading={<Avatar name={name} />}
-                            primary={name}
-                            secondary={student.email ?? "No email"}
-                          />
+                          <Link
+                            href={`/tutor/students/${student.id}`}
+                            className="rounded-xs after:absolute after:inset-0"
+                          >
+                            <TableIdentity
+                              leading={<Avatar name={name} />}
+                              primary={name}
+                              secondary={student.email ?? "No email"}
+                            />
+                          </Link>
                         </TableCell>
                         <TableCell className="text-right">
                           <span className="mono-data">{counts.active}</span>
