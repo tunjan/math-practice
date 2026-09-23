@@ -5,100 +5,94 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
 /**
- * The pill is the entire shape system (DESIGN-x.ai.md). Every interactive
- * element is `rounded-full` with a translucent-white edge — never a solid one.
+ * DESIGN.md › Buttons
  *
- * `default` is deliberately the OUTLINE pill, not a filled one: the brand uses
- * outline pills almost exclusively, so an un-styled <Button> lands on-brand.
- * `primary` is the rare white-filled pill — at most one per screen.
+ * One filled `primary` per view. Secondary is white with an `outline-strong`
+ * border; tertiary is ghost. A destructive action is never a coloured button:
+ * it is a ghost button with `error` ink, confirmed by a dialog.
  */
 const buttonVariants = cva(
   [
-    "group/button inline-flex shrink-0 items-center justify-center gap-2",
-    "rounded-full border border-transparent bg-clip-padding",
-    "font-sans text-sm leading-5 font-normal whitespace-nowrap",
-    "transition-colors duration-150 outline-none select-none",
-    "focus-visible:ring-2 focus-visible:ring-white/55 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas",
-    "disabled:pointer-events-none disabled:opacity-40",
-    "aria-invalid:border-destructive/60",
+    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap",
+    "rounded-md border label-md select-none",
+    "transition-[background-color,border-color,color,transform] duration-150 ease-out",
+    "active:not-disabled:scale-[0.98]",
+    "disabled:pointer-events-none disabled:opacity-45",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   ].join(" "),
   {
     variants: {
       variant: {
-        /** The canonical white-outline pill. */
-        default:
-          "border-white/25 bg-transparent text-ink hover:bg-white/8 hover:border-white/40 aria-expanded:bg-white/8",
-        /** Alias of `default` — shadcn components ship `variant="outline"`. */
-        outline:
-          "border-white/25 bg-transparent text-ink hover:bg-white/8 hover:border-white/40 aria-expanded:bg-white/8",
-        /** The rare white-filled pill. One per screen, maximum. */
         primary:
-          "border-white bg-primary text-primary-foreground hover:bg-white/88",
-        /** A filled-but-quiet pill for dense toolbars. */
+          "border-primary bg-primary text-on-primary hover:border-primary-hover hover:bg-primary-hover active:bg-primary-pressed",
         secondary:
-          "border-hairline bg-canvas-soft text-ink hover:bg-canvas-mid/60",
-        /** No chrome until touched. */
+          "border-outline-strong bg-surface text-on-surface hover:bg-surface-sunken",
         ghost:
-          "border-transparent bg-transparent text-body hover:bg-canvas-soft hover:text-ink aria-expanded:bg-canvas-soft aria-expanded:text-ink",
-        /** Danger is carried by text and edge only — never a filled surface. */
+          "border-transparent bg-transparent text-on-surface-muted hover:bg-surface-sunken hover:text-on-surface",
         destructive:
-          "border-destructive/40 bg-transparent text-destructive hover:bg-destructive/10 hover:border-destructive/70",
-        link: "border-transparent text-ink underline-offset-4 hover:underline",
+          "border-transparent bg-transparent text-error hover:bg-error-container hover:text-on-error-container",
+        /** The confirm step of a destructive action, never its trigger. */
+        danger:
+          "border-[#dc2626] bg-[#dc2626] text-white hover:border-[#b91c1c] hover:bg-[#b91c1c]",
+        /** Actions inside the floating `surface-inverse` bar */
+        inverse:
+          "border-transparent bg-transparent text-on-surface-inverse hover:bg-primary-hover",
+        link:
+          "h-auto border-transparent p-0 text-on-surface underline decoration-outline-strong underline-offset-4 hover:decoration-on-surface",
       },
       size: {
-        // Touch targets inflate below `sm` to clear WCAG 44x44 on mobile.
-        default: "h-9 px-4 max-sm:h-11 max-sm:px-5",
-        sm: "h-8 px-3 text-sm max-sm:h-10",
-        lg: "h-11 px-6 text-base",
-        icon: "size-9 p-0 max-sm:size-11",
-        "icon-sm": "size-8 p-0 max-sm:size-10",
-        "icon-lg": "size-11 p-0",
+        default: "h-10 px-4",
+        sm: "h-8 px-3",
+        icon: "size-9 border-outline bg-surface p-0 text-on-surface-secondary hover:bg-surface-sunken hover:text-on-surface",
+        "icon-sm": "size-8 p-0",
       },
     },
+    compoundVariants: [
+      { variant: "link", size: "default", className: "h-auto px-0" },
+      { variant: "link", size: "sm", className: "h-auto px-0" },
+    ],
     defaultVariants: {
-      variant: "default",
+      variant: "secondary",
       size: "default",
     },
   }
 )
 
+type ButtonVariants = VariantProps<typeof buttonVariants>
+
 function Button({
   className,
-  variant = "default",
-  size = "default",
+  variant,
+  size,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & ButtonVariants) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      data-variant={variant ?? "secondary"}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   )
 }
 
-/**
- * A navigation control wearing the button's chrome. Base UI warns when a
- * `<button>` renders as an anchor, so `nativeButton` is turned off here rather
- * than at every call site.
- */
 function ButtonLink({
   className,
-  variant = "default",
-  size = "default",
+  variant,
+  size,
   href,
   ...props
 }: Omit<React.ComponentProps<typeof Link>, "className"> &
-  VariantProps<typeof buttonVariants> & { className?: string }) {
+  ButtonVariants & { className?: string }) {
   return (
     <ButtonPrimitive
       data-slot="button"
       nativeButton={false}
+      data-variant={variant ?? "secondary"}
       render={<Link href={href} {...props} />}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size }), className)}
     />
   )
 }
 
-export { Button, ButtonLink, buttonVariants }
+export { Button, ButtonLink, buttonVariants, type ButtonVariants }

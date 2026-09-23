@@ -62,12 +62,17 @@ export type Database = {
           created_at: string
           description: string | null
           due_at: string
+          feedback: string | null
           id: string
           reviewed_at: string | null
           stage: string | null
           student_id: string
           student_opened_at: string | null
           submitted_at: string | null
+          superseded_feedback: string | null
+          superseded_reviewed_at: string | null
+          superseded_submitted_at: string | null
+          superseded_verdict: Database["public"]["Enums"]["review_verdict"] | null
           title: string
           tutor_id: string
           type: Database["public"]["Enums"]["assignment_type"]
@@ -80,11 +85,16 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_at: string
+          feedback?: string | null
           id?: string
           reviewed_at?: string | null
           student_id: string
           student_opened_at?: string | null
           submitted_at?: string | null
+          superseded_feedback?: string | null
+          superseded_reviewed_at?: string | null
+          superseded_submitted_at?: string | null
+          superseded_verdict?: Database["public"]["Enums"]["review_verdict"] | null
           title: string
           tutor_id: string
           type?: Database["public"]["Enums"]["assignment_type"]
@@ -97,11 +107,16 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_at?: string
+          feedback?: string | null
           id?: string
           reviewed_at?: string | null
           student_id?: string
           student_opened_at?: string | null
           submitted_at?: string | null
+          superseded_feedback?: string | null
+          superseded_reviewed_at?: string | null
+          superseded_submitted_at?: string | null
+          superseded_verdict?: Database["public"]["Enums"]["review_verdict"] | null
           title?: string
           tutor_id?: string
           type?: Database["public"]["Enums"]["assignment_type"]
@@ -126,6 +141,63 @@ export type Database = {
           {
             foreignKeyName: "assignments_tutor_id_fkey"
             columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calendar_events: {
+        Row: {
+          all_day: boolean
+          created_at: string
+          ends_at: string
+          id: string
+          kind: Database["public"]["Enums"]["calendar_event_kind"]
+          notes: string | null
+          owner_id: string
+          shared_with: string | null
+          starts_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          all_day?: boolean
+          created_at?: string
+          ends_at: string
+          id?: string
+          kind?: Database["public"]["Enums"]["calendar_event_kind"]
+          notes?: string | null
+          owner_id: string
+          shared_with?: string | null
+          starts_at: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          all_day?: boolean
+          created_at?: string
+          ends_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["calendar_event_kind"]
+          notes?: string | null
+          owner_id?: string
+          shared_with?: string | null
+          starts_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_shared_with_fkey"
+            columns: ["shared_with"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -278,6 +350,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_at?: string
+          feedback?: string | null
           id?: string
           invite_id?: string
           title?: string
@@ -415,6 +488,7 @@ export type Database = {
           assignment_id: string
           created_at: string
           file_name: string
+          handed_in_at: string | null
           id: string
           mime_type: string
           revision: number
@@ -426,6 +500,7 @@ export type Database = {
           assignment_id: string
           created_at?: string
           file_name?: string
+          handed_in_at?: string | null
           id?: string
           mime_type: string
           revision?: number
@@ -437,6 +512,7 @@ export type Database = {
           assignment_id?: string
           created_at?: string
           file_name?: string
+          handed_in_at?: string | null
           id?: string
           mime_type?: string
           revision?: number
@@ -503,6 +579,7 @@ export type Database = {
     }
     Enums: {
       assignment_type: "problem_set" | "reading_notes"
+      calendar_event_kind: "lesson" | "exam" | "study" | "other"
       review_verdict: "approved" | "changes_requested"
       user_role: "tutor" | "student"
     }
@@ -616,6 +693,7 @@ export const Constants = {
   public: {
     Enums: {
       assignment_type: ["problem_set", "reading_notes"],
+      calendar_event_kind: ["lesson", "exam", "study", "other"],
       review_verdict: ["approved", "changes_requested"],
       user_role: ["tutor", "student"],
     },

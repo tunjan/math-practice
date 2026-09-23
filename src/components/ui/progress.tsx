@@ -1,82 +1,48 @@
-"use client"
-
-import { Progress as ProgressPrimitive } from "@base-ui/react/progress"
 import { cn } from "cn"
 
-function Progress({
-  className,
-  children,
+/**
+ * DESIGN.md › Progress and Onboarding
+ *
+ * A segmented tick track: thin `outline` ticks, completed ticks in the
+ * product accent. Purely visual; pair it with a mono percentage for the value.
+ */
+function TickProgress({
   value,
-  ...props
-}: ProgressPrimitive.Root.Props) {
-  return (
-    <ProgressPrimitive.Root
-      value={value}
-      data-slot="progress"
-      className={cn("flex flex-wrap gap-3", className)}
-      {...props}
-    >
-      {children}
-      <ProgressTrack>
-        <ProgressIndicator />
-      </ProgressTrack>
-    </ProgressPrimitive.Root>
-  )
-}
-
-function ProgressTrack({ className, ...props }: ProgressPrimitive.Track.Props) {
-  return (
-    <ProgressPrimitive.Track
-      className={cn(
-        "relative flex h-1 w-full items-center overflow-x-hidden rounded-full bg-muted",
-        className
-      )}
-      data-slot="progress-track"
-      {...props}
-    />
-  )
-}
-
-function ProgressIndicator({
+  ticks = 20,
   className,
-  ...props
-}: ProgressPrimitive.Indicator.Props) {
+  label,
+}: {
+  /** 0 to 100 */
+  value: number
+  ticks?: number
+  className?: string
+  /** Accessible name, e.g. "Progress". Omit when the value is stated beside it. */
+  label?: string
+}) {
+  const clamped = Math.max(0, Math.min(100, value))
+  const filled = Math.round((clamped / 100) * ticks)
+
   return (
-    <ProgressPrimitive.Indicator
-      data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
-      {...props}
-    />
+    <div
+      role={label ? "progressbar" : undefined}
+      aria-label={label}
+      aria-valuemin={label ? 0 : undefined}
+      aria-valuemax={label ? 100 : undefined}
+      aria-valuenow={label ? clamped : undefined}
+      aria-hidden={label ? undefined : true}
+      className={cn("flex h-3 w-full items-stretch justify-between", className)}
+    >
+      {Array.from({ length: ticks }, (_, index) => (
+        <span
+          key={index}
+          className={cn(
+            "w-[3px] rounded-full transition-colors duration-200",
+            index < filled ? "bg-accent-orange" : "bg-outline"
+          )}
+        />
+      ))}
+    </div>
   )
 }
 
-function ProgressLabel({ className, ...props }: ProgressPrimitive.Label.Props) {
-  return (
-    <ProgressPrimitive.Label
-      className={cn("text-sm font-medium", className)}
-      data-slot="progress-label"
-      {...props}
-    />
-  )
-}
-
-function ProgressValue({ className, ...props }: ProgressPrimitive.Value.Props) {
-  return (
-    <ProgressPrimitive.Value
-      className={cn(
-        "ml-auto text-sm text-muted-foreground tabular-nums",
-        className
-      )}
-      data-slot="progress-value"
-      {...props}
-    />
-  )
-}
-
-export {
-  Progress,
-  ProgressTrack,
-  ProgressIndicator,
-  ProgressLabel,
-  ProgressValue,
-}
+export { TickProgress }

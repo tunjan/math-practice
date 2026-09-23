@@ -2,48 +2,41 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { Pencil } from "lucide-react"
 
-import {
-  Band,
-  Container,
-  Eyebrow,
-  PageHeader,
-  StatusDot,
-} from "@/components/brand/primitives"
-import { Badge } from "@/components/ui/badge"
-import { ButtonLink } from "@/components/ui/button"
-import { FileList } from "@/components/assignments/file-list"
+import { Page, PageHeader } from "@/components/brand/primitives"
+import { FileList, type SignedFile } from "@/components/assignments/file-list"
 import { LifecycleTracker } from "@/components/assignments/lifecycle-tracker"
 import { MathProse } from "@/components/assignments/math-prose"
 import { ReviewPanel } from "@/components/assignments/review-panel"
+import { StatusBadge } from "@/components/assignments/status-badge"
+import { ButtonLink } from "@/components/ui/button"
+import { Card, CardHeader, CardSection, DetailList } from "@/components/ui/card"
+import { TickProgress } from "@/components/ui/progress"
 import { requireRole } from "@/lib/auth/session"
 import { createClient } from "@/lib/supabase/server"
 import { formatDue, isOverdue, relativeToNow } from "@/lib/assignments/dates"
 import { MATERIALS_BUCKET, SUBMISSIONS_BUCKET } from "@/lib/assignments/files"
 import { signFiles } from "@/lib/assignments/signing"
-import {
-  asStage,
-  statusAccent,
-  statusLabel,
-  TYPE_LABEL,
-  type DotAccentLike,
-} from "@/lib/assignments/model"
+import { asStage, TYPE_LABEL } from "@/lib/assignments/model"
 
 export const metadata: Metadata = { title: "Task · Maths Tasks" }
 export const dynamic = "force-dynamic"
 
+type Revision = { revision: number; handedInAt: string; files: SignedFile[] }
+
 export default async function AssignmentDetailPage({
   params,
 }: PageProps<"/tutor/assignments/[id]">) {
-  await requireRole("tutor")
+  const profile = await requireRole("tutor")
   const { id } = await params
   const supabase = await createClient()
+  const tz = profile.timezone
 
   const { data: assignment } = await supabase
     .from("assignments")
     .select(
-      `id, title, description, type, due_at, stage, verdict, reviewed_at,
+      `id, title, description, type, due_at, stage, verdict, feedback, reviewed_at,
        student_opened_at, submitted_at, created_at, completion_pct,
-       categories(name, accent_key),
+       categories(name),
        profiles!assignments_student_id_fkey(id, full_name, email)`
     )
     .eq("id", id)
@@ -59,9 +52,12 @@ export default async function AssignmentDetailPage({
       .order("sort_order"),
     supabase
       .from("submissions")
-      .select("id, file_name, mime_type, size_bytes, storage_path, created_at, revision")
+      .select("id, file_name, mime_type, size_bytes, storage_path, created_at, revision, handed_in_at")
       .eq("assignment_id", id)
-      .order("created_at", { ascending: false }),
+      // Drafts are the student's until handed in (including after an unsubmit).
+      .not("handed_in_at", "is", null)
+      .order("revision", { ascending: false })
+      .order("created_at", { ascending: true }),
   ])
 
   const [materials, submissions] = await Promise.all([
@@ -69,51 +65,44 @@ export default async function AssignmentDetailPage({
     signFiles(supabase, SUBMISSIONS_BUCKET, submissionRows ?? []),
   ])
 
+  const revisions: Revision[] = []
+  ;(submissionRows ?? []).forEach((row, index) => {
+    const file = submissions[index]!
+    const last = revisions.at(-1)
+    if (last && last.revision === row.revision) last.files.push(file)
+    else
+      revisions.push({
+        revision: row.revision,
+        handedInAt: row.handed_in_at ?? row.created_at,
+        files: [file],
+      })
+  })
+
   const stage = asStage(assignment.stage)
   const overdue =
     isOverdue(assignment.due_at) && stage !== "submitted" && stage !== "reviewed"
+  const studentName =
+    assignment.profiles?.full_name || assignment.profiles?.email || "Unknown student"
 
   return (
-    <Band>
-      <Container className="flex flex-col gap-10">
-        <PageHeader
-          eyebrow={TYPE_LABEL[assignment.type]}
-          title={assignment.title}
-          description={`${assignment.profiles?.full_name || "Unknown student"} · due ${formatDue(assignment.due_at)} (${relativeToNow(assignment.due_at)})`}
-          action={
-            <ButtonLink href={`/tutor/assignments/${id}/edit`}>
-              <Pencil />
-              Edit
-            </ButtonLink>
-          }
-        />
+    <Page>
+      <PageHeader
+        back={{ href: "/tutor/assignments", label: "Assignments" }}
+        title={assignment.title}
+        meta={<StatusBadge stage={stage} verdict={assignment.verdict} overdue={overdue} />}
+        description={`${studentName}, due ${formatDue(assignment.due_at, tz)} (${relativeToNow(assignment.due_at)})`}
+        actions={
+          <ButtonLink href={`/tutor/assignments/${id}/edit`}>
+            <Pencil aria-hidden />
+            Edit
+          </ButtonLink>
+        }
+      />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="strong">
-            <StatusDot
-              accent={statusAccent(stage, assignment.verdict, overdue)}
-            />
-            {overdue && !assignment.verdict
-              ? "Overdue"
-              : statusLabel(stage, assignment.verdict)}
-          </Badge>
-          {assignment.categories ? (
-            <Badge>
-              <StatusDot
-                accent={assignment.categories.accent_key as DotAccentLike}
-              />
-              {assignment.categories.name}
-            </Badge>
-          ) : null}
-          <Badge variant="muted">
-            Student reports {assignment.completion_pct}% done
-          </Badge>
-        </div>
-
-        {/* Lifecycle */}
-        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas-card p-6">
-          <Eyebrow size="sm">Progress</Eyebrow>
+      <Card>
+        <CardSection className="flex flex-col gap-5">
           <LifecycleTracker
+            timeZone={tz}
             stage={stage}
             timestamps={{
               assigned: assignment.created_at,
@@ -123,46 +112,90 @@ export default async function AssignmentDetailPage({
             }}
           />
           {!assignment.student_opened_at ? (
-            <p className="body-sm text-body-mid">
-              {assignment.profiles?.full_name || "The student"} hasn&apos;t opened
-              this yet.
+            <p className="body-sm text-on-surface-muted">
+              {studentName} hasn&apos;t opened this task yet.
             </p>
           ) : null}
-        </section>
+        </CardSection>
+      </Card>
 
-        <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
-          <div className="flex flex-col gap-10">
-            {assignment.description ? (
-              <section className="flex flex-col gap-4">
-                <Eyebrow>Instructions</Eyebrow>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card>
+            <CardHeader title="Hand-ins" description={revisions.length === 0 ? undefined : `${revisions.length} ${revisions.length === 1 ? "revision" : "revisions"}`} />
+            {revisions.length === 0 ? (
+              <p className="px-6 py-5 body-sm text-on-surface-muted">Nothing handed in yet.</p>
+            ) : (
+              revisions.map((revision) => (
+                <section key={revision.revision} className="border-t border-outline first:border-t-0">
+                  <div className="flex h-10 items-center justify-between gap-4 bg-surface-sunken px-6">
+                    <span className="label-caps text-on-surface-muted">
+                      Revision {revision.revision}
+                    </span>
+                    <span className="mono-data-sm text-on-surface-muted">
+                      {formatDue(revision.handedInAt, tz)}
+                    </span>
+                  </div>
+                  <FileList files={revision.files} />
+                </section>
+              ))
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader title="Instructions" />
+            <CardSection>
+              {assignment.description ? (
                 <MathProse>{assignment.description}</MathProse>
-              </section>
-            ) : null}
+              ) : (
+                <p className="body-sm text-on-surface-muted">No written instructions.</p>
+              )}
+            </CardSection>
+          </Card>
 
-            <section className="flex flex-col gap-4">
-              <Eyebrow>Materials</Eyebrow>
-              <FileList files={materials} emptyLabel="No materials attached." />
-            </section>
-
-            <section className="flex flex-col gap-4">
-              <Eyebrow>Submitted work</Eyebrow>
-              <FileList
-                files={submissions}
-                emptyLabel="Nothing handed in yet."
-              />
-            </section>
-          </div>
-
-          <aside className="flex flex-col gap-6">
-            <ReviewPanel
-              assignmentId={id}
-              verdict={assignment.verdict}
-              reviewedAt={assignment.reviewed_at}
-              hasSubmission={submissions.length > 0}
-            />
-          </aside>
+          <Card>
+            <CardHeader title="Materials" />
+            <FileList files={materials} emptyLabel="No materials attached." />
+          </Card>
         </div>
-      </Container>
-    </Band>
+
+        <aside className="flex flex-col gap-6">
+          <ReviewPanel
+            assignmentId={id}
+            verdict={assignment.verdict}
+            feedback={assignment.feedback}
+            reviewedAt={assignment.reviewed_at}
+            hasSubmission={revisions.length > 0}
+            timeZone={tz}
+          />
+
+          <Card>
+            <CardHeader title="Details" />
+            <DetailList
+              items={[
+                { label: "Student", value: studentName },
+                { label: "Type", value: TYPE_LABEL[assignment.type] },
+                { label: "Topic", value: assignment.categories?.name ?? "None" },
+                {
+                  label: "Due",
+                  value: <span className="mono-data-sm">{formatDue(assignment.due_at, tz)}</span>,
+                },
+                {
+                  label: "Set",
+                  value: <span className="mono-data-sm">{formatDue(assignment.created_at, tz)}</span>,
+                },
+              ]}
+            />
+            <div className="flex flex-col gap-2 border-t border-outline px-6 py-4">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="body-sm text-on-surface-muted">Student&apos;s estimate</span>
+                <span className="mono-data-sm text-on-surface">{assignment.completion_pct}%</span>
+              </div>
+              <TickProgress value={assignment.completion_pct} />
+            </div>
+          </Card>
+        </aside>
+      </div>
+    </Page>
   )
 }

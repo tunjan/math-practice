@@ -22,12 +22,25 @@ their students.
 
 ## Design
 
-The entire visual surface follows [`DESIGN-x.ai.md`](DESIGN-x.ai.md).
-**Read [`DESIGN-NOTES.md`](DESIGN-NOTES.md) before writing UI** — it explains
-how those tokens are wired in and which rules are non-negotiable (dark only,
-weight 400, pills, hairlines, no shadows).
+The whole visual surface follows [`DESIGN.md`](DESIGN.md) ("Quiet Console"):
+a light grey `canvas-neutral` background, white hairline cards with no shadows, near-black as the
+only strong colour, and pale semantic containers that carry status only.
 
-`/styleguide` renders every primitive against the real tokens.
+- Tokens and type styles live in `src/app/globals.css`; components use them by
+  name (`bg-surface`, `text-on-surface-muted`, `label-caps`, `mono-data`…) and
+  never hard-code a colour.
+- Inter is for anything a person wrote, JetBrains Mono for anything the
+  database produced (dates, sizes, counts, status tags).
+- The product accent is orange: brand mark, progress ticks and selection
+  controls only, never text.
+- Task status always goes through `assignmentStatus()` in
+  `src/lib/assignments/model.ts`, so every screen names and colours a state
+  the same way.
+- Dates are formatted in `en-GB` and the viewer's profile timezone, so server
+  and browser render identical strings.
+
+`/styleguide` renders every primitive and the main screens with sample data,
+and needs no login.
 
 ## Running it
 

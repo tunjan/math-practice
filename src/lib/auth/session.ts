@@ -1,3 +1,4 @@
+import { cache } from "react"
 import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
@@ -17,9 +18,10 @@ export type SessionProfile = {
  *
  * Middleware already gates these routes, but a page must never *assume* that —
  * a matcher change or a direct RSC request would otherwise leave a page
- * rendering with no user. Ask again here; it is one cached round trip.
+ * rendering with no user. Ask again here; `cache` dedupes it per request, so
+ * the layout and the page share one round trip.
  */
-export async function requireProfile(): Promise<SessionProfile> {
+export const requireProfile = cache(async function requireProfile(): Promise<SessionProfile> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -43,7 +45,7 @@ export async function requireProfile(): Promise<SessionProfile> {
     timezone: profile.timezone,
     calendarToken: profile.calendar_token,
   }
-}
+})
 
 /** As above, but also insists on a particular role. */
 export async function requireRole(role: UserRole): Promise<SessionProfile> {

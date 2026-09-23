@@ -1,19 +1,29 @@
-import { SignOutButton } from "@/components/auth/sign-out-button"
-import { WorkspaceNav } from "@/components/shell/workspace-nav"
+import { WorkspaceShell, type NavItem } from "@/components/shell/workspace-nav"
+import { Toaster } from "@/components/ui/sonner"
+import { requireRole } from "@/lib/auth/session"
 
-const NAV = [
-  { href: "/tutor", label: "Overview" },
-  { href: "/tutor/assignments", label: "Assignments" },
-  { href: "/tutor/students", label: "Students" },
-  { href: "/tutor/library", label: "Library" },
-  { href: "/tutor/settings", label: "Settings" },
+const NAV: NavItem[] = [
+  { href: "/tutor", label: "Overview", icon: "overview", exact: true },
+  { href: "/tutor/assignments", label: "Assignments", icon: "assignments" },
+  { href: "/tutor/students", label: "Students", icon: "students" },
+  { href: "/tutor/calendar", label: "Calendar", icon: "calendar" },
 ]
 
-export default function TutorLayout({ children }: LayoutProps<"/tutor">) {
+export default async function TutorLayout({ children }: LayoutProps<"/tutor">) {
+  const profile = await requireRole("tutor")
+
   return (
-    <div className="flex min-h-svh flex-col">
-      <WorkspaceNav items={NAV} action={<SignOutButton />} />
-      <main className="flex-1">{children}</main>
-    </div>
+    <WorkspaceShell
+      home="/tutor"
+      items={NAV}
+      person={{
+        name: profile.fullName || "Tutor",
+        email: profile.email,
+        role: "Tutor",
+      }}
+    >
+      {children}
+      <Toaster />
+    </WorkspaceShell>
   )
 }

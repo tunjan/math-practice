@@ -16,6 +16,8 @@ export const PUBLIC_PREFIXES = [
   "/auth",
   "/styleguide",
   "/health",
+  // Calendar apps poll the feed with no cookies; its token is the credential.
+  "/api/calendar",
 ] as const
 
 export function isPublicPath(pathname: string): boolean {

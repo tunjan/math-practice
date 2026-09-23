@@ -184,7 +184,7 @@ export async function redeemInvite(
 
   if (signInError) {
     // The account exists and is linked; only the automatic sign-in failed.
-    return { error: "Your account is ready — please sign in." }
+    return { error: "Your account is ready. Please sign in." }
   }
 
   redirect("/student")

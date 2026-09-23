@@ -2,24 +2,41 @@ import * as React from "react"
 import { Input as InputPrimitive } from "@base-ui/react/input"
 import { cn } from "cn"
 
-// text-input (DESIGN-x.ai.md): canvas-soft fill, hairline edge, 8px radius,
-// body-md at 12px/16px padding. Inputs are the one interactive element that is
-// NOT a pill — the brand keeps them as 8px rectangles.
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+/**
+ * DESIGN.md › input-field
+ *
+ * 40px, 8px radius, white with an `outline-strong` border. The `filled`
+ * variant is the recessed search field: `surface-sunken`, no border.
+ */
+const fieldBase = [
+  "w-full min-w-0 rounded-md border text-on-surface",
+  "transition-[border-color,box-shadow,background-color] duration-150 outline-none",
+  "placeholder:text-on-surface-muted",
+  "focus-visible:border-on-surface focus-visible:ring-3 focus-visible:ring-on-surface/10",
+  "disabled:pointer-events-none disabled:bg-surface-sunken disabled:text-on-surface-muted",
+  "aria-invalid:border-error aria-invalid:ring-3 aria-invalid:ring-error/15",
+].join(" ")
+
+function Input({
+  className,
+  variant = "default",
+  mono = false,
+  ...props
+}: React.ComponentProps<"input"> & {
+  variant?: "default" | "filled"
+  /** For machine values: links, codes, dates. */
+  mono?: boolean
+}) {
   return (
     <InputPrimitive
-      type={type}
       data-slot="input"
       className={cn(
-        "w-full min-w-0 rounded-lg border border-hairline bg-canvas-soft px-4 py-3",
-        "font-sans text-base leading-6 font-normal text-ink",
-        "transition-colors outline-none",
-        "placeholder:text-body-mid",
-        "file:inline-flex file:border-0 file:bg-transparent file:text-sm file:text-ink",
-        "hover:border-white/20",
-        "focus-visible:border-white/40 focus-visible:ring-2 focus-visible:ring-white/20",
-        "disabled:pointer-events-none disabled:opacity-40",
-        "aria-invalid:border-destructive/60",
+        fieldBase,
+        "h-10 px-3",
+        mono ? "mono-data" : "body-md",
+        variant === "default" && "border-outline-strong bg-surface",
+        variant === "filled" &&
+          "border-transparent bg-surface-sunken focus-visible:bg-surface",
         className
       )}
       {...props}
@@ -27,4 +44,4 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   )
 }
 
-export { Input }
+export { Input, fieldBase }

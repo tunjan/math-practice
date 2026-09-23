@@ -1,7 +1,5 @@
 import type { Metadata } from "next"
-import Link from "next/link"
-
-import { AuthCard } from "@/components/auth/auth-card"
+import { AuthCard, AuthLink } from "@/components/auth/auth-card"
 import { FormMessage } from "@/components/auth/form-message"
 import { RedeemForm } from "@/components/invites/redeem-form"
 import { Badge } from "@/components/ui/badge"
@@ -74,41 +72,30 @@ export default async function InvitePage({
   if (status.kind === "invalid") {
     return (
       <AuthCard
-        eyebrow="Invitation"
-        title="Link not valid"
-        footer={
-          <Link
-            href="/login"
-            className="body-sm text-body-mid underline-offset-4 transition-colors hover:text-ink hover:underline"
-          >
-            Go to sign in
-          </Link>
-        }
+        title="This link doesn't work"
+        footer={<AuthLink href="/login">Go to sign in</AuthLink>}
       >
         <FormMessage error={status.message} />
       </AuthCard>
     )
   }
 
+  const firstName = status.fullName.split(" ")[0]
+
   return (
     <AuthCard
-      eyebrow="Invitation"
-      title={status.fullName ? `Hello, ${status.fullName}` : "Set up your account"}
-      description="Your tutor has invited you to Maths Tasks. Pick an email and password and you're in."
+      title={firstName ? `Welcome, ${firstName}` : "Set up your account"}
+      description="Your tutor has invited you to Maths Tasks. Choose an email and password to get started."
       footer={
         status.queued > 0 ? (
-          <div className="flex items-center gap-2">
-            <Badge variant="strong">
-              {status.queued} task{status.queued === 1 ? "" : "s"} waiting
+          <span className="flex items-center gap-2">
+            <Badge variant="violet">
+              {status.queued} {status.queued === 1 ? "task" : "tasks"} waiting
             </Badge>
-            <span className="body-sm text-body-mid">
-              already assigned to you
-            </span>
-          </div>
+            <span>already set for you</span>
+          </span>
         ) : (
-          <p className="body-sm text-body-mid">
-            This link works once, and only for you.
-          </p>
+          "This link works once, and only for you."
         )
       }
     >

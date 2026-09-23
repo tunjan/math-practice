@@ -1,19 +1,26 @@
 "use client"
 
 import { useActionState, useEffect, useId, useState } from "react"
-import { Check, Copy, Link2, UserPlus, X } from "lucide-react"
+import { Check, Copy, MailPlus } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { FormMessage } from "@/components/auth/form-message"
-import { EmptyState, Eyebrow } from "@/components/brand/primitives"
+import { EmptyState } from "@/components/brand/primitives"
 import {
-  createInvite,
-  revokeInvite,
-  type InviteActionState,
-} from "@/lib/invites/actions"
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/brand/table"
+import { FormMessage } from "@/components/auth/form-message"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardSection } from "@/components/ui/card"
+import { ConfirmDialog } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Field } from "@/components/ui/label"
+import { createInvite, revokeInvite, type InviteActionState } from "@/lib/invites/actions"
+import { LOCALE } from "@/lib/assignments/dates"
 
 export type OpenInvite = {
   id: string
@@ -35,163 +42,181 @@ function CopyButton({ value }: { value: string }) {
   return (
     <Button
       type="button"
-      size="sm"
+      className="shrink-0"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(value)
           setCopied(true)
         } catch {
-          // Clipboard access can be refused; the link is visible and
-          // selectable either way, so there is nothing to recover from.
+          // Clipboard access can be refused; the link is visible and selectable.
         }
       }}
     >
-      {copied ? <Check /> : <Copy />}
-      {copied ? "Copied" : "Copy link"}
+      {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
+      {copied ? "Copied" : "Copy"}
     </Button>
   )
 }
 
-/**
- * The invite link is shown exactly once, at creation. Only its hash is stored,
- * so there is nothing to re-display later — losing it means revoking and
- * inviting again. The UI has to say so plainly rather than implying the link
- * can be found again.
- */
-function NewInviteLink({ link }: { link: string }) {
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-white/25 bg-canvas p-4">
-      <div className="flex items-center gap-2">
-        <Link2 className="size-4 text-ink" />
-        <Eyebrow size="sm" className="text-ink">
-          Invite link — copy it now
-        </Eyebrow>
-      </div>
-      <code className="block overflow-x-auto rounded-lg border border-hairline bg-canvas-soft px-3 py-2 font-mono text-xs text-body">
-        {link}
-      </code>
-      <div className="flex flex-wrap items-center gap-3">
-        <CopyButton value={link} />
-        <p className="body-sm text-body-mid">
-          Shown once. We store only a hash, so it can&apos;t be shown again.
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function RevokeButton({ inviteId }: { inviteId: string }) {
-  const [state, action, pending] = useActionState<InviteActionState, FormData>(
-    revokeInvite,
-    {}
-  )
-
-  return (
-    <form action={action} className="flex items-center gap-2">
-      <input type="hidden" name="invite_id" value={inviteId} />
-      <Button type="submit" variant="destructive" size="sm" disabled={pending}>
-        <X />
-        {pending ? "Revoking…" : "Revoke"}
-      </Button>
-      {state.error ? (
-        <span className="body-sm text-destructive">{state.error}</span>
-      ) : null}
-    </form>
-  )
-}
-
-export function InvitePanel({ invites }: { invites: OpenInvite[] }) {
-  const [state, action, pending] = useActionState<InviteActionState, FormData>(
-    createInvite,
-    {}
-  )
+/** Create an invite. The link is shown once: only its hash is stored. */
+export function InviteForm() {
+  const [state, action, pending] = useActionState<InviteActionState, FormData>(createInvite, {})
   const nameId = useId()
+  const linkId = useId()
 
   return (
-    <div className="flex flex-col gap-6">
-      <form
-        action={action}
-        className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas-card p-6"
-      >
-        <div className="flex flex-col gap-2">
-          <Eyebrow size="sm">Invite a student</Eyebrow>
-          <p className="body-sm text-body-mid">
-            You name them; they choose their own email and password.
-          </p>
-        </div>
-
-        <FormMessage error={state.error} notice={state.notice} />
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex flex-1 flex-col gap-2">
-            <Label htmlFor={nameId} className="eyebrow-sm text-body-mid">
-              Student name
-            </Label>
-            <Input
-              id={nameId}
-              name="full_name"
-              required
-              maxLength={120}
-              placeholder="Amara Osei"
-            />
-          </div>
-          <Button
-            type="submit"
-            variant="primary"
-            size="lg"
-            disabled={pending}
-            className="sm:w-auto"
-          >
-            <UserPlus />
-            {pending ? "Creating…" : "Create invite"}
+    <Card>
+      <CardHeader
+        title="Invite a student"
+        description="They choose their own email and password when they accept."
+      />
+      <CardSection className="flex flex-col gap-4">
+        <form action={action} className="flex flex-col gap-4">
+          <FormMessage error={state.error} />
+          <Field label="Student's name" htmlFor={nameId}>
+            <Input id={nameId} name="full_name" required maxLength={120} autoComplete="off" />
+          </Field>
+          <Button type="submit" variant="primary" disabled={pending} className="w-full">
+            <MailPlus aria-hidden />
+            {pending ? "Creating link" : "Create invite link"}
           </Button>
-        </div>
+        </form>
 
-        {state.link ? <NewInviteLink link={state.link} /> : null}
-      </form>
+        {state.link ? (
+          <div className="flex flex-col gap-2 border-t border-outline pt-4">
+            <label htmlFor={linkId} className="label-md text-on-surface-secondary">
+              Invite link
+            </label>
+            <div className="flex gap-2">
+              <Input
+                id={linkId}
+                readOnly
+                value={state.link}
+                variant="filled"
+                mono
+                onFocus={(event) => event.currentTarget.select()}
+              />
+              <CopyButton value={state.link} />
+            </div>
+            <p className="body-sm text-on-surface-muted">
+              Send it to the student now. It won&apos;t be shown again after you leave this page.
+            </p>
+          </div>
+        ) : null}
+      </CardSection>
+    </Card>
+  )
+}
 
-      <div className="flex flex-col gap-3">
-        <Eyebrow size="sm">Outstanding invites</Eyebrow>
+function RevokeInvite({ invite }: { invite: OpenInvite }) {
+  const [state, action, pending] = useActionState<InviteActionState, FormData>(revokeInvite, {})
+  const [open, setOpen] = useState(false)
 
-        {invites.length === 0 ? (
-          <EmptyState
-            title="No invites waiting"
-            description="Invites you create appear here until they're redeemed or revoked."
-          />
-        ) : (
-          <ul className="flex flex-col gap-2">
+  const [seen, setSeen] = useState(state)
+  if (state !== seen) {
+    setSeen(state)
+    if (!state.error) setOpen(false)
+  }
+
+  return (
+    <ConfirmDialog
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <Button variant="destructive" size="sm">
+          Revoke
+        </Button>
+      }
+      title="Revoke this invite?"
+      description={
+        <>
+          The link for {invite.fullName || "this student"} stops working.
+          {invite.queued > 0
+            ? ` The ${invite.queued === 1 ? "task" : `${invite.queued} tasks`} queued for them will be discarded.`
+            : ""}
+          {state.error ? <span className="mt-2 block text-error">{state.error}</span> : null}
+        </>
+      }
+      confirm={
+        <form action={action}>
+          <input type="hidden" name="invite_id" value={invite.id} />
+          <Button type="submit" variant="primary" disabled={pending} className="w-full sm:w-auto">
+            {pending ? "Revoking" : "Revoke invite"}
+          </Button>
+        </form>
+      }
+    />
+  )
+}
+
+export function PendingInvites({
+  invites,
+  timeZone,
+}: {
+  invites: OpenInvite[]
+  timeZone: string
+}) {
+  const date = (iso: string) =>
+    new Date(iso).toLocaleDateString(LOCALE, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      timeZone,
+    })
+
+  return (
+    <Card>
+      <CardHeader
+        title="Pending invites"
+        description="Invites wait here until they're accepted or revoked."
+      />
+      {invites.length === 0 ? (
+        <EmptyState
+          icon={<MailPlus />}
+          title="No pending invites"
+          description="Invites you create appear here until the student accepts."
+          className="py-10"
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <tr>
+              <TableHead>Name</TableHead>
+              <TableHead className="hidden sm:table-cell">Expires</TableHead>
+              <TableHead className="hidden sm:table-cell">Queued</TableHead>
+              <TableHead className="w-px">
+                <span className="sr-only">Actions</span>
+              </TableHead>
+            </tr>
+          </TableHeader>
+          <TableBody>
             {invites.map((invite) => (
-              <li
-                key={invite.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-hairline bg-canvas-card px-4 py-3"
-              >
-                <div className="flex flex-col gap-1">
-                  <span className="body-md text-ink">
-                    {invite.fullName || "Unnamed student"}
+              <TableRow key={invite.id}>
+                <TableCell className="w-full max-w-0">
+                  <span className="block truncate">{invite.fullName || "Unnamed student"}</span>
+                </TableCell>
+                <TableCell className="hidden whitespace-nowrap sm:table-cell">
+                  <span className="mono-data-sm text-on-surface-secondary">
+                    {date(invite.expiresAt)}
                   </span>
-                  <span className="eyebrow-sm text-body-mid">
-                    Expires{" "}
-                    {new Date(invite.expiresAt).toLocaleDateString(undefined, {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3">
+                </TableCell>
+                <TableCell className="hidden whitespace-nowrap sm:table-cell">
                   {invite.queued > 0 ? (
-                    <Badge>
-                      {invite.queued} task{invite.queued === 1 ? "" : "s"} queued
+                    <Badge variant="violet">
+                      {invite.queued} {invite.queued === 1 ? "task" : "tasks"}
                     </Badge>
-                  ) : null}
-                  <RevokeButton inviteId={invite.id} />
-                </div>
-              </li>
+                  ) : (
+                    <span className="mono-data-sm text-on-surface-muted">0</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <RevokeInvite invite={invite} />
+                </TableCell>
+              </TableRow>
             ))}
-          </ul>
-        )}
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      )}
+    </Card>
   )
 }

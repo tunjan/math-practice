@@ -1,154 +1,128 @@
 import * as React from "react"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 import { cn } from "cn"
 
 /**
- * Brand primitives that sit above shadcn/ui — the pieces DESIGN-x.ai.md names
- * as signature components but that have no shadcn equivalent.
+ * Layout building blocks shared by every screen. DESIGN.md › Layout: content
+ * is capped at 1280px with a 32px page margin (16px on phones), and the only
+ * thing typed directly on the canvas is the page heading.
  */
 
-/** eyebrow-mono: the uppercase tracked Geist Mono label above every headline. */
-function Eyebrow({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<"p"> & { size?: "default" | "sm" }) {
+function BrandMark(_props: { className?: string }) {
+  return null
+}
+
+function Wordmark({ href, className }: { href: string; className?: string }) {
   return (
-    <p
-      data-slot="eyebrow"
+    <Link
+      href={href}
       className={cn(
-        size === "sm" ? "eyebrow-sm" : "eyebrow",
-        "text-body-mid",
+        "inline-flex items-center rounded-md text-on-surface transition-opacity hover:opacity-80",
+        className
+      )}
+    >
+      <span className="title-md tracking-[-0.01em]">Maths Tasks</span>
+    </Link>
+  )
+}
+
+function Page({
+  className,
+  width = "default",
+  ...props
+}: React.ComponentProps<"div"> & { width?: "default" | "narrow" | "wide" }) {
+  return (
+    <div
+      data-slot="page"
+      className={cn(
+        "mx-auto flex w-full flex-col gap-6 px-4 py-6 md:px-8 md:py-8",
+        width === "default" && "max-w-content",
+        width === "narrow" && "max-w-4xl",
+        width === "wide" && "max-w-wide",
         className
       )}
       {...props}
     />
+  )
+}
+
+/** "← Tasks": the way back up, typed on the canvas above a page. */
+function BackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex w-fit items-center gap-1.5 rounded-md label-md text-on-surface-secondary transition-colors hover:text-on-surface"
+    >
+      <ArrowLeft className="size-4" aria-hidden />
+      {label}
+    </Link>
   )
 }
 
 /**
- * The accent palette lives almost entirely in illustrations. A 6px dot is the
- * one place it is allowed into the interface chrome — it carries status without
- * turning a badge into a coloured fill.
+ * The page heading. It sits on the canvas, so supporting text uses the
+ * secondary ink for comfortable contrast rather than the muted ink.
  */
-const DOT_ACCENTS = {
-  ink: "bg-ink",
-  mute: "bg-body-mid",
-  sunset: "bg-sunset",
-  sunsetSoft: "bg-sunset-soft",
-  dusk: "bg-dusk",
-  twilight: "bg-twilight",
-  breeze: "bg-breeze",
-  danger: "bg-destructive",
-} as const
-
-type DotAccent = keyof typeof DOT_ACCENTS
-
-function StatusDot({
-  accent = "mute",
-  pulse = false,
-  className,
-  ...props
-}: React.ComponentProps<"span"> & { accent?: DotAccent; pulse?: boolean }) {
-  return (
-    <span
-      data-slot="status-dot"
-      aria-hidden
-      className={cn(
-        "inline-block size-1.5 shrink-0 rounded-full",
-        DOT_ACCENTS[accent],
-        pulse && "motion-safe:animate-pulse",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-/** divider-hairline: the 1px rule between bands. */
-function Rule({ className, ...props }: React.ComponentProps<"hr">) {
-  return (
-    <hr
-      data-slot="rule"
-      className={cn("border-0 border-t border-hairline", className)}
-      {...props}
-    />
-  )
-}
-
-/** content-band: a full-bleed section on canvas with generous vertical air. */
-function Band({
-  className,
-  ruled = false,
-  ...props
-}: React.ComponentProps<"section"> & { ruled?: boolean }) {
-  return (
-    <section
-      data-slot="band"
-      className={cn(
-        "w-full bg-canvas px-6 py-12 md:px-6 md:py-16",
-        ruled && "border-t border-hairline",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-/** Marketing content centres at ~1200px; app shells run a little wider. */
-function Container({
-  className,
-  width = "default",
-  ...props
-}: React.ComponentProps<"div"> & { width?: "default" | "wide" | "narrow" }) {
-  return (
-    <div
-      data-slot="container"
-      className={cn(
-        "mx-auto w-full",
-        width === "narrow" && "max-w-2xl",
-        width === "default" && "max-w-[1200px]",
-        width === "wide" && "max-w-[1440px]",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-/** The standard page heading: mono eyebrow over a weight-400 display line. */
 function PageHeader({
-  eyebrow,
   title,
   description,
-  action,
+  actions,
+  back,
+  meta,
   className,
 }: {
-  eyebrow?: string
   title: React.ReactNode
   description?: React.ReactNode
-  action?: React.ReactNode
+  actions?: React.ReactNode
+  back?: { href: string; label: string }
+  /** Sits beside the title, e.g. a status pill. */
+  meta?: React.ReactNode
   className?: string
 }) {
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between",
-        className
-      )}
-    >
-      <div className="flex flex-col gap-2">
-        {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-        <h1 className="display-sm text-ink md:display-md">{title}</h1>
-        {description ? (
-          <p className="body-md max-w-2xl text-body-mid">{description}</p>
+    <header className={cn("flex flex-col gap-3", className)}>
+      {back ? <BackLink {...back} /> : null}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h1 className="headline-lg min-w-0 text-on-surface">{title}</h1>
+            {meta}
+          </div>
+          {description ? (
+            <p className="body-md max-w-[70ch] text-on-surface-secondary">{description}</p>
+          ) : null}
+        </div>
+        {actions ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
         ) : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
-    </div>
+    </header>
   )
 }
 
-/** ex-empty-state-card: canvas-soft frame, generous padding, quiet caption. */
+/** 40px bordered square that holds an icon on a card row. */
+function IconTile({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex size-10 shrink-0 items-center justify-center rounded-md border border-outline bg-surface text-on-surface-secondary [&_svg]:size-5",
+        className
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
+/** Empty state for the inside of a card. */
 function EmptyState({
   icon,
   title,
@@ -158,7 +132,7 @@ function EmptyState({
 }: {
   icon?: React.ReactNode
   title: string
-  description?: string
+  description?: React.ReactNode
   action?: React.ReactNode
   className?: string
 }) {
@@ -166,27 +140,52 @@ function EmptyState({
     <div
       data-slot="empty-state"
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-lg border border-hairline bg-canvas-soft px-6 py-12 text-center",
+        "flex flex-col items-center justify-center gap-3 px-6 py-14 text-center",
         className
       )}
     >
-      {icon ? <div className="text-body-mid">{icon}</div> : null}
-      <p className="body-md text-ink">{title}</p>
-      {description ? (
-        <p className="body-sm max-w-sm text-body-mid">{description}</p>
-      ) : null}
+      {icon ? <IconTile>{icon}</IconTile> : null}
+      <div className="flex flex-col gap-1">
+        <p className="title-md text-on-surface">{title}</p>
+        {description ? (
+          <p className="body-sm max-w-sm text-on-surface-muted">{description}</p>
+        ) : null}
+      </div>
       {action ? <div className="pt-2">{action}</div> : null}
     </div>
   )
 }
 
-export {
-  Band,
-  Container,
-  EmptyState,
-  Eyebrow,
-  PageHeader,
-  Rule,
-  StatusDot,
-  type DotAccent,
+/** Round initial for a person. 36px, `surface-muted`. */
+function Avatar({
+  name,
+  size = "default",
+  className,
+}: {
+  name: string
+  size?: "default" | "sm"
+  className?: string
+}) {
+  const initials =
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "?"
+
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full bg-surface-muted label-sm text-on-surface-secondary",
+        size === "default" ? "size-9" : "size-7",
+        className
+      )}
+    >
+      {initials}
+    </span>
+  )
 }
+
+export { Avatar, BackLink, BrandMark, EmptyState, IconTile, Page, PageHeader, Wordmark }

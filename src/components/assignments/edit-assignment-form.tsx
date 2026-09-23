@@ -2,70 +2,87 @@
 
 import * as React from "react"
 import { useActionState } from "react"
-import { BookOpen, Eye, Plus, Sigma, X } from "lucide-react"
+import { FileText, ImageIcon, Trash2 } from "lucide-react"
 
-import { cn } from "cn"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Eyebrow, StatusDot } from "@/components/brand/primitives"
+import { IconTile } from "@/components/brand/primitives"
 import { FormMessage } from "@/components/auth/form-message"
+import { Button, ButtonLink } from "@/components/ui/button"
+import { Card, CardFooter } from "@/components/ui/card"
+import { ConfirmDialog } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Field } from "@/components/ui/label"
 import {
   removeAssignmentFile,
   updateAssignment,
   type UpdateAssignmentState,
 } from "@/lib/assignments/actions"
-import type { UploadedFile } from "@/lib/assignments/files"
-import type { AssignmentType, DotAccentLike } from "@/lib/assignments/model"
-import type { SignedFile } from "./file-list"
+import { formatBytes, type UploadedFile } from "@/lib/assignments/files"
+import type { AssignmentType } from "@/lib/assignments/model"
 
+import {
+  FormSection,
+  InstructionsField,
+  TopicField,
+  TypeChoice,
+  type Topic,
+} from "./assignment-fields"
 import { DuePicker } from "./due-picker"
+import type { SignedFile } from "./file-list"
 import { MaterialUploader } from "./material-uploader"
-import { MathProse } from "./math-prose"
 
-export type Topic = { id: string; name: string; accentKey: string }
+export type { Topic }
 
-const TYPES = [
-  { value: "problem_set", label: "Problem set", icon: Sigma },
-  { value: "reading_notes", label: "Reading notes", icon: BookOpen },
-] as const
+function ExistingFile({ file, assignmentId }: { file: SignedFile; assignmentId: string }) {
+  const [state, action, pending] = useActionState<UpdateAssignmentState, FormData>(
+    removeAssignmentFile,
+    {}
+  )
+  const [open, setOpen] = React.useState(false)
 
-function ExistingFile({
-  file,
-  assignmentId,
-}: {
-  file: SignedFile
-  assignmentId: string
-}) {
-  const [state, action, pending] = useActionState<
-    UpdateAssignmentState,
-    FormData
-  >(removeAssignmentFile, {})
+  const [seen, setSeen] = React.useState(state)
+  if (state !== seen) {
+    setSeen(state)
+    setOpen(false)
+  }
 
   if (state.notice) return null
+  const Icon = file.mimeType === "application/pdf" ? FileText : ImageIcon
 
   return (
-    // Nested inside the edit form would be invalid HTML, so removal posts to
-    // its own action rather than riding along with the save.
-    <li className="flex items-center gap-3 rounded-lg border border-hairline bg-canvas-card px-3 py-2">
-      <span className="flex-1 truncate body-sm text-ink">
-        {file.fileName || "Attachment"}
+    <li className="flex min-h-14 items-center gap-3 border-t border-outline px-3 py-2 first:border-t-0">
+      <IconTile className="size-8 [&_svg]:size-4">
+        <Icon />
+      </IconTile>
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate body-md text-on-surface">{file.fileName || "Attachment"}</span>
+        {state.error ? <span className="body-sm text-error">{state.error}</span> : null}
       </span>
-      <form action={action}>
-        <input type="hidden" name="file_id" value={file.id} />
-        <input type="hidden" name="assignment_id" value={assignmentId} />
-        <Button
-          type="submit"
-          variant="ghost"
-          size="icon-sm"
-          aria-label={`Remove ${file.fileName}`}
-          disabled={pending}
-        >
-          <X />
-        </Button>
-      </form>
+      {file.sizeBytes ? (
+        <span className="shrink-0 mono-data-sm text-on-surface-muted">
+          {formatBytes(file.sizeBytes)}
+        </span>
+      ) : null}
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        trigger={
+          <Button type="button" variant="destructive" size="sm">
+            <Trash2 aria-hidden />
+            Remove
+          </Button>
+        }
+        title="Remove this file?"
+        description={`${file.fileName || "The file"} is deleted from the task straight away, for you and the student.`}
+        confirm={
+          <form action={action}>
+            <input type="hidden" name="file_id" value={file.id} />
+            <input type="hidden" name="assignment_id" value={assignmentId} />
+            <Button type="submit" variant="primary" disabled={pending} className="w-full sm:w-auto">
+              {pending ? "Removing" : "Remove file"}
+            </Button>
+          </form>
+        }
+      />
     </li>
   )
 }
@@ -87,202 +104,59 @@ export function EditAssignmentForm({
   existingFiles: SignedFile[]
   topics: Topic[]
 }) {
-  const [state, action, pending] = useActionState<
-    UpdateAssignmentState,
-    FormData
-  >(updateAssignment, {})
-
-  const [files, setFiles] = React.useState<UploadedFile[]>([])
-  const [type, setType] = React.useState<string>(initial.type)
-  const [description, setDescription] = React.useState(initial.description)
-  const [preview, setPreview] = React.useState(false)
-  const [addingTopic, setAddingTopic] = React.useState(false)
-  const [topicId, setTopicId] = React.useState(initial.categoryId ?? "")
-
-  const handleFiles = React.useCallback(
-    (next: UploadedFile[]) => setFiles(next),
-    []
+  const [state, action, pending] = useActionState<UpdateAssignmentState, FormData>(
+    updateAssignment,
+    {}
   )
+  const [files, setFiles] = React.useState<UploadedFile[]>([])
+  const handleFiles = React.useCallback((next: UploadedFile[]) => setFiles(next), [])
 
+  // Each file's removal form lives in its confirm dialog, which is portaled
+  // to <body>, so it never nests inside this form.
   return (
-    <div className="flex flex-col gap-10">
-      {/* Removal posts separately, so it sits outside the save form. */}
-      {existingFiles.length > 0 ? (
-        <section className="flex flex-col gap-3">
-          <Eyebrow>Current materials</Eyebrow>
-          <ul className="flex flex-col gap-2">
-            {existingFiles.map((file) => (
-              <ExistingFile
-                key={file.id}
-                file={file}
-                assignmentId={assignmentId}
-              />
-            ))}
-          </ul>
-        </section>
-      ) : null}
+    <form action={action} className="flex flex-col gap-4">
+      <input type="hidden" name="assignment_id" value={assignmentId} />
+      <input type="hidden" name="files" value={JSON.stringify(files)} />
 
-      <form action={action} className="flex flex-col gap-10">
-        <input type="hidden" name="assignment_id" value={assignmentId} />
-        <input type="hidden" name="files" value={JSON.stringify(files)} />
-        <input type="hidden" name="type" value={type} />
-        <input
-          type="hidden"
-          name="category_id"
-          value={addingTopic ? "" : topicId}
-        />
+      <FormMessage error={state.error} notice={state.notice} />
 
-        <FormMessage error={state.error} notice={state.notice} />
+      <Card>
+        <FormSection title="Task">
+          <Field label="Title" htmlFor="title">
+            <Input id="title" name="title" required maxLength={200} defaultValue={initial.title} />
+          </Field>
+          <TypeChoice defaultValue={initial.type} />
+        </FormSection>
 
-        <section className="flex flex-col gap-6">
-          <Eyebrow>The task</Eyebrow>
+        <FormSection title="Instructions">
+          <InstructionsField defaultValue={initial.description} />
+        </FormSection>
 
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="title" className="eyebrow-sm text-body-mid">
-              Title
-            </Label>
-            <Input
-              id="title"
-              name="title"
-              required
-              maxLength={200}
-              defaultValue={initial.title}
-            />
-          </div>
-
-          <fieldset className="flex flex-col gap-3">
-            <legend className="eyebrow-sm mb-3 text-body-mid">Type</legend>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {TYPES.map((option) => {
-                const Icon = option.icon
-                const selected = type === option.value
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setType(option.value)}
-                    aria-pressed={selected}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors",
-                      selected
-                        ? "border-white/40 bg-canvas-soft"
-                        : "border-hairline bg-canvas-card hover:border-white/20"
-                    )}
-                  >
-                    <Icon className="size-4 shrink-0 text-body-mid" />
-                    <span className="body-md text-ink">{option.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </fieldset>
-        </section>
-
-        <section className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <Eyebrow>Instructions</Eyebrow>
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => setPreview((v) => !v)}
-              aria-pressed={preview}
-            >
-              <Eye />
-              {preview ? "Edit" : "Preview"}
-            </Button>
-          </div>
-
-          {preview ? (
-            <div className="min-h-32 rounded-lg border border-hairline bg-canvas-card p-6">
-              {description.trim() ? (
-                <MathProse>{description}</MathProse>
-              ) : (
-                <p className="body-sm text-body-mid">Nothing to preview yet.</p>
-              )}
-            </div>
-          ) : (
-            <Textarea
-              name="description"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              rows={8}
-            />
-          )}
-        </section>
-
-        <section className="flex flex-col gap-4">
-          <Eyebrow>Add materials</Eyebrow>
+        <FormSection title="Materials" description="Removing a file takes effect straight away.">
+          {existingFiles.length > 0 ? (
+            <ul role="list" className="overflow-hidden rounded-md border border-outline">
+              {existingFiles.map((file) => (
+                <ExistingFile key={file.id} file={file} assignmentId={assignmentId} />
+              ))}
+            </ul>
+          ) : null}
           <MaterialUploader assignmentId={assignmentId} onChange={handleFiles} />
-        </section>
+        </FormSection>
 
-        <section className="flex flex-col gap-6">
-          <Eyebrow>Topic and deadline</Eyebrow>
-
-          <div className="flex flex-col gap-3">
-            <Label className="eyebrow-sm text-body-mid">Topic</Label>
-
-            {addingTopic ? (
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Input
-                  name="new_category"
-                  placeholder="e.g. Sequences and series"
-                  autoFocus
-                  maxLength={80}
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => setAddingTopic(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <button type="button" onClick={() => setTopicId("")} className="contents">
-                  <Badge variant={topicId === "" ? "strong" : "default"}>
-                    No topic
-                  </Badge>
-                </button>
-
-                {topics.map((topic) => (
-                  <button
-                    key={topic.id}
-                    type="button"
-                    onClick={() => setTopicId(topic.id)}
-                    className="contents"
-                  >
-                    <Badge variant={topicId === topic.id ? "strong" : "default"}>
-                      <StatusDot accent={topic.accentKey as DotAccentLike} />
-                      {topic.name}
-                    </Badge>
-                  </button>
-                ))}
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setAddingTopic(true)}
-                >
-                  <Plus />
-                  New topic
-                </Button>
-              </div>
-            )}
-          </div>
-
+        <FormSection title="Schedule">
+          <TopicField topics={topics} defaultValue={initial.categoryId ?? ""} />
           <DuePicker name="due_at" defaultValue={initial.dueAt} />
-        </section>
+        </FormSection>
 
-        <div className="flex items-center gap-3 border-t border-hairline pt-6">
-          <Button type="submit" variant="primary" size="lg" disabled={pending}>
-            {pending ? "Saving…" : "Save changes"}
+        <CardFooter className="justify-end">
+          <ButtonLink href={`/tutor/assignments/${assignmentId}`} variant="ghost">
+            Cancel
+          </ButtonLink>
+          <Button type="submit" variant="primary" disabled={pending}>
+            {pending ? "Saving" : "Save changes"}
           </Button>
-        </div>
-      </form>
-    </div>
+        </CardFooter>
+      </Card>
+    </form>
   )
 }

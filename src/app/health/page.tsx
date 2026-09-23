@@ -1,6 +1,4 @@
-import { CheckCircle2, XCircle } from "lucide-react"
-
-import { Band, Container, Eyebrow } from "@/components/brand/primitives"
+import { Page, PageHeader } from "@/components/brand/primitives"
 import {
   Table,
   TableBody,
@@ -9,6 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/brand/table"
+import { Badge } from "@/components/ui/badge"
+import { Card } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
@@ -82,53 +82,44 @@ export default async function HealthPage() {
     checks.push({
       name: "Rate limiter not exposed over HTTP",
       ok: !!rpcError,
-      detail: rpcError ? "not reachable from a client" : "REACHABLE — investigate",
+      detail: rpcError ? "not reachable from a client" : "REACHABLE: investigate",
     })
   }
 
   const allOk = checks.every((c) => c.ok)
 
   return (
-    <main className="flex min-h-full flex-col">
-      <Band className="py-16">
-        <Container className="flex flex-col gap-8">
-          <div className="flex flex-col gap-2">
-            <Eyebrow>Diagnostics</Eyebrow>
-            <h1 className="display-sm text-ink">
-              {allOk ? "All checks passing" : "Something needs attention"}
-            </h1>
-            <p className="body-md text-body-mid">
-              Development-only. Confirms the app can reach Supabase and that the
-              database is refusing what it should refuse.
-            </p>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-8" />
-                <TableHead>Check</TableHead>
-                <TableHead>Detail</TableHead>
+    <Page width="narrow">
+      <PageHeader
+        title={allOk ? "All checks passing" : "Something needs attention"}
+        description="Development only. Confirms the app can reach Supabase and that the database refuses what it should."
+      />
+      <Card>
+        <Table>
+          <TableHeader>
+            <tr>
+              <TableHead>Check</TableHead>
+              <TableHead>Detail</TableHead>
+              <TableHead className="w-px">Result</TableHead>
+            </tr>
+          </TableHeader>
+          <TableBody>
+            {checks.map((check) => (
+              <TableRow key={check.name}>
+                <TableCell className="whitespace-nowrap">{check.name}</TableCell>
+                <TableCell className="max-w-0 w-full">
+                  <span className="block truncate mono-data-sm text-on-surface-secondary">
+                    {check.detail}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={check.ok ? "success" : "error"}>{check.ok ? "Pass" : "Fail"}</Badge>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {checks.map((check) => (
-                <TableRow key={check.name}>
-                  <TableCell>
-                    {check.ok ? (
-                      <CheckCircle2 className="size-4 text-breeze" />
-                    ) : (
-                      <XCircle className="size-4 text-destructive" />
-                    )}
-                  </TableCell>
-                  <TableCell className="text-ink">{check.name}</TableCell>
-                  <TableCell className="text-body-mid">{check.detail}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Container>
-      </Band>
-    </main>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
+    </Page>
   )
 }

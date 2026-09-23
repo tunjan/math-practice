@@ -2,36 +2,91 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
-
 /* ---------------------------------------------------------------------------
-   Maths Tasks — design tokens
-   Source of truth: DESIGN-x.ai.md (xAI design language).
-   Dark canvas only. There is no light mode by design.
+   Maths Tasks: Quiet Console
+   Source of truth: DESIGN.md. Every colour, radius and type style used by the
+   app is declared here and nowhere else; components reference tokens only.
+
+   Workspace background: canvas-neutral (#fbfbfb). DESIGN.md's default
+   limestone canvas (#dddcd8) read as too much contrast against white cards.
+
+   Product accent: accent-orange. It is the only identity colour and is used
+   for the brand mark, progress fills and selection controls. It is never text.
    --------------------------------------------------------------------------- */
 
 @theme inline {
-  /* shadcn semantic surface mapping */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  /* Canvas: the frame behind working surfaces */
+  --color-canvas: var(--canvas);
+  --color-canvas-cool: var(--canvas-cool);
+  --color-canvas-neutral: var(--canvas-neutral);
 
+  /* Surfaces */
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-inverse: var(--surface-inverse);
+
+  /* Ink ramp */
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-secondary: var(--on-surface-secondary);
+  --color-on-surface-muted: var(--on-surface-muted);
+  --color-on-surface-inverse: var(--on-surface-inverse);
+
+  /* Hairlines */
+  --color-outline: var(--outline);
+  --color-outline-strong: var(--outline-strong);
+
+  /* Primary action: warm near-black */
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-on-primary: var(--on-primary);
+
+  /* Product accent (orange) */
+  --color-accent-orange: var(--accent-orange);
+
+  /* Semantic containers and their paired ink */
+  --color-success: var(--success);
+  --color-success-container: var(--success-container);
+  --color-on-success-container: var(--on-success-container);
+  --color-warning: var(--warning);
+  --color-warning-container: var(--warning-container);
+  --color-on-warning-container: var(--on-warning-container);
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+  --color-info: var(--info);
+  --color-info-container: var(--info-container);
+  --color-on-info-container: var(--on-info-container);
+  --color-violet: var(--violet);
+  --color-violet-container: var(--violet-container);
+  --color-on-violet-container: var(--on-violet-container);
+  --color-accent-container: var(--accent-container);
+  --color-on-accent-container: var(--on-accent-container);
+  --color-highlight-container: var(--highlight-container);
+  --color-on-highlight-container: var(--on-highlight-container);
+
+  /* shadcn semantic names, resolved to Quiet Console */
+  --color-background: var(--canvas-neutral);
+  --color-foreground: var(--on-surface);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--on-surface);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--on-surface);
+  --color-muted: var(--surface-sunken);
+  --color-muted-foreground: var(--on-surface-muted);
+  --color-secondary: var(--surface-sunken);
+  --color-secondary-foreground: var(--on-surface);
+  --color-accent: var(--surface-sunken);
+  --color-accent-foreground: var(--on-surface);
+  --color-primary-foreground: var(--on-primary);
+  --color-destructive: var(--error);
+  --color-border: var(--outline);
+  --color-input: var(--outline-strong);
+  --color-ring: var(--on-surface);
+
+  /* shadcn sidebar tokens */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -41,234 +96,284 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Brand surfaces — use these directly when the semantic name would lie */
-  --color-canvas: var(--canvas);
-  --color-canvas-soft: var(--canvas-soft);
-  --color-canvas-card: var(--canvas-card);
-  --color-canvas-mid: var(--canvas-mid);
-  --color-hairline: var(--hairline);
-  --color-ink: var(--ink);
-  --color-body: var(--body-text);
-  --color-body-mid: var(--body-mid);
-
-  /* Accents. Illustration / companion / status-dot use ONLY.
-     Never a button fill, never a badge fill. See DESIGN-NOTES.md. */
-  --color-sunset: var(--accent-sunset);
-  --color-sunset-soft: var(--accent-sunset-soft);
-  --color-dusk: var(--accent-dusk);
-  --color-twilight: var(--accent-twilight);
-  --color-breeze: var(--accent-breeze);
-  --color-midnight: var(--accent-midnight);
-
-  --color-chart-1: var(--accent-sunset);
-  --color-chart-2: var(--accent-breeze);
-  --color-chart-3: var(--accent-twilight);
-  --color-chart-4: var(--accent-dusk);
-  --color-chart-5: var(--body-mid);
-
-  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  /* Type families: Inter for people, JetBrains Mono for machines */
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-heading: var(--font-sans);
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Display face for the Dub-styled student task page (DESIGN_3.md) */
+  --font-display: var(--font-satoshi), "Satoshi", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* The brand has exactly three radii: 0, 8px, pill. Every step resolves to 8px
-     so a stray `rounded-xl` from a shadcn component still lands on-brand. */
-  --radius-xs: var(--radius);
-  --radius-sm: var(--radius);
-  --radius-md: var(--radius);
-  --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-2xl: var(--radius);
-  --radius-3xl: var(--radius);
-  --radius-4xl: var(--radius);
+  /* Radii: softly squared */
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Layout constants */
+  --spacing-control: 40px;
+  --spacing-row: 56px;
+  --spacing-sidebar: 260px;
+  --container-content: 1280px;
+  /* Boards need room for every column side by side. */
+  --container-wide: 1600px;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* ── Brand palette (DESIGN-x.ai.md front-matter) ── */
-  --canvas: #0a0a0a;
-  --canvas-soft: #1a1c20;
-  --canvas-card: #191919;
-  --canvas-mid: #363a3f;
-  --hairline: #212327;
+  --canvas: #dddcd8;
+  --canvas-cool: #f4f6f8;
+  --canvas-neutral: #fbfbfb;
 
-  --ink: #ffffff;
-  --ink-hover: #fafaf7;
-  --body-text: #dadbdf;
-  --body-mid: #7d8187;
+  --surface: #ffffff;
+  --surface-muted: #f3f2f0;
+  --surface-sunken: #f7f7f7;
+  --surface-hover: var(--surface-sunken);
+  --surface-inverse: #282828;
 
-  --accent-sunset: #ff7a17;
-  --accent-sunset-soft: #ffc285;
-  --accent-dusk: #7c3aed;
-  --accent-twilight: #c4b5fd;
-  --accent-breeze: #a0c3ec;
-  --accent-midnight: #0d1726;
+  --on-surface: #1a1a1a;
+  --on-surface-secondary: #3f3f3f;
+  --on-surface-muted: #6b6b6b;
+  --on-surface-inverse: #ffffff;
 
-  /* The outline-pill border. Translucent white, never solid. */
-  --pill-border: rgba(255, 255, 255, 0.25);
+  --outline: #e7e5e3;
+  --outline-strong: #d4d2d1;
 
-  /* ── shadcn semantic tokens, resolved onto the brand palette ── */
-  --background: var(--canvas);
-  --foreground: var(--ink);
-  --card: var(--canvas-card);
-  --card-foreground: var(--ink);
-  --popover: var(--canvas-soft);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--canvas);
-  --secondary: var(--canvas-soft);
-  --secondary-foreground: var(--ink);
-  --muted: var(--canvas-soft);
-  --muted-foreground: var(--body-mid);
-  --accent: var(--canvas-soft);
-  --accent-foreground: var(--ink);
+  --primary: #282828;
+  --primary-hover: #3a3a3a;
+  --primary-pressed: #101010;
+  --on-primary: #ffffff;
 
-  /* The brand publishes no semantic palette. Destructive is held to text and
-     hairline borders only — it is never a filled surface. */
-  --destructive: #f0523f;
-  --destructive-foreground: var(--ink);
+  /* Sidebar tokens */
+  --sidebar: var(--surface);
+  --sidebar-foreground: var(--on-surface);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--on-primary);
+  --sidebar-accent: var(--surface-sunken);
+  --sidebar-accent-foreground: var(--on-surface);
+  --sidebar-border: var(--outline);
+  --sidebar-ring: var(--on-surface);
 
-  --border: var(--hairline);
-  --input: var(--hairline);
-  --ring: rgba(255, 255, 255, 0.4);
+  --accent-orange: #ed5b22;
+  --accent-container: #f9d8c1;
+  --on-accent-container: #8a3d12;
+
+  --success: #0e8f5e;
+  --success-container: #d9e9db;
+  --on-success-container: #05674a;
+
+  --warning: #f5ac2b;
+  --warning-container: #f6e2b7;
+  --on-warning-container: #7a4a18;
+
+  --error: #b42318;
+  --error-container: #ffdfdb;
+  --on-error-container: #9e0812;
+
+  --info: #2b7da6;
+  --info-container: #cce1ea;
+  --on-info-container: #1a5878;
+
+  --violet: #5b21b6;
+  --violet-container: #e5d9ea;
+  --on-violet-container: #4d169a;
+
+  --highlight-container: #fec2ff;
+  --on-highlight-container: #1a1a1a;
+
+  /* Transient overlays only: menus, dialogs, the floating bulk-action bar */
+  --shadow-overlay: 0 12px 32px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
 
   --radius: 8px;
-
-  --sidebar: var(--canvas);
-  --sidebar-foreground: var(--body-text);
-  --sidebar-primary: var(--ink);
-  --sidebar-primary-foreground: var(--canvas);
-  --sidebar-accent: var(--canvas-soft);
-  --sidebar-accent-foreground: var(--ink);
-  --sidebar-border: var(--hairline);
-  --sidebar-ring: rgba(255, 255, 255, 0.4);
 }
 
 /* ---------------------------------------------------------------------------
-   Type ladder. Weight 400 throughout — the brand never bolds. Hierarchy comes
-   from size and negative tracking. These are utilities so they take variants
-   (`md:display-lg`).
+   Type scale (DESIGN.md › typography)
    --------------------------------------------------------------------------- */
 
-@utility display-xl {
-  font-family: var(--font-sans);
-  font-size: 96px;
-  line-height: 96px;
-  letter-spacing: -2.4px;
-  font-weight: 400;
+@utility display-num {
+  font-family: var(--font-mono);
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  font-feature-settings: "tnum" 1, "zero" 1;
 }
-@utility display-lg {
+
+/* Extension: the public front page's single hero line. Nowhere else. */
+@utility headline-xl {
   font-family: var(--font-sans);
-  font-size: 72px;
-  line-height: 72px;
-  letter-spacing: -1.8px;
-  font-weight: 400;
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
 }
-@utility display-md {
+
+@utility headline-lg {
   font-family: var(--font-sans);
-  font-size: 48px;
-  line-height: 48px;
-  letter-spacing: -1.2px;
-  font-weight: 400;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
-@utility display-sm {
-  font-family: var(--font-sans);
-  font-size: 32px;
-  line-height: 36px;
-  letter-spacing: -0.6px;
-  font-weight: 400;
-}
-@utility display-xs {
+
+@utility headline-md {
   font-family: var(--font-sans);
   font-size: 20px;
-  line-height: 28px;
-  letter-spacing: -0.2px;
-  font-weight: 400;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
-@utility body-lg {
-  font-family: var(--font-sans);
-  font-size: 18px;
-  line-height: 28px;
-  font-weight: 400;
-}
-@utility body-md {
+
+@utility title-md {
   font-family: var(--font-sans);
   font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
+  font-weight: 600;
+  line-height: 1.4;
 }
-@utility body-sm {
+
+@utility body-lg {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+@utility body-md {
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 20px;
   font-weight: 400;
+  line-height: 1.45;
 }
 
-/* The signature label style: Geist Mono, uppercase, positively tracked, so it
-   reads as a code comment rather than a marketing label. */
-@utility eyebrow {
+@utility body-sm {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+@utility label-md {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+@utility label-sm {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Column headers, KPI titles, tracker steps. Never longer than three words. */
+@utility label-caps {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Status pills and enum values */
+@utility mono-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Dates, sizes, counts: anything a database produced */
+@utility mono-data {
   font-family: var(--font-mono);
   font-size: 14px;
-  line-height: 20px;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
   font-weight: 400;
-}
-@utility eyebrow-sm {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  font-weight: 400;
+  line-height: 1.4;
+  font-feature-settings: "tnum" 1;
 }
 
-/* Counters and any number that changes in place — stops digits jittering. */
-@utility numeric {
+@utility mono-data-sm {
   font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  font-feature-settings: "tnum" 1;
 }
+
+@utility caption {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+@utility shadow-overlay {
+  box-shadow: var(--shadow-overlay);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-outline;
   }
 
   html {
     @apply font-sans;
-    background-color: var(--canvas);
+    background-color: var(--canvas-neutral);
+    color: var(--on-surface);
+    -webkit-text-size-adjust: 100%;
   }
 
   body {
-    @apply bg-background text-foreground;
-    font-size: 16px;
-    line-height: 24px;
+    @apply bg-canvas-neutral text-on-surface;
+    font-size: 14px;
+    line-height: 1.45;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* The brand carries elevation on hairlines. Nothing casts a shadow. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
   ::selection {
-    background-color: rgba(255, 255, 255, 0.16);
-    color: var(--ink);
+    background-color: var(--accent-container);
+    color: var(--on-accent-container);
   }
 
   :focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.55);
+    outline: 2px solid var(--on-surface);
     outline-offset: 2px;
   }
-}
 
-@layer utilities {
-  /* Hairline rule between section bands. */
-  .rule {
-    border-top: 1px solid var(--hairline);
+  /* Iconography: 1.5px stroke, rounded caps and joins (DESIGN.md › shapes) */
+  svg.lucide {
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
-  /* The universal interactive border. */
-  .pill-edge {
-    border: 1px solid var(--pill-border);
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+    cursor: pointer;
   }
 }
 
@@ -281,4 +386,201 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Dub scope (DESIGN_3.md)
+   The student task page and its dialog follow the Dub system: monochrome
+   neutral scale, #E5E5E5 hairlines, a black primary, Satoshi display over
+   Inter, Geist Mono for data. Scoped by re-pointing the shared tokens, so the
+   primitives (buttons, chips, prose) pick it up without forks. Add `dub` to a
+   page root, and to any portalled popup that belongs to it.
+   --------------------------------------------------------------------------- */
+
+.dub {
+  --surface: #ffffff;
+  --surface-muted: #fafafa;
+  --surface-sunken: #f5f5f5;
+  --surface-inverse: #171717;
+
+  --on-surface: #171717;
+  --on-surface-secondary: #404040;
+  --on-surface-muted: #737373;
+
+  --outline: #e5e5e5;
+  --outline-strong: #d4d4d4;
+  /* 5% black on white: ghost hovers and the active nav item */
+  --surface-hover: #f3f3f3;
+
+  /* Tokens that alias others must be re-pointed here too */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #171717;
+  --sidebar-accent: #f3f3f3;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #171717;
+
+  --primary: #000000;
+  --primary-hover: #262626;
+  --primary-pressed: #000000;
+
+  /* Status: tinted container, dark same-hue ink, 200-tint border */
+  --success: #15803d;
+  --success-container: #dcfce7;
+  --on-success-container: #166534;
+  --warning: #c2410c;
+  --warning-container: #ffedd5;
+  --on-warning-container: #9a3412;
+  --error: #b91c1c;
+  --error-container: #fee2e2;
+  --on-error-container: #991b1b;
+  --info: #1d4ed8;
+  --info-container: #dbeafe;
+  --on-info-container: #1e40af;
+  --violet: #7c3aed;
+  --violet-container: #ede9fe;
+  --on-violet-container: #5b21b6;
+  --accent-orange: #ea580c;
+  --accent-container: #ffedd5;
+  --on-accent-container: #9a3412;
+
+  --shadow-overlay: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  --font-mono: var(--font-geist-mono), "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-jetbrains-mono: var(--font-geist-mono);
+
+  color: var(--on-surface);
+}
+
+/* Nav items: 32px, 14px medium #404040, 16px #737373 icons, 5% black when
+   active (DESIGN_3.md › Navigation). The collapsed rail keeps its own size. */
+.dub [data-sidebar="menu-button"] {
+  height: 32px;
+  gap: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--on-surface-secondary);
+}
+.dub [data-sidebar="menu-button"] svg {
+  width: 16px;
+  height: 16px;
+  color: var(--on-surface-muted);
+  transition: color 150ms;
+}
+.dub [data-sidebar="menu-button"]:hover,
+.dub [data-sidebar="menu-button"][data-active] {
+  background-color: var(--surface-hover);
+  color: var(--on-surface);
+}
+.dub [data-sidebar="menu-button"]:hover svg,
+.dub [data-sidebar="menu-button"][data-active] svg {
+  color: var(--on-surface);
+}
+
+/* Buttons gain a 4px neutral ring on hover (DESIGN_3.md › Buttons). Only
+   buttons with an edge rest on a shadow; a ghost has nothing to lift. */
+.dub [data-slot="button"]:not(:disabled):is([data-variant="primary"], [data-variant="secondary"], [data-variant="danger"]) {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  transition-property: background-color, border-color, color, box-shadow, transform;
+}
+.dub [data-slot="button"]:not(:disabled):hover {
+  box-shadow: 0 0 0 4px var(--outline);
+}
+.dub [data-slot="button"][data-variant="danger"]:not(:disabled):hover {
+  box-shadow: 0 0 0 4px #fee2e2;
+}
+
+.dub ::selection {
+  background-color: var(--outline);
+  color: var(--on-surface);
+}
+
+.dub :focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgb(0 0 0 / 0.2);
+}
+
+/* Composer fields are borderless: the caret marks focus, not a halo. */
+.dub [data-composer]:focus-visible {
+  box-shadow: none;
+}
+
+/* Modal overlay: #F5F5F5 at 50% over a 12px blur (DESIGN_3.md › Modal). */
+.dub[data-slot="dialog-backdrop"] {
+  background-color: rgb(245 245 245 / 0.5);
+  backdrop-filter: blur(12px);
+}
+
+/* Switch: #E5E5E5 off, blue on, one of the few chromatic UI states. */
+.dub [data-slot="switch"] {
+  height: 16px;
+  width: 32px;
+}
+.dub [data-slot="switch"][data-unchecked] {
+  background-color: var(--outline);
+}
+.dub [data-slot="switch"][data-checked] {
+  background-color: #3b82f6;
+}
+.dub [data-slot="switch-thumb"] {
+  width: 14px;
+  height: 14px;
+  background-color: #ffffff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
+}
+.dub [data-slot="switch-thumb"][data-checked] {
+  translate: 16px 0;
+}
+
+/* Checkbox: 16px, 4px radius, blue-500 when checked (DESIGN.md › Checkbox). */
+.dub [data-slot="checkbox"] {
+  border-radius: 4px;
+}
+.dub [data-slot="checkbox"][data-checked],
+.dub [data-slot="checkbox"][data-indeterminate] {
+  border-color: #3b82f6;
+  background-color: #3b82f6;
+}
+
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(var(--offset, 10px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-slide-up-fade {
+  animation: slide-up-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Dialog and section headings take the display face (DESIGN_3.md › Typography). */
+.dub .headline-md {
+  font-family: var(--font-satoshi), "Satoshi", system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.33;
+  letter-spacing: 0;
+}
+
+/* Segmented control: a white 12px track with a hairline and 4px padding; the
+   active segment is a #FAFAFA 8px chip with its own hairline. */
+.dub [data-slot="segmented-control"] {
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background-color: var(--surface);
+  height: 42px;
+}
+.dub [data-slot="segmented-control-item"] {
+  border-radius: 8px;
+}
+.dub [data-slot="segmented-control-item"][data-checked] {
+  border-color: var(--outline);
+  background-color: var(--surface-muted);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
 }

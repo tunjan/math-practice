@@ -1,38 +1,43 @@
-import { AlertCircle, Info } from "lucide-react"
+import { CircleAlert, CircleCheck } from "lucide-react"
+import { cn } from "cn"
 
 /**
- * Validation feedback in the brand's voice: no coloured fill, no icon-heavy
- * alert box. Errors are the one place the destructive colour appears, and only
- * as text plus a hairline.
+ * Inline form feedback. A pale semantic container with its paired ink, so the
+ * colour is a background signal and the sentence stays readable.
  */
 export function FormMessage({
+  id,
   error,
   notice,
+  className,
 }: {
+  id?: string
   error?: string
   notice?: string
+  className?: string
 }) {
   if (!error && !notice) return null
-
   const isError = Boolean(error)
 
   return (
-    <p
+    <div
+      id={id}
       role={isError ? "alert" : "status"}
       aria-live="polite"
-      className={[
-        "flex items-start gap-2 rounded-lg border px-3 py-2 body-sm",
+      className={cn(
+        "flex items-start gap-2.5 rounded-md px-3 py-2.5 body-sm",
         isError
-          ? "border-destructive/40 text-destructive"
-          : "border-hairline text-body",
-      ].join(" ")}
+          ? "bg-error-container text-on-error-container"
+          : "bg-success-container text-on-success-container",
+        className
+      )}
     >
       {isError ? (
-        <AlertCircle className="mt-0.5 size-4 shrink-0" />
+        <CircleAlert className="mt-px size-4 shrink-0" aria-hidden />
       ) : (
-        <Info className="mt-0.5 size-4 shrink-0" />
+        <CircleCheck className="mt-px size-4 shrink-0" aria-hidden />
       )}
-      <span>{error ?? notice}</span>
-    </p>
+      <span className="min-w-0 flex-1">{error ?? notice}</span>
+    </div>
   )
 }

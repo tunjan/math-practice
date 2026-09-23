@@ -14,28 +14,10 @@ export const STAGE_LABEL: Record<Stage, string> = {
   reviewed: "Reviewed",
 }
 
-export const STAGE_ACCENT = {
-  assigned: "mute",
-  opened: "dusk",
-  submitted: "breeze",
-  reviewed: "twilight",
-} as const
-
 export const TYPE_LABEL: Record<AssignmentType, string> = {
   problem_set: "Problem set",
   reading_notes: "Reading notes",
 }
-
-/** The accent names <StatusDot /> accepts, kept in one place. */
-export type DotAccentLike =
-  | "mute"
-  | "sunset"
-  | "sunsetSoft"
-  | "dusk"
-  | "twilight"
-  | "breeze"
-  | "danger"
-  | "ink"
 
 export function stageIndex(stage: Stage): number {
   return STAGES.indexOf(stage)
@@ -58,15 +40,96 @@ export function statusLabel(
   return STAGE_LABEL[stage]
 }
 
-export function statusAccent(
+/**
+ * DESIGN.md › Colors: each semantic container answers one question about a
+ * record's condition. Violet is new, accent is early stage, info is in flight,
+ * warning is pending on someone, success is closed, error is blocked.
+ */
+export type StatusTone =
+  | "violet"
+  | "accent"
+  | "info"
+  | "warning"
+  | "success"
+  | "error"
+
+export function assignmentStatus(
   stage: Stage,
   verdict: ReviewVerdict | null,
   overdue: boolean
-): "mute" | "dusk" | "breeze" | "twilight" | "sunset" | "danger" {
-  if (verdict === "approved") return "twilight"
-  if (verdict === "changes_requested") return "sunset"
-  if (overdue) return "danger"
-  return STAGE_ACCENT[stage]
+): { label: string; tone: StatusTone } {
+  if (verdict === "approved") return { label: "Approved", tone: "success" }
+  if (verdict === "changes_requested")
+    return { label: "Changes requested", tone: "warning" }
+  if (overdue) return { label: "Overdue", tone: "error" }
+  if (stage === "submitted") return { label: "Submitted", tone: "info" }
+  if (stage === "opened") return { label: "Opened", tone: "accent" }
+  return { label: "Assigned", tone: "violet" }
+}
+
+/**
+ * The student's board, left to right in the order work travels. Columns are
+ * read off the same evidence as the stage and verdict, never stored, so a card
+ * moves only when something real happens: the student reports progress, hands
+ * work in, or the tutor reviews it. Handing revised work in again clears the
+ * verdict, which sends a "Feedback" card back to "Submitted".
+ *
+ * "In progress" keys off the student's own progress report rather than the
+ * open receipt, because opening a task once is not the same as starting it.
+ */
+export const BOARD_COLUMNS = [
+  "assigned",
+  "in_progress",
+  "submitted",
+  "revise",
+  "finished",
+] as const
+export type BoardColumn = (typeof BOARD_COLUMNS)[number]
+
+export const BOARD_COLUMN_LABEL: Record<BoardColumn, string> = {
+  assigned: "Assigned",
+  in_progress: "In progress",
+  submitted: "Submitted",
+  revise: "Feedback",
+  finished: "Finished",
+}
+
+export const BOARD_COLUMN_HINT: Record<BoardColumn, string> = {
+  assigned: "New from your tutor",
+  in_progress: "You're working on these",
+  submitted: "Waiting for your tutor",
+  revise: "Revise and hand in again",
+  finished: "Approved by your tutor",
+}
+
+export const BOARD_COLUMN_EMPTY: Record<BoardColumn, string> = {
+  assigned: "No new tasks",
+  in_progress: "Tasks you start appear here",
+  submitted: "Nothing waiting for review",
+  revise: "No feedback to act on",
+  finished: "Approved work lands here",
+}
+
+export const BOARD_COLUMN_TONE = {
+  assigned: "violet",
+  in_progress: "accent",
+  submitted: "info",
+  revise: "warning",
+  finished: "success",
+} as const satisfies Record<BoardColumn, StatusTone>
+
+export function boardColumn(task: {
+  stage: Stage
+  verdict: ReviewVerdict | null
+  completionPct: number
+  /** Files saved but not handed in, e.g. after an unsubmit. */
+  hasDraft: boolean
+}): BoardColumn {
+  if (task.verdict === "approved") return "finished"
+  if (task.verdict === "changes_requested") return "revise"
+  if (task.stage === "submitted") return "submitted"
+  if (task.completionPct > 0 || task.hasDraft) return "in_progress"
+  return "assigned"
 }
 
 export const FILTERS = ["attention", "active", "approved", "all"] as const
@@ -96,7 +159,6 @@ export type AssignmentRow = {
   studentName: string
   studentId: string
   topic: string | null
-  topicAccent: string
   submittedAt: string | null
   openedAt: string | null
 }
@@ -150,8 +212,8 @@ export type Sort = (typeof SORTS)[number]
 export const SORT_LABEL: Record<Sort, string> = {
   "due-asc": "Due soonest",
   "due-desc": "Due latest",
-  student: "Student A–Z",
-  title: "Title A–Z",
+  student: "Student A-Z",
+  title: "Title A-Z",
 }
 
 export function compareRows(a: AssignmentRow, b: AssignmentRow, sort: Sort) {

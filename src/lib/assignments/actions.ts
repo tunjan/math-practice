@@ -16,7 +16,11 @@ import {
 
 type AssignmentType = Database["public"]["Enums"]["assignment_type"]
 
-export type CreateAssignmentState = { error?: string }
+export type CreateAssignmentState = {
+  error?: string
+  /** Set once the task exists, so the dialog can close and confirm it. */
+  created?: { id: string; title: string; queued: boolean }
+}
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -78,7 +82,7 @@ export async function createAssignment(
   const categoryId = String(formData.get("category_id") ?? "")
   const newCategory = String(formData.get("new_category") ?? "").trim()
 
-  if (!UUID.test(assignmentId)) return { error: "Something went wrong — reload and try again." }
+  if (!UUID.test(assignmentId)) return { error: "Something went wrong. Please reload and try again." }
   if (!title) return { error: "Give the task a title." }
   if (title.length > 200) return { error: "That title is too long." }
   if (type !== "problem_set" && type !== "reading_notes") {
@@ -187,12 +191,17 @@ export async function createAssignment(
   revalidatePath("/tutor")
   revalidatePath("/tutor/assignments")
   revalidatePath("/tutor/students")
-  redirect("/tutor/assignments")
+  // No redirect: creation happens in a dialog over whichever list the tutor was
+  // on, and the revalidation above refreshes that list underneath it.
+  return { created: { id: assignmentId, title, queued: targetKind === "invite" } }
 }
 
 // ── Review workflow ─────────────────────────────────────────────────────────
 
 export type ReviewState = { error?: string; notice?: string }
+
+/** Matches assignments_feedback_length in 0014_review_feedback.sql. */
+const MAX_FEEDBACK_LENGTH = 5000
 
 /**
  * Records the tutor's verdict. Deliberately separate from the student's
@@ -207,10 +216,17 @@ export async function setVerdict(
 
   const assignmentId = String(formData.get("assignment_id") ?? "")
   const verdict = String(formData.get("verdict") ?? "")
+  const feedback = String(formData.get("feedback") ?? "").trim()
 
   if (!UUID.test(assignmentId)) return { error: "Unknown task." }
   if (verdict !== "approved" && verdict !== "changes_requested") {
     return { error: "Pick a verdict." }
+  }
+  if (verdict === "changes_requested" && !feedback) {
+    return { error: "Say what needs changing, so the student knows what to revise." }
+  }
+  if (feedback.length > MAX_FEEDBACK_LENGTH) {
+    return { error: `Keep feedback under ${MAX_FEEDBACK_LENGTH} characters.` }
   }
 
   const supabase = await createClient()
@@ -218,12 +234,14 @@ export async function setVerdict(
     .from("assignments")
     .update({
       verdict,
+      feedback: feedback || null,
       reviewed_at: new Date().toISOString(),
     })
     .eq("id", assignmentId)
 
   if (error) return { error: error.message }
 
+  revalidatePath("/student")
   revalidatePath("/tutor")
   revalidatePath("/tutor/assignments")
   revalidatePath(`/tutor/assignments/${assignmentId}`)
@@ -242,11 +260,12 @@ export async function clearVerdict(
   const supabase = await createClient()
   const { error } = await supabase
     .from("assignments")
-    .update({ verdict: null, reviewed_at: null })
+    .update({ verdict: null, reviewed_at: null, feedback: null })
     .eq("id", assignmentId)
 
   if (error) return { error: error.message }
 
+  revalidatePath("/student")
   revalidatePath("/tutor/assignments")
   revalidatePath(`/tutor/assignments/${assignmentId}`)
   return { notice: "Review withdrawn." }

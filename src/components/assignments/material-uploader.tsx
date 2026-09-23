@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { FileText, ImageIcon, Loader2, Upload, X } from "lucide-react"
-
+import { FileText, ImageIcon, LoaderCircle, Upload, X } from "lucide-react"
 import { cn } from "cn"
+
+import { IconTile } from "@/components/brand/primitives"
 import { Button } from "@/components/ui/button"
-import { Eyebrow } from "@/components/brand/primitives"
 import { createClient } from "@/lib/supabase/client"
 import {
   describeFileError,
@@ -16,7 +16,10 @@ import {
   type UploadedFile,
 } from "@/lib/assignments/files"
 
-type Item = UploadedFile & { id: string; status: "uploading" | "done" | "error" }
+export type UploadItem = UploadedFile & {
+  id: string
+  status: "uploading" | "done" | "error"
+}
 
 /**
  * Uploads straight from the browser to Storage, under the assignment id the
@@ -24,35 +27,13 @@ type Item = UploadedFile & { id: string; status: "uploading" | "done" | "error" 
  * pushing every 20MB file through the Next server for no benefit.
  *
  * A file that is uploaded but never submitted leaves an orphaned object in a
- * private bucket with no row pointing at it — invisible, and cheap to sweep
+ * private bucket with no row pointing at it: invisible, and cheap to sweep
  * later. That is the right trade against making the tutor wait on upload after
  * they press Create.
  */
-export function MaterialUploader({
-  assignmentId,
-  onChange,
-}: {
-  assignmentId: string
-  onChange: (files: UploadedFile[]) => void
-}) {
-  const [items, setItems] = React.useState<Item[]>([])
+export function useMaterialUploads(assignmentId: string) {
+  const [items, setItems] = React.useState<UploadItem[]>([])
   const [errors, setErrors] = React.useState<string[]>([])
-  const [dragging, setDragging] = React.useState(false)
-  const inputRef = React.useRef<HTMLInputElement>(null)
-
-  // Report only what actually landed.
-  React.useEffect(() => {
-    onChange(
-      items
-        .filter((item) => item.status === "done")
-        .map(({ storagePath, fileName, mimeType, sizeBytes }) => ({
-          storagePath,
-          fileName,
-          mimeType,
-          sizeBytes,
-        }))
-    )
-  }, [items, onChange])
 
   const upload = React.useCallback(
     async (files: FileList | File[]) => {
@@ -93,28 +74,66 @@ export function MaterialUploader({
 
           setItems((prev) =>
             prev.map((item) =>
-              item.id === id
-                ? { ...item, status: error ? "error" : "done" }
-                : item
+              item.id === id ? { ...item, status: error ? "error" : "done" } : item
             )
           )
 
-          if (error) {
-            setErrors((prev) => [...prev, `${file.name} failed to upload.`])
-          }
+          if (error) setErrors((prev) => [...prev, `${file.name} failed to upload.`])
         })
       )
     },
     [assignmentId]
   )
 
-  const remove = React.useCallback(async (item: Item) => {
+  const remove = React.useCallback(async (item: UploadItem) => {
     setItems((prev) => prev.filter((i) => i.id !== item.id))
     if (item.status === "done") {
       const supabase = createClient()
       await supabase.storage.from(MATERIALS_BUCKET).remove([item.storagePath])
     }
   }, [])
+
+  // Only what actually landed.
+  const uploaded = React.useMemo<UploadedFile[]>(
+    () =>
+      items
+        .filter((item) => item.status === "done")
+        .map(({ storagePath, fileName, mimeType, sizeBytes }) => ({
+          storagePath,
+          fileName,
+          mimeType,
+          sizeBytes,
+        })),
+    [items]
+  )
+
+  const uploading = items.filter((item) => item.status === "uploading").length
+
+  /** For a discarded draft. Best effort: nothing waits on it. */
+  const discardAll = React.useCallback(() => {
+    const paths = uploaded.map((file) => file.storagePath)
+    if (paths.length > 0) {
+      void createClient().storage.from(MATERIALS_BUCKET).remove(paths)
+    }
+  }, [uploaded])
+
+  return { items, errors, upload, remove, uploaded, uploading, discardAll }
+}
+
+export function MaterialUploader({
+  assignmentId,
+  onChange,
+}: {
+  assignmentId: string
+  onChange: (files: UploadedFile[]) => void
+}) {
+  const { items, errors, upload, remove, uploaded } = useMaterialUploads(assignmentId)
+  const [dragging, setDragging] = React.useState(false)
+  const inputRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    onChange(uploaded)
+  }, [uploaded, onChange])
 
   return (
     <div className="flex flex-col gap-3">
@@ -130,18 +149,16 @@ export function MaterialUploader({
           void upload(event.dataTransfer.files)
         }}
         className={cn(
-          "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 py-10 text-center transition-colors",
-          dragging
-            ? "border-white/40 bg-canvas-soft"
-            : "border-hairline bg-canvas-soft/50"
+          "flex flex-col items-center justify-center gap-3 rounded-md border border-dashed px-6 py-8 text-center transition-colors",
+          dragging ? "border-on-surface bg-surface-sunken" : "border-outline-strong bg-surface"
         )}
       >
-        <Upload className="size-5 text-body-mid" />
-        <div className="flex flex-col gap-1">
-          <p className="body-md text-ink">Drop problem sheets here</p>
-          <p className="body-sm text-body-mid">
-            PDF, PNG or JPEG · up to 20MB each
-          </p>
+        <IconTile>
+          <Upload />
+        </IconTile>
+        <div className="flex flex-col gap-0.5">
+          <p className="body-md text-on-surface">Drop worksheets here</p>
+          <p className="body-sm text-on-surface-muted">PDF, PNG or JPEG, up to 20 MB each</p>
         </div>
         <Button type="button" size="sm" onClick={() => inputRef.current?.click()}>
           Choose files
@@ -152,6 +169,7 @@ export function MaterialUploader({
           multiple
           accept={MATERIAL_ACCEPT}
           className="sr-only"
+          tabIndex={-1}
           onChange={(event) => {
             if (event.target.files) void upload(event.target.files)
             event.target.value = ""
@@ -160,9 +178,9 @@ export function MaterialUploader({
       </div>
 
       {errors.length > 0 ? (
-        <ul className="flex flex-col gap-1">
+        <ul role="alert" className="flex flex-col gap-1 rounded-md bg-error-container px-3 py-2.5">
           {errors.map((message) => (
-            <li key={message} className="body-sm text-destructive">
+            <li key={message} className="body-sm text-on-error-container">
               {message}
             </li>
           ))}
@@ -170,44 +188,48 @@ export function MaterialUploader({
       ) : null}
 
       {items.length > 0 ? (
-        <div className="flex flex-col gap-2">
-          <Eyebrow size="sm">Attached</Eyebrow>
-          <ul className="flex flex-col gap-2">
-            {items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center gap-3 rounded-lg border border-hairline bg-canvas-card px-3 py-2"
-              >
+        <ul role="list" className="flex flex-col overflow-hidden rounded-md border border-outline">
+          {items.map((item) => (
+            <li
+              key={item.id}
+              className="flex min-h-14 items-center gap-3 border-t border-outline px-3 py-2 first:border-t-0"
+            >
+              <IconTile className="size-8 [&_svg]:size-4">
                 {item.status === "uploading" ? (
-                  <Loader2 className="size-4 shrink-0 animate-spin text-body-mid" />
+                  <LoaderCircle className="animate-spin" />
                 ) : item.mimeType === "application/pdf" ? (
-                  <FileText className="size-4 shrink-0 text-body-mid" />
+                  <FileText />
                 ) : (
-                  <ImageIcon className="size-4 shrink-0 text-body-mid" />
+                  <ImageIcon />
                 )}
-
-                <span className="flex-1 truncate body-sm text-ink">
-                  {item.fileName}
-                </span>
-                <span className="eyebrow-sm shrink-0 text-body-mid">
-                  {item.status === "error"
-                    ? "Failed"
+              </IconTile>
+              <span className="min-w-0 flex-1 truncate body-md text-on-surface">
+                {item.fileName}
+              </span>
+              <span
+                className={cn(
+                  "shrink-0 mono-data-sm",
+                  item.status === "error" ? "text-error" : "text-on-surface-muted"
+                )}
+              >
+                {item.status === "error"
+                  ? "Failed"
+                  : item.status === "uploading"
+                    ? "Uploading"
                     : formatBytes(item.sizeBytes)}
-                </span>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Remove ${item.fileName}`}
-                  onClick={() => void remove(item)}
-                >
-                  <X />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </div>
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Remove ${item.fileName}`}
+                onClick={() => void remove(item)}
+              >
+                <X />
+              </Button>
+            </li>
+          ))}
+        </ul>
       ) : null}
     </div>
   )

@@ -1,8 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
-import { Band, Container, PageHeader } from "@/components/brand/primitives"
-import { ButtonLink } from "@/components/ui/button"
+import { Page, PageHeader } from "@/components/brand/primitives"
 import {
   EditAssignmentForm,
   type Topic,
@@ -22,55 +21,43 @@ export default async function EditAssignmentPage({
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: assignment }, { data: categories }] = await Promise.all([
+  const [{ data: assignment }, { data: categories }, { data: fileRows }] = await Promise.all([
     supabase
       .from("assignments")
       .select("id, title, description, type, due_at, category_id")
       .eq("id", id)
       .maybeSingle(),
-    supabase.from("categories").select("id, name, accent_key").order("name"),
+    supabase.from("categories").select("id, name").order("name"),
+    supabase
+      .from("assignment_files")
+      .select("id, file_name, mime_type, size_bytes, storage_path")
+      .eq("assignment_id", id)
+      .order("sort_order"),
   ])
 
   if (!assignment) notFound()
 
-  const { data: fileRows } = await supabase
-    .from("assignment_files")
-    .select("id, file_name, mime_type, size_bytes, storage_path")
-    .eq("assignment_id", id)
-    .order("sort_order")
-
   const existingFiles = await signFiles(supabase, MATERIALS_BUCKET, fileRows ?? [])
-
-  const topics: Topic[] = (categories ?? []).map((category) => ({
-    id: category.id,
-    name: category.name,
-    accentKey: category.accent_key,
-  }))
+  const topics: Topic[] = (categories ?? []).map((c) => ({ id: c.id, name: c.name }))
 
   return (
-    <Band>
-      <Container className="flex flex-col gap-10">
-        <PageHeader
-          eyebrow="Edit task"
-          title={assignment.title}
-          action={
-            <ButtonLink href={`/tutor/assignments/${id}`}>Cancel</ButtonLink>
-          }
-        />
-
-        <EditAssignmentForm
-          assignmentId={id}
-          initial={{
-            title: assignment.title,
-            description: assignment.description ?? "",
-            type: assignment.type,
-            dueAt: assignment.due_at,
-            categoryId: assignment.category_id,
-          }}
-          existingFiles={existingFiles}
-          topics={topics}
-        />
-      </Container>
-    </Band>
+    <Page width="narrow">
+      <PageHeader
+        back={{ href: `/tutor/assignments/${id}`, label: assignment.title }}
+        title="Edit task"
+      />
+      <EditAssignmentForm
+        assignmentId={id}
+        initial={{
+          title: assignment.title,
+          description: assignment.description ?? "",
+          type: assignment.type,
+          dueAt: assignment.due_at,
+          categoryId: assignment.category_id,
+        }}
+        existingFiles={existingFiles}
+        topics={topics}
+      />
+    </Page>
   )
 }

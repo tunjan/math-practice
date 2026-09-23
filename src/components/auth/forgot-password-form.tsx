@@ -4,7 +4,7 @@ import { useActionState, useId } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Field } from "@/components/ui/label"
 import { requestPasswordReset, type FormState } from "@/lib/auth/actions"
 
 import { FormMessage } from "./form-message"
@@ -20,10 +20,7 @@ export function ForgotPasswordForm() {
     <form action={action} className="flex flex-col gap-5">
       <FormMessage error={state.error} notice={state.notice} />
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={emailId} className="eyebrow-sm text-body-mid">
-          Email
-        </Label>
+      <Field label="Email" htmlFor={emailId}>
         <Input
           id={emailId}
           name="email"
@@ -31,12 +28,11 @@ export function ForgotPasswordForm() {
           autoComplete="email"
           required
           autoFocus
-          placeholder="you@example.com"
         />
-      </div>
+      </Field>
 
-      <Button type="submit" variant="primary" size="lg" disabled={pending}>
-        {pending ? "Sending…" : "Send reset link"}
+      <Button type="submit" variant="primary" disabled={pending} className="w-full">
+        {pending ? "Sending" : "Send reset link"}
       </Button>
     </form>
   )

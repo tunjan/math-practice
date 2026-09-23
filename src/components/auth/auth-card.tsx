@@ -1,36 +1,45 @@
 import * as React from "react"
+import Link from "next/link"
 
-import { Eyebrow } from "@/components/brand/primitives"
-
-/** ex-auth-form-card: canvas-soft surface, 8px radius, hairline edge. */
+/** White, 16px radius, hairline border, no shadow. Footer below a rule. */
 export function AuthCard({
-  eyebrow,
   title,
   description,
   children,
   footer,
 }: {
-  eyebrow: string
   title: string
-  description?: string
+  description?: React.ReactNode
   children: React.ReactNode
   footer?: React.ReactNode
 }) {
   return (
-    <div className="flex flex-col gap-6 rounded-lg border border-hairline bg-canvas-soft p-6">
-      <div className="flex flex-col gap-2">
-        <Eyebrow size="sm">{eyebrow}</Eyebrow>
-        <h1 className="display-sm text-ink">{title}</h1>
-        {description ? (
-          <p className="body-sm text-body-mid">{description}</p>
-        ) : null}
+    <div className="overflow-hidden rounded-xl border border-outline bg-surface">
+      <div className="flex flex-col gap-6 p-6 sm:p-8">
+        <div className="flex flex-col gap-1.5">
+          <h1 className="headline-md text-on-surface">{title}</h1>
+          {description ? (
+            <p className="body-md text-on-surface-muted">{description}</p>
+          ) : null}
+        </div>
+        {children}
       </div>
-
-      {children}
-
       {footer ? (
-        <div className="border-t border-hairline pt-4">{footer}</div>
+        <div className="border-t border-outline bg-surface-sunken px-6 py-4 body-sm text-on-surface-muted sm:px-8">
+          {footer}
+        </div>
       ) : null}
     </div>
+  )
+}
+
+export function AuthLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="label-md text-on-surface underline decoration-outline-strong underline-offset-4 transition-colors hover:decoration-on-surface"
+    >
+      {children}
+    </Link>
   )
 }

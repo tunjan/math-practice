@@ -1,44 +1,44 @@
 "use client"
 
-import { useTheme } from "next-themes"
+import { CircleAlert, CircleCheck, Info, LoaderCircle, TriangleAlert } from "lucide-react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
+/**
+ * Toasts are transient overlays, so they get the overlay shadow: a white
+ * 12px card with an `outline` hairline. The app is light-only, so the theme is
+ * pinned rather than following the OS. Bottom right keeps them clear of the
+ * floating bulk-action bar, which docks bottom centre.
+ */
+const Toaster = (props: ToasterProps) => {
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      theme="light"
+      position="bottom-right"
+      gap={8}
       icons={{
-        success: (
-          <CircleCheckIcon className="size-4" />
-        ),
-        info: (
-          <InfoIcon className="size-4" />
-        ),
-        warning: (
-          <TriangleAlertIcon className="size-4" />
-        ),
-        error: (
-          <OctagonXIcon className="size-4" />
-        ),
-        loading: (
-          <Loader2Icon className="size-4 animate-spin" />
-        ),
+        success: <CircleCheck className="size-4 text-success" aria-hidden />,
+        info: <Info className="size-4 text-info" aria-hidden />,
+        warning: <TriangleAlert className="size-4 text-on-warning-container" aria-hidden />,
+        error: <CircleAlert className="size-4 text-error" aria-hidden />,
+        loading: <LoaderCircle className="size-4 animate-spin text-on-surface-muted" aria-hidden />,
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          "--normal-bg": "var(--surface)",
+          "--normal-text": "var(--on-surface)",
+          "--normal-border": "var(--outline)",
+          "--border-radius": "12px",
+          "--width": "380px",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          toast: "gap-3! p-4! font-sans! shadow-overlay!",
+          title: "label-md! text-on-surface!",
+          description: "body-sm! mt-0.5! text-on-surface-muted!",
+          actionButton:
+            "h-8! rounded-md! bg-primary! px-3! label-sm! text-on-primary! hover:bg-primary-hover!",
+          icon: "mt-0.5! self-start!",
         },
       }}
       {...props}

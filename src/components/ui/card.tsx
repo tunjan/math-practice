@@ -1,25 +1,20 @@
 import * as React from "react"
 import { cn } from "cn"
 
-// card-content (DESIGN-x.ai.md): canvas-card fill, 1px hairline, 8px radius,
-// 24px interior padding. The brand casts NO shadows — the hairline is the only
-// elevation cue, so nothing here may gain a ring or a drop shadow.
-function Card({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+/**
+ * DESIGN.md › Layout, Elevation
+ *
+ * A card is one continuous white surface with a 1px `outline` border and no
+ * shadow, subdivided by hairlines rather than stacked sub-cards. Tables inside
+ * run full-bleed to the card edges, so padding lives on the sections, not on
+ * the card.
+ */
+function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
-      data-size={size}
       className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-lg",
-        "border border-hairline bg-card py-(--card-spacing)",
-        "text-sm text-card-foreground",
-        "[--card-spacing:--spacing(6)] data-[size=sm]:[--card-spacing:--spacing(4)]",
-        "has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0",
-        "*:[img:first-child]:rounded-t-lg *:[img:last-child]:rounded-b-lg",
+        "relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-outline bg-surface text-on-surface",
         className
       )}
       {...props}
@@ -27,65 +22,65 @@ function Card({
   )
 }
 
-function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+function CardHeader({
+  className,
+  title,
+  description,
+  action,
+  children,
+  ...props
+}: Omit<React.ComponentProps<"div">, "title"> & {
+  title?: React.ReactNode
+  description?: React.ReactNode
+  action?: React.ReactNode
+}) {
   return (
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header @container/card-header grid auto-rows-min items-start gap-1.5 px-(--card-spacing)",
-        "has-data-[slot=card-action]:grid-cols-[1fr_auto]",
-        "has-data-[slot=card-description]:grid-rows-[auto_auto]",
-        "[.border-b]:pb-(--card-spacing)",
+        "flex min-h-16 flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-outline px-6 py-4",
         className
       )}
       {...props}
-    />
+    >
+      {title || description ? (
+        <div className="flex min-w-0 flex-col gap-0.5">
+          {title ? <CardTitle>{title}</CardTitle> : null}
+          {description ? <CardDescription>{description}</CardDescription> : null}
+        </div>
+      ) : null}
+      {children}
+      {action ? <div className="flex shrink-0 items-center gap-2">{action}</div> : null}
+    </div>
   )
 }
 
-// Weight 400 throughout — the brand never bolds. Size and tracking carry the
-// hierarchy instead.
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+function CardTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return (
-    <div
+    <h2
       data-slot="card-title"
-      className={cn(
-        "display-xs text-ink group-data-[size=sm]/card:body-lg",
-        className
-      )}
+      className={cn("title-md text-on-surface", className)}
       {...props}
     />
   )
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
+function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
-    <div
+    <p
       data-slot="card-description"
-      className={cn("body-sm text-body-mid", className)}
+      className={cn("body-sm text-on-surface-muted", className)}
       {...props}
     />
   )
 }
 
-function CardAction({ className, ...props }: React.ComponentProps<"div">) {
+/** A padded region. Consecutive sections are separated by a hairline. */
+function CardSection({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      data-slot="card-action"
-      className={cn(
-        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
-        className
-      )}
-      {...props}
-    />
-  )
-}
-
-function CardContent({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="card-content"
-      className={cn("px-(--card-spacing)", className)}
+      data-slot="card-section"
+      className={cn("border-t border-outline p-6 first:border-t-0", className)}
       {...props}
     />
   )
@@ -96,7 +91,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "flex items-center rounded-b-lg border-t border-hairline p-(--card-spacing)",
+        "flex flex-wrap items-center gap-3 border-t border-outline px-6 py-4",
         className
       )}
       {...props}
@@ -104,12 +99,70 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+/**
+ * KPI strip: stat cells divided by vertical rules inside one white card.
+ * Two columns on small screens, one row from `lg`.
+ */
+function StatStrip({
+  stats,
+  className,
+}: {
+  stats: { label: string; value: React.ReactNode; note?: React.ReactNode }[]
+  className?: string
+}) {
+  return (
+    <Card className={cn("grid grid-cols-2 lg:grid-flow-col lg:auto-cols-fr lg:grid-cols-none", className)}>
+      {stats.map((stat, index) => (
+        <div
+          key={stat.label}
+          className={cn(
+            "flex min-w-0 flex-col gap-3 p-6",
+            index % 2 === 1 && "border-l border-outline",
+            index >= 2 && "border-t border-outline lg:border-t-0",
+            index > 0 && "lg:border-l"
+          )}
+        >
+          <span className="label-caps text-on-surface-muted">{stat.label}</span>
+          <span className="display-num text-on-surface">{stat.value}</span>
+          {stat.note ? (
+            <span className="body-sm text-on-surface-muted">{stat.note}</span>
+          ) : null}
+        </div>
+      ))}
+    </Card>
+  )
+}
+
+/** Label / value pairs down a card, e.g. a record's details. */
+function DetailList({
+  items,
+  className,
+}: {
+  items: { label: string; value: React.ReactNode }[]
+  className?: string
+}) {
+  return (
+    <dl className={cn("flex flex-col", className)}>
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className="flex items-baseline justify-between gap-4 border-t border-outline px-6 py-3 first:border-t-0"
+        >
+          <dt className="body-sm shrink-0 text-on-surface-muted">{item.label}</dt>
+          <dd className="body-md min-w-0 text-right text-on-surface">{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 export {
   Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardAction,
   CardDescription,
-  CardContent,
+  CardFooter,
+  CardHeader,
+  CardSection,
+  CardTitle,
+  DetailList,
+  StatStrip,
 }

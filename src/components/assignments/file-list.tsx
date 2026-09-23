@@ -1,5 +1,6 @@
-import { Download, FileText, ImageIcon } from "lucide-react"
+import { ArrowUpRight, FileText, ImageIcon } from "lucide-react"
 
+import { IconTile } from "@/components/brand/primitives"
 import { formatBytes } from "@/lib/assignments/files"
 
 export type SignedFile = {
@@ -11,10 +12,16 @@ export type SignedFile = {
   url: string | null
 }
 
+function formatLabel(mimeType: string) {
+  if (mimeType === "application/pdf") return "PDF"
+  if (mimeType === "image/png") return "PNG"
+  if (mimeType === "image/jpeg") return "JPEG"
+  return "FILE"
+}
+
 /**
- * Attachments open in a new tab rather than inline: browsers already render
- * PDFs and images well, and an embedded viewer would be a worse version of
- * something the reader already has.
+ * Attachments as rows inside a card: a bordered icon tile, the name, then the
+ * format and size in mono. Rows are divided by hairlines, not boxed.
  */
 export function FileList({
   files,
@@ -24,43 +31,58 @@ export function FileList({
   emptyLabel?: string
 }) {
   if (files.length === 0) {
-    return <p className="body-sm text-body-mid">{emptyLabel}</p>
+    return <p className="px-6 py-5 body-sm text-on-surface-muted">{emptyLabel}</p>
   }
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="flex flex-col" role="list">
       {files.map((file) => {
         const Icon = file.mimeType === "application/pdf" ? FileText : ImageIcon
-        const content = (
-          <>
-            <Icon className="size-4 shrink-0 text-body-mid" />
-            <span className="flex-1 truncate body-sm text-ink">
-              {file.fileName || "Attachment"}
-            </span>
-            {file.sizeBytes ? (
-              <span className="eyebrow-sm shrink-0 text-body-mid">
-                {formatBytes(file.sizeBytes)}
-              </span>
-            ) : null}
-            <Download className="size-4 shrink-0 text-body-mid" />
-          </>
+        const meta = (
+          <span className="mono-data-sm text-on-surface-muted">
+            {formatLabel(file.mimeType)}
+            {file.sizeBytes ? ` · ${formatBytes(file.sizeBytes)}` : ""}
+          </span>
         )
 
         return (
-          <li key={file.id}>
+          <li key={file.id} className="border-t border-outline first:border-t-0">
             {file.url ? (
               <a
                 href={file.url}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-3 rounded-lg border border-hairline bg-canvas-card px-3 py-2 transition-colors hover:border-white/25"
+                className="group flex min-h-16 items-center gap-3 px-6 py-3 transition-colors hover:bg-surface-sunken"
               >
-                {content}
+                <IconTile>
+                  <Icon />
+                </IconTile>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate body-md text-on-surface">
+                    {file.fileName || "Attachment"}
+                  </span>
+                  {meta}
+                </span>
+                <ArrowUpRight
+                  className="size-4 shrink-0 text-on-surface-muted transition-colors group-hover:text-on-surface"
+                  aria-hidden
+                />
+                <span className="sr-only">Opens in a new tab</span>
               </a>
             ) : (
-              <span className="flex items-center gap-3 rounded-lg border border-hairline bg-canvas-card px-3 py-2 opacity-50">
-                {content}
-              </span>
+              <div className="flex min-h-16 items-center gap-3 px-6 py-3">
+                <IconTile>
+                  <Icon />
+                </IconTile>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate body-md text-on-surface-muted">
+                    {file.fileName || "Attachment"}
+                  </span>
+                  <span className="body-sm text-on-surface-muted">
+                    Unavailable right now
+                  </span>
+                </span>
+              </div>
             )}
           </li>
         )

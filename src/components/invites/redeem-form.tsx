@@ -1,12 +1,12 @@
 "use client"
 
 import { useActionState, useId } from "react"
-import { ArrowRight } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Field } from "@/components/ui/label"
 import { FormMessage } from "@/components/auth/form-message"
+import { PasswordInput } from "@/components/auth/password-input"
 import { redeemInvite, type RedeemState } from "@/lib/invites/actions"
 
 export function RedeemForm({ token }: { token: string }) {
@@ -23,10 +23,11 @@ export function RedeemForm({ token }: { token: string }) {
       <input type="hidden" name="token" value={token} />
       <FormMessage error={state.error} />
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={emailId} className="eyebrow-sm text-body-mid">
-          Your email
-        </Label>
+      <Field
+        label="Your email"
+        htmlFor={emailId}
+        hint="Your tutor never sees your password."
+      >
         <Input
           id={emailId}
           name="email"
@@ -34,45 +35,31 @@ export function RedeemForm({ token }: { token: string }) {
           autoComplete="email"
           required
           autoFocus
-          placeholder="you@example.com"
         />
-        <p className="body-sm text-body-mid">
-          You choose this — your tutor never sees your password.
-        </p>
-      </div>
+      </Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={passwordId} className="eyebrow-sm text-body-mid">
-          Choose a password
-        </Label>
-        <Input
+      <Field label="Choose a password" htmlFor={passwordId} hint="At least 10 characters.">
+        <PasswordInput
           id={passwordId}
           name="password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={10}
         />
-        <p className="body-sm text-body-mid">At least 10 characters.</p>
-      </div>
+      </Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor={confirmId} className="eyebrow-sm text-body-mid">
-          Confirm password
-        </Label>
-        <Input
+      <Field label="Confirm password" htmlFor={confirmId}>
+        <PasswordInput
           id={confirmId}
           name="confirm"
-          type="password"
           autoComplete="new-password"
           required
           minLength={10}
         />
-      </div>
+      </Field>
 
-      <Button type="submit" variant="primary" size="lg" disabled={pending}>
-        {pending ? "Setting up…" : "Create my account"}
-        {!pending && <ArrowRight />}
+      <Button type="submit" variant="primary" disabled={pending} className="w-full">
+        {pending ? "Creating account" : "Create account"}
       </Button>
     </form>
   )

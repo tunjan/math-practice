@@ -1,28 +1,33 @@
 import type { Metadata } from "next"
+import { ClipboardList } from "lucide-react"
 
-import { Band, Container, EmptyState, PageHeader } from "@/components/brand/primitives"
-import { ButtonLink } from "@/components/ui/button"
+import { EmptyState, Page, PageHeader } from "@/components/brand/primitives"
+import { Card } from "@/components/ui/card"
 import {
   AssignmentBrowser,
   type QueuedRow,
 } from "@/components/assignments/assignment-browser"
+import { NewTaskDialog } from "@/components/assignments/new-task-dialog"
 import { requireRole } from "@/lib/auth/session"
 import { createClient } from "@/lib/supabase/server"
 import { asStage, type AssignmentRow } from "@/lib/assignments/model"
+import { loadTaskOptions } from "@/lib/assignments/task-options"
 
 export const metadata: Metadata = { title: "Assignments · Maths Tasks" }
 export const dynamic = "force-dynamic"
 
-export default async function AssignmentsPage() {
-  await requireRole("tutor")
+export default async function AssignmentsPage({
+  searchParams,
+}: PageProps<"/tutor/assignments">) {
+  const [profile, params] = await Promise.all([requireRole("tutor"), searchParams])
   const supabase = await createClient()
 
-  const [{ data: assignments }, { data: pending }] = await Promise.all([
+  const [{ data: assignments }, { data: pending }, taskOptions] = await Promise.all([
     supabase
       .from("assignments")
       .select(
         `id, title, type, due_at, stage, verdict, submitted_at, student_opened_at,
-         categories(name, accent_key),
+         categories(name),
          profiles!assignments_student_id_fkey(id, full_name, email)`
       )
       .order("due_at", { ascending: true }),
@@ -30,6 +35,7 @@ export default async function AssignmentsPage() {
       .from("pending_assignments")
       .select("id, title, due_at, student_invites(full_name)")
       .order("due_at", { ascending: true }),
+    loadTaskOptions(supabase),
   ])
 
   const rows: AssignmentRow[] = (assignments ?? []).map((assignment) => ({
@@ -41,11 +47,8 @@ export default async function AssignmentsPage() {
     verdict: assignment.verdict,
     studentId: assignment.profiles?.id ?? "",
     studentName:
-      assignment.profiles?.full_name ||
-      assignment.profiles?.email ||
-      "Unknown student",
+      assignment.profiles?.full_name || assignment.profiles?.email || "Unknown student",
     topic: assignment.categories?.name ?? null,
-    topicAccent: assignment.categories?.accent_key ?? "mute",
     submittedAt: assignment.submitted_at,
     openedAt: assignment.student_opened_at,
   }))
@@ -57,34 +60,29 @@ export default async function AssignmentsPage() {
     inviteeName: task.student_invites?.full_name || "Invited student",
   }))
 
-  return (
-    <Band>
-      <Container width="wide" className="flex flex-col gap-8">
-        <PageHeader
-          eyebrow="Assignments"
-          title="All work"
-          description="Start with Attention — it holds anything handed in, returned, or past due."
-          action={
-            <ButtonLink variant="primary" href="/tutor/assignments/new">
-              New task
-            </ButtonLink>
-          }
-        />
+  // `?new` is where the old /tutor/assignments/new page now sends people.
+  const newTask = <NewTaskDialog {...taskOptions} defaultOpen={"new" in params} />
 
-        {rows.length === 0 && queued.length === 0 ? (
+  return (
+    <Page>
+      <PageHeader
+        title="Assignments"
+        description="Every task you've set. Attention holds hand-ins, returned work and anything past due."
+        actions={rows.length > 0 || queued.length > 0 ? newTask : null}
+      />
+
+      {rows.length === 0 && queued.length === 0 ? (
+        <Card>
           <EmptyState
+            icon={<ClipboardList />}
             title="No tasks yet"
-            description="Set your first piece of work and it will show up here."
-            action={
-              <ButtonLink variant="primary" href="/tutor/assignments/new">
-                Set some work
-              </ButtonLink>
-            }
+            description="Set a problem set or some reading, pick a deadline, and it lands in the student's list."
+            action={newTask}
           />
-        ) : (
-          <AssignmentBrowser rows={rows} queued={queued} />
-        )}
-      </Container>
-    </Band>
+        </Card>
+      ) : (
+        <AssignmentBrowser rows={rows} queued={queued} timeZone={profile.timezone} />
+      )}
+    </Page>
   )
 }

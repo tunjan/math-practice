@@ -4,39 +4,45 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
 /**
- * The brand publishes no semantic colour palette, so badges are never coloured
- * fills. They are mono-caps labels inside a hairline pill; where a status needs
- * a colour cue it gets a 6px accent dot alongside (see <StatusDot />).
+ * DESIGN.md › Badges and Status Pills
+ *
+ * Semantic pills: pale container, same-hue ink, `mono-tag`, 4px radius. They
+ * answer "what condition is this record in?" and nothing else.
+ * Outline pills: transparent, `outline-strong` border, neutral ink, for states
+ * where nothing is happening. Never mix the two idioms inside one column.
  */
 const badgeVariants = cva(
-  [
-    "group/badge inline-flex h-6 w-fit shrink-0 items-center justify-center gap-1.5",
-    "overflow-hidden rounded-full border px-2.5",
-    "eyebrow-sm whitespace-nowrap transition-colors",
-    "focus-visible:ring-2 focus-visible:ring-white/55",
-    "[&>svg]:pointer-events-none [&>svg]:size-3!",
-  ].join(" "),
+  "inline-flex w-fit shrink-0 items-center gap-1.5 whitespace-nowrap select-none [&>svg]:size-3 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "border-hairline bg-transparent text-body",
-        /** Higher-contrast outline for the one label that must be read first. */
-        strong: "border-white/25 bg-transparent text-ink",
-        /** The rare filled pill. Use for a single count or "NEW" marker. */
-        solid: "border-white bg-primary text-primary-foreground",
-        muted: "border-transparent bg-canvas-soft text-body-mid",
-        destructive: "border-destructive/40 bg-transparent text-destructive",
+        neutral: "rounded-xs bg-surface-sunken px-2 py-1 mono-tag text-on-surface-secondary",
+        success: "rounded-xs bg-success-container px-2 py-1 mono-tag text-on-success-container",
+        warning: "rounded-xs bg-warning-container px-2 py-1 mono-tag text-on-warning-container",
+        error: "rounded-xs bg-error-container px-2 py-1 mono-tag text-on-error-container",
+        info: "rounded-xs bg-info-container px-2 py-1 mono-tag text-on-info-container",
+        violet: "rounded-xs bg-violet-container px-2 py-1 mono-tag text-on-violet-container",
+        accent: "rounded-xs bg-accent-container px-2 py-1 mono-tag text-on-accent-container",
+        outline:
+          "rounded-sm border border-outline-strong px-2.5 py-1 label-sm text-on-surface-secondary",
+        solid: "rounded-sm bg-primary px-2.5 py-1 label-sm text-on-primary",
+        plan: "rounded-sm bg-highlight-container px-2 py-1 mono-tag text-on-highlight-container",
+        /** Count chip beside a label, e.g. a filter or a group heading */
+        count:
+          "min-w-5 justify-center rounded-xs bg-surface-sunken px-1.5 py-0.5 mono-tag text-on-surface-muted",
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "neutral",
     },
   }
 )
 
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>
+
 function Badge({
   className,
-  variant = "default",
+  variant = "neutral",
   render,
   ...props
 }: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
@@ -51,4 +57,4 @@ function Badge({
   })
 }
 
-export { Badge, badgeVariants }
+export { Badge, badgeVariants, type BadgeVariant }

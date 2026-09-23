@@ -1,9 +1,8 @@
 import type { Metadata } from "next"
-import Link from "next/link"
 
-import { AuthCard } from "@/components/auth/auth-card"
-import { ResetPasswordForm } from "@/components/auth/reset-password-form"
+import { AuthCard, AuthLink } from "@/components/auth/auth-card"
 import { FormMessage } from "@/components/auth/form-message"
+import { ResetPasswordForm } from "@/components/auth/reset-password-form"
 import { createClient } from "@/lib/supabase/server"
 
 export const metadata: Metadata = { title: "New password · Maths Tasks" }
@@ -19,17 +18,15 @@ export default async function ResetPasswordPage() {
 
   return (
     <AuthCard
-      eyebrow="Password reset"
       title="Choose a new password"
-      description={user?.email ?? undefined}
-      footer={
-        <Link
-          href="/login"
-          className="body-sm text-body-mid underline-offset-4 transition-colors hover:text-ink hover:underline"
-        >
-          Back to sign in
-        </Link>
+      description={
+        user?.email ? (
+          <>
+            For <span className="mono-data-sm text-on-surface">{user.email}</span>
+          </>
+        ) : undefined
       }
+      footer={<AuthLink href="/login">Back to sign in</AuthLink>}
     >
       {user ? (
         <ResetPasswordForm />
