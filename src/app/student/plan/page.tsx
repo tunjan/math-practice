@@ -31,5 +31,5 @@ export default async function StudentPlanPage() {
     )
   }
 
-  return <StudentPlan plan={loaded.plan} today={today} />
+  return <StudentPlan plan={loaded.plan} studyDays={loaded.studyDays} today={today} />
 }

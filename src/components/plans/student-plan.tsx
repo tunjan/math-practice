@@ -4,12 +4,25 @@ import { MathProse } from "@/components/assignments/math-prose"
 import { TickProgress } from "@/components/ui/progress"
 import { daysBetween, formatDayShort, type DayKey } from "@/lib/calendar/dates"
 import { focusUnit, planProgress, type Plan } from "@/lib/plans/model"
+import { streakWeeks, weekStatus } from "@/lib/plans/streak"
 
+import { LogStudy } from "./log-study"
 import { StudentUnit } from "./student-unit"
+import { WeekDots } from "./week-dots"
 
 /** The student's plan: where it is heading, how far along, and each unit in order. */
-export function StudentPlan({ plan, today }: { plan: Plan; today: DayKey }) {
+export function StudentPlan({
+  plan,
+  studyDays,
+  today,
+}: {
+  plan: Plan
+  studyDays: Set<DayKey>
+  today: DayKey
+}) {
   const progress = planProgress(plan.units)
+  const week = weekStatus(studyDays, plan.weeklyGoalDays, today)
+  const streak = streakWeeks(studyDays, plan.weeklyGoalDays, today)
   const focus = focusUnit(plan.units, today)
   const daysLeft = daysBetween(today, plan.endsOn)
 
@@ -41,43 +54,59 @@ export function StudentPlan({ plan, today }: { plan: Plan; today: DayKey }) {
           <section
             aria-label="Progress"
             style={{ animationDelay: "160ms" }}
-            className="grid animate-slide-up-fade gap-6 rounded-xl bg-surface-sunken p-5 sm:grid-cols-2"
+            className="flex animate-slide-up-fade flex-col rounded-xl bg-surface-sunken"
           >
-            <div className="flex flex-col gap-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-sm font-medium text-on-surface">Secure</span>
-                <span className="font-mono text-xs text-on-surface-muted">
-                  {progress.secure}/{progress.total}
+            <div className="grid gap-6 p-5 sm:grid-cols-2">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm font-medium text-on-surface">Secure</span>
+                  <span className="font-mono text-xs text-on-surface-muted">
+                    {progress.secure}/{progress.total}
+                  </span>
+                </div>
+                {/* One segment per unit, filled as your tutor rates it. */}
+                <div className="flex h-3 gap-1" aria-hidden>
+                  {plan.units.map((u) => (
+                    <span
+                      key={u.id}
+                      className={cn(
+                        "flex-1 rounded-full",
+                        u.mastery === "secure"
+                          ? "bg-accent-orange"
+                          : u.mastery === "developing"
+                            ? "bg-accent-orange/35"
+                            : "bg-outline"
+                      )}
+                    />
+                  ))}
+                </div>
+                <span className="sr-only">
+                  {progress.secure} of {progress.total} units rated secure by your tutor
                 </span>
               </div>
-              {/* One segment per unit, filled as your tutor rates it. */}
-              <div className="flex h-3 gap-1" aria-hidden>
-                {plan.units.map((u) => (
-                  <span
-                    key={u.id}
-                    className={cn(
-                      "flex-1 rounded-full",
-                      u.mastery === "secure"
-                        ? "bg-accent-orange"
-                        : u.mastery === "developing"
-                          ? "bg-accent-orange/35"
-                          : "bg-outline"
-                    )}
-                  />
-                ))}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm font-medium text-on-surface">Confidence</span>
+                  <span className="font-mono text-xs text-on-surface-muted">
+                    {progress.selfPct === null ? "–" : `${progress.selfPct}%`}
+                  </span>
+                </div>
+                <TickProgress value={progress.selfPct ?? 0} label="Your confidence across the plan" />
               </div>
-              <span className="sr-only">
-                {progress.secure} of {progress.total} units rated secure by your tutor
-              </span>
             </div>
-            <div className="flex flex-col gap-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-sm font-medium text-on-surface">Confidence</span>
-                <span className="font-mono text-xs text-on-surface-muted">
-                  {progress.selfPct === null ? "–" : `${progress.selfPct}%`}
-                </span>
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 border-t border-outline px-5 py-4">
+              <div className="flex items-center gap-5">
+                <WeekDots week={week} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-on-surface">
+                    {week.active}/{week.goal} days
+                  </span>
+                  <span className="text-xs text-on-surface-muted">
+                    {streak > 0 ? `${streak}-week streak` : "This week"}
+                  </span>
+                </div>
               </div>
-              <TickProgress value={progress.selfPct ?? 0} label="Your confidence across the plan" />
+              <LogStudy todayCounted={studyDays.has(today)} />
             </div>
           </section>
         ) : null}
