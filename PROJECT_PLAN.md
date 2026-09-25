@@ -138,7 +138,8 @@
 - **Verify by:** Add, edit and delete an exam as student and as tutor.
 
 ### Phase 9.14 — Exams on the calendar
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
+- **Notes:** Exams are a third calendar item type (`ExamItem`), all day on their date and sorted before deadlines and events. In the month grid they're an ink (inverse) bar so they stand out from grey all-day events; on phones they're an ink dot. The day panel row shows "Exam · student" (tutor), the result ("78% · Grade 6") once marked, and topic pills, and links to the tracker page. The tutor's student filter narrows exams too. ICS: an all-day event "Exam: title (student)" with topics, result and notes in the description. Students get an alarm at 18:00 the evening before an upcoming exam.
 - **Verify by:** Exams appear on their date for both roles and in the ICS feed.
 
 ### Phase 9.15 — CSV export

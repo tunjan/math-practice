@@ -57,7 +57,21 @@ export type EventItem = {
   from: string | null
 }
 
-export type CalendarItem = DeadlineItem | EventItem
+/** A class exam, from the student's exams list. All day, on its date. */
+export type ExamItem = {
+  type: "exam"
+  id: string
+  title: string
+  date: DayKey
+  percent: number | null
+  ibGrade: number | null
+  topics: TopicTag[]
+  /** The student it is for, on the tutor's calendar. */
+  person: string | null
+  href: string
+}
+
+export type CalendarItem = DeadlineItem | EventItem | ExamItem
 
 export type Person = { id: string; name: string }
 
@@ -67,6 +81,7 @@ const MAX_SPAN_DAYS = 31
 /** Every day an item appears on, in the viewer's zone. */
 export function itemDays(item: CalendarItem, timeZone: string): DayKey[] {
   if (item.type === "deadline") return [dayKeyOf(item.dueAt, timeZone)]
+  if (item.type === "exam") return [item.date]
 
   let first: DayKey
   let last: DayKey
@@ -105,7 +120,7 @@ function placementFor(item: CalendarItem, day: DayKey, timeZone: string): DayPla
     const time = timeOf(item.dueAt, timeZone)
     return { item, time, until: null, allDay: false, continues: false, order: minutes(time) }
   }
-  if (item.allDay) {
+  if (item.type === "exam" || item.allDay) {
     return { item, time: null, until: null, allDay: true, continues: false, order: -1 }
   }
 
@@ -134,11 +149,11 @@ function minutes(time: string): number {
   return h! * 60 + m!
 }
 
-const TYPE_RANK: Record<CalendarItem["type"], number> = { deadline: 0, event: 1 }
+const TYPE_RANK: Record<CalendarItem["type"], number> = { exam: 0, deadline: 1, event: 2 }
 
 /**
  * Items keyed by the day they appear on, each day in reading order: all-day
- * first, then by time; deadlines, then events.
+ * first, then by time; exams, then deadlines, then events.
  */
 export function placeByDay(items: CalendarItem[], timeZone: string): Map<DayKey, DayPlacement[]> {
   const byDay = new Map<DayKey, DayPlacement[]>()

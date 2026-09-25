@@ -226,7 +226,7 @@ export function key({ item }: DayPlacement): string {
   return `${item.type}-${item.id}`
 }
 
-/** Deadlines carry their status colour; events stay neutral. */
+/** Deadlines carry their status colour; exams are ink; events stay neutral. */
 export function Dot({ placement, className }: { placement: DayPlacement; className?: string }) {
   const { item } = placement
   return (
@@ -234,7 +234,11 @@ export function Dot({ placement, className }: { placement: DayPlacement; classNa
       aria-hidden
       className={cn(
         "size-1.5 shrink-0 rounded-full",
-        item.type === "event" ? "bg-neutral-400" : TONE_DOT[item.status.tone],
+        item.type === "event"
+          ? "bg-neutral-400"
+          : item.type === "exam"
+            ? "bg-on-surface"
+            : TONE_DOT[item.status.tone],
         className
       )}
     />
@@ -243,6 +247,15 @@ export function Dot({ placement, className }: { placement: DayPlacement; classNa
 
 function Chip({ placement }: { placement: DayPlacement }) {
   const { item } = placement
+
+  // Exams are the one thing on the month that must not be missed.
+  if (item.type === "exam") {
+    return (
+      <li className="flex min-w-0 items-center gap-1.5 rounded-md bg-surface-inverse px-1.5 text-xs leading-5 text-on-surface-inverse">
+        <span className="truncate">{item.title}</span>
+      </li>
+    )
+  }
 
   // All-day items read as a bar, as in every calendar people already use.
   if (placement.allDay) {

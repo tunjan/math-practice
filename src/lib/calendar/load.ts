@@ -69,8 +69,8 @@ export function parseCalendarQuery(
 }
 
 /**
- * Everything the month view shows: deadlines from assignments and events from
- * the calendar, for every day in the grid. RLS decides what each person may
+ * Everything the month view shows: deadlines from assignments, exams, and
+ * events from the calendar, for every day in the grid. RLS decides what each person may
  * see; the queries only narrow it to the window.
  */
 export async function loadCalendarItems(
@@ -109,14 +109,27 @@ export async function loadCalendarItems(
     .gt("ends_at", from)
     .order("starts_at")
 
+  let exams = supabase
+    .from("exams")
+    .select(
+      `id, title, exam_date, percent, ib_grade, student_id,
+       exam_topics(syllabus_topics(code, title, topic, subtopic)),
+       profiles(full_name, email)`
+    )
+    .gte("exam_date", weeks[0]![0]!)
+    .lte("exam_date", weeks.at(-1)!.at(-1)!)
+    .order("exam_date")
+
   if (isTutor && query.studentId) {
     deadlines = deadlines.eq("student_id", query.studentId)
     events = events.or(`owner_id.eq.${query.studentId},shared_with.eq.${query.studentId}`)
+    exams = exams.eq("student_id", query.studentId)
   } else if (!isTutor) {
     deadlines = deadlines.eq("student_id", profile.id)
+    exams = exams.eq("student_id", profile.id)
   }
 
-  const [{ data: tasks }, { data: rows }] = await Promise.all([deadlines, events])
+  const [{ data: tasks }, { data: rows }, { data: examRows }] = await Promise.all([deadlines, events, exams])
 
   const items: CalendarItem[] = []
 
@@ -136,6 +149,20 @@ export async function loadCalendarItems(
         ? task.profiles?.full_name || task.profiles?.email || "Unknown student"
         : null,
       topics: toTopicTags(task.assignment_topics),
+    })
+  }
+
+  for (const exam of examRows ?? []) {
+    items.push({
+      type: "exam",
+      id: exam.id,
+      title: exam.title,
+      date: exam.exam_date,
+      percent: exam.percent === null ? null : Number(exam.percent),
+      ibGrade: exam.ib_grade,
+      topics: toTopicTags(exam.exam_topics),
+      person: isTutor ? exam.profiles?.full_name || exam.profiles?.email || "Unknown student" : null,
+      href: isTutor ? `/tutor/students/${exam.student_id}` : "/student/syllabus",
     })
   }
 
