@@ -2,6 +2,7 @@ import { cache } from "react"
 import { redirect } from "next/navigation"
 
 import { createClient } from "@/lib/supabase/server"
+import { studentCourse, type StudentCourse } from "@/lib/syllabus/model"
 import { homePathForRole, type UserRole } from "./roles"
 
 export type SessionProfile = {
@@ -11,6 +12,8 @@ export type SessionProfile = {
   role: UserRole
   timezone: string
   calendarToken: string
+  /** The IB course a student is on; null for the tutor and for students without one. */
+  course: StudentCourse | null
 }
 
 /**
@@ -31,7 +34,7 @@ export const requireProfile = cache(async function requireProfile(): Promise<Ses
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, email, full_name, role, timezone, calendar_token")
+    .select("id, email, full_name, role, timezone, calendar_token, programme, course, level")
     .eq("id", user.id)
     .single()
 
@@ -44,6 +47,7 @@ export const requireProfile = cache(async function requireProfile(): Promise<Ses
     role: profile.role,
     timezone: profile.timezone,
     calendarToken: profile.calendar_token,
+    course: studentCourse(profile),
   }
 })
 

@@ -94,27 +94,28 @@
 - **Verify by:** Tag a task with 1.1 + 1.3, reopen edit and both are selected; a student with no course shows no field.
 
 ### Phase 9.6 — Show topic tags on tasks
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
 - **Changes:** Shows topic pills (code, title on hover) on task lists, cards, the task detail and the calendar popovers.
 - **Verify by:** Tagged tasks show pills everywhere; untagged tasks are unchanged.
 
 ### Phase 9.7 — Tracker progress schema
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
 - **Changes:** `topic_progress` (student, topic, status enum, stars 0–5, planned_start, planned_end, notes) + RLS (tutor writes, student reads own).
 - **Verify by:** A student can read their own row but can't update it.
 
 ### Phase 9.8 — Tutor tracker grid (read + inline edit)
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
 - **Changes:** Adds a "Syllabus" tab on the tutor student page with a ReUI Data Grid grouped by topic 1–5. Columns: code, title, level, status (pill select), stars, planned start/end, tasks count, notes. Each cell saves on its own.
 - **Verify by:** Edit each column type, reload, and the values persist. The AHL rows only appear for HL students.
 
 ### Phase 9.9 — Bulk edit in the tracker
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
 - **Changes:** Adds row selection and a toolbar to set status or date range on the selected rows.
 - **Verify by:** Select 5 rows and set the week; all 5 update.
 
 ### Phase 9.10 — Student tracker view
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
+- **Notes:** `/student/syllabus` renders `SyllabusTracker` with `editable={false}`: no checkboxes or bulk bar, status as a plain pill, stars read-only, planned window and notes as text. The summary strip (seen, in progress, scheduled, average stars, progress bar) is the tracker's own. `SessionProfile` now carries `course`, so the student layout adds the Syllabus link (book icon, between Calendar and Aviary) only when a course is set; the page 404s without one.
 - **Changes:** Adds a read-only `/student/syllabus` page with the same grid, plus a nav link (only when a course is set) and a progress summary.
 - **Verify by:** A student with a course sees their tracker and can't edit it; a student without one has no link.
 
