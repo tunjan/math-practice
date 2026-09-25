@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { requireProfile, requireRole } from "@/lib/auth/session"
+import type { Database } from "@/lib/supabase/database.types"
 import { createClient } from "@/lib/supabase/server"
 
 import { isDayKey } from "@/lib/calendar/dates"
@@ -71,22 +72,14 @@ export type ProgressPatch = {
   notes?: string | null
 }
 
-/**
- * Writes the same change to one or more of a student's subtopics, creating
- * their rows as needed. Only the fields in `patch` change; the rest keep
- * what they had (or their defaults, for a new row).
- */
-export async function saveTopicProgress(
-  studentId: string,
-  topicIds: string[],
-  patch: ProgressPatch
-): Promise<{ error?: string }> {
-  await requireRole("tutor")
-  if (!UUID.test(studentId)) return { error: "That student no longer exists." }
-  const ids = [...new Set(topicIds)].filter((id) => UUID.test(id))
-  if (ids.length === 0 || ids.length > 200) return { error: "Pick at least one topic." }
+type ProgressColumns = Pick<
+  Database["public"]["Tables"]["topic_progress"]["Insert"],
+  "status" | "stars" | "planned_start" | "planned_end" | "notes"
+>
 
-  const values: Record<string, unknown> = {}
+/** Checks a patch and maps it to columns. Only the fields present are set. */
+function progressValues(patch: ProgressPatch): { values: ProgressColumns } | { error: string } {
+  const values: ProgressColumns = {}
   if (patch.status !== undefined) {
     if (!STATUSES.includes(patch.status)) return { error: "Unknown status." }
     values.status = patch.status
@@ -116,6 +109,27 @@ export async function saveTopicProgress(
     if (notes.length > 2000) return { error: "Notes can be up to 2,000 characters." }
     values.notes = notes || null
   }
+  return { values }
+}
+
+/**
+ * Writes the same change to one or more of a student's subtopics, creating
+ * their rows as needed. Only the fields in `patch` change; the rest keep
+ * what they had (or their defaults, for a new row).
+ */
+export async function saveTopicProgress(
+  studentId: string,
+  topicIds: string[],
+  patch: ProgressPatch
+): Promise<{ error?: string }> {
+  await requireRole("tutor")
+  if (!UUID.test(studentId)) return { error: "That student no longer exists." }
+  const ids = [...new Set(topicIds)].filter((id) => UUID.test(id))
+  if (ids.length === 0 || ids.length > 200) return { error: "Pick at least one topic." }
+
+  const checked = progressValues(patch)
+  if ("error" in checked) return checked
+  const values = checked.values
   if (Object.keys(values).length === 0) return {}
 
   const supabase = await createClient()
@@ -132,6 +146,41 @@ export async function saveTopicProgress(
 
   revalidateTracker(studentId)
   return {}
+}
+
+/**
+ * Applies a checked CSV import: each subtopic gets its full progress as the
+ * preview showed it. All rows go in one upsert, so it lands or fails whole.
+ */
+export async function importTopicProgress(
+  studentId: string,
+  rows: { topicId: string; progress: Required<ProgressPatch> }[]
+): Promise<{ error?: string; count?: number }> {
+  await requireRole("tutor")
+  if (!UUID.test(studentId)) return { error: "That student no longer exists." }
+  if (rows.length === 0) return { count: 0 }
+  if (rows.length > 200) return { error: "That's more rows than the syllabus has." }
+
+  const records: (ProgressColumns & { student_id: string; topic_id: string })[] = []
+  const ids = new Set<string>()
+  for (const row of rows) {
+    if (!UUID.test(row.topicId) || ids.has(row.topicId)) return { error: "The import lists an unknown or repeated topic." }
+    ids.add(row.topicId)
+    const checked = progressValues(row.progress)
+    if ("error" in checked) return checked
+    records.push({ student_id: studentId, topic_id: row.topicId, ...checked.values })
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from("topic_progress").upsert(records, { onConflict: "student_id,topic_id" })
+  if (error) {
+    if (error.message.includes("not in this student")) return { error: "Some rows aren't in this student's course." }
+    if (error.message.includes("topic_progress_window")) return { error: "A plan has to start before it ends." }
+    return { error: error.message }
+  }
+
+  revalidateTracker(studentId)
+  return { count: records.length }
 }
 
 function revalidateTracker(studentId: string) {

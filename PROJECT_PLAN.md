@@ -149,7 +149,16 @@
 - **Verify by:** The file opens in Sheets with one row per topic.
 
 ### Phase 9.16 — CSV import with preview
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
+- **Notes:** "Import CSV" in the tutor's tracker toolbar opens a dialog: choose a file or paste (pasting into the empty box checks straight away), then Check, then a diff table (code, subtopic, each changed field before → after), then "Apply n changes". `parseTrackerCsv` (`src/lib/syllabus/csv.ts`) is pure and writes nothing:
+  - Headers are case/space-insensitive.
+  - Only `code` is required. A missing column leaves that field alone; unknown columns are ignored with a note.
+  - A blank status/stars cell = unchanged; a blank date/notes cell = cleared, matching how export writes "not set", so a round trip gives 0 changes.
+  - Status accepts stored values or labels ("In progress").
+  - When code and title disagree and the title names another subtopic exactly, the title wins (Sheets turns 1.10 into 1.1).
+  - Rejected with the spreadsheet row number (header = row 1): unknown or out-of-course codes, duplicate rows, non-integer or out-of-range stars, invalid dates (incl. 2026-02-30), end before start, windows over 366 days, notes over 2000 chars, and CSV syntax errors. Any problem blocks Apply.
+  
+  `importTopicProgress` re-validates every row with the same checks as inline edits (`progressValues`, now shared) and writes them in one upsert, so the import lands or fails whole. Checked with a script: round-trip of an export → 0 changes; mangled 1.10 matched by title; partial LLM file with labels; a file with every kind of error reports each with its row.
 - **Changes:** Adds upload/paste → validation (unknown codes, bad dates, stars out of range) → diff preview → apply.
 - **Verify by:** Round-trip an exported file unchanged (0 changes). A file with a bad code is rejected with the row number.
 

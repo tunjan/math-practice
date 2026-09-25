@@ -1,6 +1,8 @@
 import Papa from "papaparse"
 
-import type { TrackerRow } from "./model"
+import { isDayKey } from "@/lib/calendar/dates"
+
+import { STATUS_LABEL, STATUSES, type TopicProgress, type TopicStatus, type TrackerRow } from "./model"
 
 /**
  * The tracker as a spreadsheet: one row per subtopic, in syllabus order.
@@ -53,4 +55,162 @@ export function csvFilename(name: string, course: string, day: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
   return `syllabus-${slug || "student"}-${day}.csv`
+}
+
+// ── Import ──────────────────────────────────────────────────────────────────
+
+/** One subtopic whose progress the file changes. */
+export type CsvChange = {
+  topicId: string
+  code: string
+  title: string
+  before: TopicProgress
+  after: TopicProgress
+  /** The fields that differ, in column order. */
+  fields: (keyof TopicProgress)[]
+}
+
+export type CsvIssue = { row: number | null; message: string }
+
+export type CsvImport = {
+  /** Anything here rejects the file. */
+  issues: CsvIssue[]
+  /** Worth saying, but the file still applies. */
+  warnings: string[]
+  changes: CsvChange[]
+  rows: number
+}
+
+const FIELD_ORDER: (keyof TopicProgress)[] = ["status", "stars", "plannedStart", "plannedEnd", "notes"]
+
+/** Past this, the database refuses the window (0020). */
+const MAX_WINDOW_DAYS = 366
+
+function readStatus(value: string): TopicStatus | null {
+  const v = value.trim().toLowerCase().replace(/[\s-]+/g, "_")
+  const byValue = STATUSES.find((s) => s === v)
+  if (byValue) return byValue
+  return STATUSES.find((s) => STATUS_LABEL[s].toLowerCase().replace(/\s+/g, "_") === v) ?? null
+}
+
+function daysBetween(a: string, b: string): number {
+  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000)
+}
+
+/**
+ * Reads a tracker CSV against a student's subtopics and works out what would
+ * change. Nothing is written: any issue rejects the whole file, so it's fixed
+ * and re-checked rather than half applied.
+ *
+ * Rows are matched by `code`. Spreadsheets turn 1.10 into 1.1, so when a
+ * row's title names a different subtopic exactly, the title wins. A missing
+ * column leaves that field alone; a blank cell leaves status and stars alone
+ * and clears dates and notes, which is how an export writes "not set". Row
+ * numbers are spreadsheet rows: the header is row 1.
+ */
+export function parseTrackerCsv(text: string, rows: TrackerRow[]): CsvImport {
+  const parsed = Papa.parse<Record<string, string>>(text.trim(), {
+    header: true,
+    skipEmptyLines: "greedy",
+    transformHeader: (header) => header.trim().toLowerCase().replace(/\s+/g, "_"),
+  })
+
+  const issues: CsvIssue[] = []
+  const columns = new Set(parsed.meta.fields ?? [])
+  if (!columns.has("code")) {
+    return {
+      issues: [{ row: 1, message: "The header row needs a code column." }],
+      warnings: [],
+      changes: [],
+      rows: 0,
+    }
+  }
+  const warnings: string[] = []
+  const unknown = [...columns].filter((c) => c && !(CSV_COLUMNS as readonly string[]).includes(c))
+  if (unknown.length) {
+    warnings.push(`Ignoring column${unknown.length > 1 ? "s" : ""} ${unknown.join(", ")}.`)
+  }
+  for (const error of parsed.errors) {
+    // Papa counts data rows from 0; the header is spreadsheet row 1.
+    issues.push({ row: error.row === undefined ? null : error.row + 2, message: error.message })
+  }
+
+  const byCode = new Map(rows.map((r) => [r.code, r]))
+  const byTitle = new Map(rows.map((r) => [r.title.trim().toLowerCase(), r]))
+  const seen = new Map<string, number>()
+  const changes: CsvChange[] = []
+
+  parsed.data.forEach((record, index) => {
+    const line = index + 2
+    const cell = (column: CsvColumn) => (columns.has(column) ? (record[column] ?? "").trim() : undefined)
+
+    const code = cell("code") ?? ""
+    const title = cell("title")
+    const titled = title ? byTitle.get(title.toLowerCase()) : undefined
+    let topic = byCode.get(code)
+    if (titled && titled !== topic) topic = titled
+    if (!topic) {
+      issues.push({
+        row: line,
+        message: code ? `${code} isn't a subtopic of this student's course.` : "The code is empty.",
+      })
+      return
+    }
+    const first = seen.get(topic.id)
+    if (first) {
+      issues.push({ row: line, message: `${topic.code} is already on row ${first}.` })
+      return
+    }
+    seen.set(topic.id, line)
+
+    const after: TopicProgress = { ...topic.progress }
+    const problems: string[] = []
+
+    const status = cell("status")
+    if (status) {
+      const value = readStatus(status)
+      if (value) after.status = value
+      else problems.push(`status "${status}" isn't one of ${STATUSES.join(", ")}`)
+    }
+
+    const stars = cell("stars")
+    if (stars) {
+      const value = Number(stars)
+      if (Number.isInteger(value) && value >= 0 && value <= 5) after.stars = value
+      else problems.push(`stars "${stars}" isn't a whole number from 0 to 5`)
+    }
+
+    for (const [column, key] of [
+      ["planned_start", "plannedStart"],
+      ["planned_end", "plannedEnd"],
+    ] as const) {
+      const value = cell(column)
+      if (value === undefined) continue
+      if (value === "") after[key] = null
+      else if (isDayKey(value)) after[key] = value
+      else problems.push(`${column} "${value}" isn't a date like 2026-10-05`)
+    }
+    if (after.plannedStart && after.plannedEnd) {
+      if (after.plannedStart > after.plannedEnd) problems.push("planned_end is before planned_start")
+      else if (daysBetween(after.plannedStart, after.plannedEnd) > MAX_WINDOW_DAYS) problems.push("the plan is longer than a year")
+    }
+
+    const notes = cell("notes")
+    if (notes !== undefined) {
+      if (notes.length > 2000) problems.push("notes are longer than 2,000 characters")
+      else after.notes = notes || null
+    }
+
+    if (problems.length) {
+      issues.push({ row: line, message: `${topic.code}: ${problems.join("; ")}.` })
+      return
+    }
+
+    const fields = FIELD_ORDER.filter((key) => after[key] !== topic.progress[key])
+    if (fields.length) {
+      changes.push({ topicId: topic.id, code: topic.code, title: topic.title, before: topic.progress, after, fields })
+    }
+  })
+
+  return { issues, warnings, changes: issues.length ? [] : changes, rows: parsed.data.length }
 }
