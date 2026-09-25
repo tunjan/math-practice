@@ -64,6 +64,20 @@ $$;
 
 revoke all on function private.guard_assignment_update() from public, anon, authenticated;
 
+-- ── Leftovers from an earlier draft ─────────────────────────────────────────
+--
+-- The hosted project picked these up outside these migrations: per-task
+-- syllabus codes and exam paper, a course table, unit ratings and a plan
+-- importer. The syllabus tracker replaces all of them. `if exists` makes this
+-- a no-op on a database built from the migrations alone. Dropping a column
+-- takes its check constraint and index with it.
+
+alter table public.assignments drop column if exists syllabus_codes;
+alter table public.assignments drop column if exists paper;
+drop function if exists public.import_learning_plan(uuid, jsonb);
+drop table if exists public.student_courses;
+drop table if exists public.plan_unit_ratings;
+
 -- ── Tasks under units ───────────────────────────────────────────────────────
 
 drop index if exists public.assignments_plan_unit_idx;
@@ -84,8 +98,11 @@ drop table if exists public.plan_units;
 drop table if exists public.learning_plans;
 
 drop function if exists private.guard_objective_update();
+drop function if exists private.record_unit_rating();
 drop function if exists private.stamp_unit_mastery();
 drop function if exists private.unit_student(uuid);
 drop function if exists private.plan_student(uuid);
+-- Last: units had a syllabus-codes check of their own that used it.
+drop function if exists private.valid_syllabus_codes(text[]);
 
 drop type if exists public.plan_mastery;
