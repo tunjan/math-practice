@@ -2,7 +2,15 @@ import "server-only"
 
 import type { createClient } from "@/lib/supabase/server"
 
-import { EMPTY_PROGRESS, topicsForCourse, type StudentCourse, type SyllabusTopic, type TrackerRow } from "./model"
+import {
+  EMPTY_PROGRESS,
+  toTopicTags,
+  topicsForCourse,
+  type Exam,
+  type StudentCourse,
+  type SyllabusTopic,
+  type TrackerRow,
+} from "./model"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
 
@@ -60,4 +68,27 @@ export async function loadTracker(
       taskCount: counts.get(topic.id) ?? 0,
     }
   })
+}
+
+/** A student's exams, latest first. RLS limits a student to their own. */
+export async function loadExams(supabase: Supabase, studentId: string): Promise<Exam[]> {
+  const { data } = await supabase
+    .from("exams")
+    .select(
+      "id, exam_date, title, percent, ib_grade, notes, exam_topics(topic_id, syllabus_topics(code, title, topic, subtopic))"
+    )
+    .eq("student_id", studentId)
+    .order("exam_date", { ascending: false })
+    .order("created_at", { ascending: false })
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    date: row.exam_date,
+    title: row.title,
+    percent: row.percent === null ? null : Number(row.percent),
+    ibGrade: row.ib_grade,
+    notes: row.notes,
+    topicIds: row.exam_topics.map((t) => t.topic_id),
+    topics: toTopicTags(row.exam_topics),
+  }))
 }

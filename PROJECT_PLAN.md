@@ -132,7 +132,8 @@
 - **Verify by:** A student can insert/update their own exam but can't touch another student's.
 
 ### Phase 9.13 — Exams UI
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
+- **Notes:** `ExamsSection` (`src/components/syllabus/exams-section.tsx`) sits under the tracker on the tutor student page and on `/student/syllabus`. It's a table of date, exam (with an "Upcoming" pill from today on), topic pills, score %, IB grade pill (6–7 green, 4–5 yellow, 1–3 red) and notes, latest first. "Add exam" or clicking a title opens a dialog with name, date, score, grade (native select, "Not marked" allowed), topics (the 9.5 `TopicPicker`) and notes; delete asks for confirmation. Actions `saveExam`/`deleteExam` are in `src/lib/syllabus/actions.ts`: the tutor may manage anyone's exams and a student only their own (RLS enforces the same). Saving replaces the exam's topics with exactly the chosen set.
 - **Changes:** Adds an Exams table + dialog (topics multi-select) under the tracker for both roles.
 - **Verify by:** Add, edit and delete an exam as student and as tutor.
 

@@ -145,3 +145,26 @@ export function summarise(rows: TrackerRow[]): TrackerSummary {
     averageStars: rated.length ? rated.reduce((sum, r) => sum + r.progress.stars, 0) / rated.length : null,
   }
 }
+
+// ── Exams ───────────────────────────────────────────────────────────────────
+
+/** A class exam: when, what, how it went, and what it covered. */
+export type Exam = {
+  id: string
+  date: string
+  title: string
+  /** 0–100, or null until marked. */
+  percent: number | null
+  /** IB grade 1–7, or null until marked. */
+  ibGrade: number | null
+  notes: string | null
+  topicIds: string[]
+  topics: TopicTag[]
+}
+
+export const IB_GRADES = [1, 2, 3, 4, 5, 6, 7] as const
+
+/** "78%" or "78.5%": whole numbers stay whole. */
+export function formatPercent(percent: number): string {
+  return `${Number.isInteger(percent) ? percent : percent.toFixed(1)}%`
+}

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 
-import { requireRole } from "@/lib/auth/session"
+import { requireProfile, requireRole } from "@/lib/auth/session"
 import { createClient } from "@/lib/supabase/server"
 
 import { isDayKey } from "@/lib/calendar/dates"
@@ -139,4 +139,112 @@ function revalidateTracker(studentId: string) {
   revalidatePath("/student/syllabus")
   revalidatePath("/tutor/calendar")
   revalidatePath("/student/calendar")
+}
+
+// ── Exams ───────────────────────────────────────────────────────────────────
+
+export type ExamInput = {
+  /** Present when editing. */
+  id?: string
+  date: string
+  title: string
+  percent: number | null
+  ibGrade: number | null
+  notes: string | null
+  topicIds: string[]
+}
+
+/**
+ * The tutor may manage any student's exams; a student only their own. RLS
+ * says the same; this is for a readable message.
+ */
+async function canManageExams(studentId: string): Promise<string | null> {
+  const profile = await requireProfile()
+  if (!UUID.test(studentId)) return "That student no longer exists."
+  if (profile.role === "student" && profile.id !== studentId) return "You can only change your own exams."
+  return null
+}
+
+/** Adds or edits an exam, then makes its topics exactly `topicIds`. */
+export async function saveExam(studentId: string, input: ExamInput): Promise<{ error?: string; id?: string }> {
+  const denied = await canManageExams(studentId)
+  if (denied) return { error: denied }
+
+  const title = input.title.trim()
+  if (!title) return { error: "Give the exam a name." }
+  if (title.length > 200) return { error: "Keep the name under 200 characters." }
+  if (!isDayKey(input.date)) return { error: "Pick the date of the exam." }
+  if (input.percent !== null && !(Number.isFinite(input.percent) && input.percent >= 0 && input.percent <= 100)) {
+    return { error: "The score is a percentage, 0 to 100." }
+  }
+  if (input.ibGrade !== null && !(Number.isInteger(input.ibGrade) && input.ibGrade >= 1 && input.ibGrade <= 7)) {
+    return { error: "IB grades go from 1 to 7." }
+  }
+  const notes = input.notes?.trim() ?? ""
+  if (notes.length > 2000) return { error: "Notes can be up to 2,000 characters." }
+  if (input.id !== undefined && !UUID.test(input.id)) return { error: "That exam no longer exists." }
+  const topicIds = [...new Set(input.topicIds)].filter((id) => UUID.test(id))
+  if (topicIds.length > 200) return { error: "That's more topics than the syllabus has." }
+
+  const values = {
+    exam_date: input.date,
+    title,
+    percent: input.percent === null ? null : Math.round(input.percent * 100) / 100,
+    ib_grade: input.ibGrade,
+    notes: notes || null,
+  }
+
+  const supabase = await createClient()
+  const { data, error } = input.id
+    ? await supabase.from("exams").update(values).eq("id", input.id).eq("student_id", studentId).select("id")
+    : await supabase.from("exams").insert({ ...values, student_id: studentId }).select("id")
+  if (error) return { error: error.message }
+  const examId = data?.[0]?.id
+  if (!examId) return { error: "That exam no longer exists." }
+
+  // Replace the topics: drop the ones no longer chosen, add the new ones.
+  const drop = supabase.from("exam_topics").delete().eq("exam_id", examId)
+  const { error: dropError } = topicIds.length
+    ? await drop.not("topic_id", "in", `(${topicIds.join(",")})`)
+    : await drop
+  if (dropError) return { error: dropError.message }
+  if (topicIds.length) {
+    const { error: addError } = await supabase
+      .from("exam_topics")
+      .upsert(
+        topicIds.map((topicId) => ({ exam_id: examId, topic_id: topicId })),
+        { onConflict: "exam_id,topic_id", ignoreDuplicates: true }
+      )
+    if (addError) {
+      if (addError.message.includes("not in this student")) return { error: "Some topics aren't in this course." }
+      return { error: addError.message }
+    }
+  }
+
+  revalidateExams(studentId)
+  return { id: examId }
+}
+
+export async function deleteExam(studentId: string, examId: string): Promise<{ error?: string }> {
+  const denied = await canManageExams(studentId)
+  if (denied) return { error: denied }
+  if (!UUID.test(examId)) return { error: "That exam no longer exists." }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("exams")
+    .delete()
+    .eq("id", examId)
+    .eq("student_id", studentId)
+    .select("id")
+  if (error) return { error: error.message }
+  if (!data?.length) return { error: "That exam no longer exists." }
+
+  revalidateExams(studentId)
+  return {}
+}
+
+function revalidateExams(studentId: string) {
+  revalidatePath(`/tutor/students/${studentId}`)
+  revalidatePath("/student/syllabus")
 }
