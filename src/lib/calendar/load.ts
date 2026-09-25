@@ -3,7 +3,7 @@ import "server-only"
 import type { SessionProfile } from "@/lib/auth/session"
 import { asStage, assignmentStatus } from "@/lib/assignments/model"
 import type { createClient } from "@/lib/supabase/server"
-import { toTopicTags } from "@/lib/syllabus/model"
+import { toTopicTags, type Course, type Level, type SyllabusLevel } from "@/lib/syllabus/model"
 
 import {
   addDays,
@@ -17,7 +17,7 @@ import {
   type DayKey,
   type MonthKey,
 } from "./dates"
-import type { CalendarItem, Person } from "./model"
+import { weekPlans, type CalendarItem, type Person, type PlannedTopic, type WeekPlan } from "./model"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
 
@@ -69,8 +69,8 @@ export function parseCalendarQuery(
 }
 
 /**
- * Everything the month view shows: deadlines from assignments and events from
- * the calendar, for every day in the grid. RLS decides what each person may
+ * Everything the month view shows: deadlines from assignments, exams, and
+ * events from the calendar, for every day in the grid. RLS decides what each person may
  * see; the queries only narrow it to the window.
  */
 export async function loadCalendarItems(
@@ -109,14 +109,27 @@ export async function loadCalendarItems(
     .gt("ends_at", from)
     .order("starts_at")
 
+  let exams = supabase
+    .from("exams")
+    .select(
+      `id, title, exam_date, percent, ib_grade, student_id,
+       exam_topics(syllabus_topics(code, title, topic, subtopic)),
+       profiles(full_name, email)`
+    )
+    .gte("exam_date", weeks[0]![0]!)
+    .lte("exam_date", weeks.at(-1)!.at(-1)!)
+    .order("exam_date")
+
   if (isTutor && query.studentId) {
     deadlines = deadlines.eq("student_id", query.studentId)
     events = events.or(`owner_id.eq.${query.studentId},shared_with.eq.${query.studentId}`)
+    exams = exams.eq("student_id", query.studentId)
   } else if (!isTutor) {
     deadlines = deadlines.eq("student_id", profile.id)
+    exams = exams.eq("student_id", profile.id)
   }
 
-  const [{ data: tasks }, { data: rows }] = await Promise.all([deadlines, events])
+  const [{ data: tasks }, { data: rows }, { data: examRows }] = await Promise.all([deadlines, events, exams])
 
   const items: CalendarItem[] = []
 
@@ -136,6 +149,20 @@ export async function loadCalendarItems(
         ? task.profiles?.full_name || task.profiles?.email || "Unknown student"
         : null,
       topics: toTopicTags(task.assignment_topics),
+    })
+  }
+
+  for (const exam of examRows ?? []) {
+    items.push({
+      type: "exam",
+      id: exam.id,
+      title: exam.title,
+      date: exam.exam_date,
+      percent: exam.percent === null ? null : Number(exam.percent),
+      ibGrade: exam.ib_grade,
+      topics: toTopicTags(exam.exam_topics),
+      person: isTutor ? exam.profiles?.full_name || exam.profiles?.email || "Unknown student" : null,
+      href: isTutor ? `/tutor/students/${exam.student_id}` : "/student/syllabus",
     })
   }
 
@@ -162,6 +189,85 @@ export async function loadCalendarItems(
   }
 
   return items
+}
+
+/** Tracker rows with a planned window, with what a week bar needs. */
+export const PLANNED_TOPICS_SELECT =
+  "student_id, planned_start, planned_end, updated_at, syllabus_topics(course, level, code, title, topic, subtopic), profiles(full_name, email, course, level)"
+
+type PlannedRow = {
+  student_id: string
+  planned_start: string | null
+  planned_end: string | null
+  updated_at: string
+  syllabus_topics: {
+    course: Course
+    level: SyllabusLevel
+    code: string
+    title: string
+    topic: number
+    subtopic: number
+  } | null
+  profiles: { full_name: string; email: string | null; course: Course | null; level: Level | null } | null
+}
+
+/**
+ * Reads planned tracker rows; the student's name only matters to the tutor.
+ * Rows left over from a course the student is no longer on are dropped, as
+ * the tracker drops them.
+ */
+export function toPlannedTopics(rows: PlannedRow[] | null, withPerson: boolean): PlannedTopic[] {
+  return (rows ?? []).flatMap((row) => {
+    const topic = row.syllabus_topics
+    const student = row.profiles
+    if (!topic || !student || topic.course !== student.course) return []
+    if (topic.level === "AHL" && student.level !== "HL") return []
+    return [
+      {
+        studentId: row.student_id,
+        person: withPerson ? student.full_name || student.email || "Unknown student" : null,
+        tag: { code: topic.code, title: topic.title, topic: topic.topic, subtopic: topic.subtopic },
+        plannedStart: row.planned_start,
+        plannedEnd: row.planned_end,
+        updatedAt: row.updated_at,
+      },
+    ]
+  })
+}
+
+/**
+ * The syllabus plan as week bars for every week in the grid. The student sees
+ * their own (RLS); the tutor sees everyone's, or one student's when filtered.
+ */
+export async function loadWeekPlans(
+  supabase: Supabase,
+  profile: SessionProfile,
+  query: CalendarQuery
+): Promise<WeekPlan[]> {
+  const isTutor = profile.role === "tutor"
+  const weeks = monthGrid(query.month)
+  const from = weeks[0]![0]!
+  const to = weeks.at(-1)!.at(-1)!
+
+  let rows = supabase
+    .from("topic_progress")
+    .select(PLANNED_TOPICS_SELECT)
+    // Planned at all, and not wholly before or after the grid. A one-sided
+    // window is a single day; `weekPlans` clips to the grid exactly.
+    // (A one-branch `or` is how postgrest-js spells a grouped `and`.)
+    .or(
+      `and(${[
+        "or(planned_start.not.is.null,planned_end.not.is.null)",
+        `or(planned_start.lte.${to},planned_start.is.null)`,
+        `or(planned_end.gte.${from},planned_end.is.null)`,
+      ].join(",")})`
+    )
+
+  if (isTutor && query.studentId) rows = rows.eq("student_id", query.studentId)
+  else if (!isTutor) rows = rows.eq("student_id", profile.id)
+
+  const { data } = await rows
+  return weekPlans(toPlannedTopics(data, isTutor), { from, to })
 }
 
 /** The tutor's roster, for the filter and for sharing an event. */

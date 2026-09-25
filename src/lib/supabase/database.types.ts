@@ -455,6 +455,83 @@ export type Database = {
           },
         ]
       }
+      exam_topics: {
+        Row: {
+          created_at: string
+          exam_id: string
+          topic_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          topic_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_topics_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_topics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "syllabus_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exams: {
+        Row: {
+          created_at: string
+          exam_date: string
+          ib_grade: number | null
+          id: string
+          notes: string | null
+          percent: number | null
+          student_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date: string
+          ib_grade?: number | null
+          id?: string
+          notes?: string | null
+          percent?: number | null
+          student_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          ib_grade?: number | null
+          id?: string
+          notes?: string | null
+          percent?: number | null
+          student_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pending_assignment_files: {
         Row: {
           created_at: string

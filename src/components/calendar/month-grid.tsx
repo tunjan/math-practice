@@ -15,7 +15,9 @@ import {
   type DayKey,
   type MonthKey,
 } from "@/lib/calendar/dates"
-import type { DayPlacement } from "@/lib/calendar/model"
+import type { DayPlacement, WeekPlan } from "@/lib/calendar/model"
+
+import { WeekBars } from "./week-plans"
 
 /** Three lines fit a cell; past that, two items and a count. */
 const CELL_LINES = 3
@@ -35,6 +37,8 @@ export function MonthGrid({
   today,
   selected,
   placements,
+  plans,
+  showPerson,
   onSelect,
   labelledBy,
 }: {
@@ -42,6 +46,10 @@ export function MonthGrid({
   today: DayKey
   selected: DayKey
   placements: Map<DayKey, DayPlacement[]>
+  /** Planned syllabus topics, keyed by the Monday of their week. */
+  plans: Map<DayKey, WeekPlan[]>
+  /** Name the student on each bar (the tutor's unfiltered calendar). */
+  showPerson: boolean
   /** `focus` is true when the keyboard moved, so the new cell takes focus. */
   onSelect: (day: DayKey, options: { focus: boolean }) => void
   labelledBy: string
@@ -104,19 +112,22 @@ export function MonthGrid({
       </div>
 
       {weeks.map((week) => (
-        <div key={week[0]} role="row" className="grid grid-cols-7 border-b border-outline last:border-b-0">
-          {week.map((day) => (
-            <DayCell
-              key={day}
-              day={day}
-              outside={monthOf(day) !== month}
-              isToday={day === today}
-              isSelected={day === selected}
-              placements={placements.get(day) ?? []}
-              onSelect={onSelect}
-              onKeyDown={handleKeyDown}
-            />
-          ))}
+        <div key={week[0]} role="presentation" className="border-b border-outline last:border-b-0">
+          <div role="row" className="grid grid-cols-7">
+            {week.map((day) => (
+              <DayCell
+                key={day}
+                day={day}
+                outside={monthOf(day) !== month}
+                isToday={day === today}
+                isSelected={day === selected}
+                placements={placements.get(day) ?? []}
+                onSelect={onSelect}
+                onKeyDown={handleKeyDown}
+              />
+            ))}
+          </div>
+          <WeekBars plans={plans.get(week[0]!) ?? []} showPerson={showPerson} />
         </div>
       ))}
     </div>
@@ -215,7 +226,7 @@ export function key({ item }: DayPlacement): string {
   return `${item.type}-${item.id}`
 }
 
-/** Deadlines carry their status colour; events stay neutral. */
+/** Deadlines carry their status colour; exams are ink; events stay neutral. */
 export function Dot({ placement, className }: { placement: DayPlacement; className?: string }) {
   const { item } = placement
   return (
@@ -223,7 +234,11 @@ export function Dot({ placement, className }: { placement: DayPlacement; classNa
       aria-hidden
       className={cn(
         "size-1.5 shrink-0 rounded-full",
-        item.type === "event" ? "bg-neutral-400" : TONE_DOT[item.status.tone],
+        item.type === "event"
+          ? "bg-neutral-400"
+          : item.type === "exam"
+            ? "bg-on-surface"
+            : TONE_DOT[item.status.tone],
         className
       )}
     />
@@ -232,6 +247,15 @@ export function Dot({ placement, className }: { placement: DayPlacement; classNa
 
 function Chip({ placement }: { placement: DayPlacement }) {
   const { item } = placement
+
+  // Exams are the one thing on the month that must not be missed.
+  if (item.type === "exam") {
+    return (
+      <li className="flex min-w-0 items-center gap-1.5 rounded-md bg-surface-inverse px-1.5 text-xs leading-5 text-on-surface-inverse">
+        <span className="truncate">{item.title}</span>
+      </li>
+    )
+  }
 
   // All-day items read as a bar, as in every calendar people already use.
   if (placement.allDay) {

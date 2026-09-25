@@ -6,15 +6,18 @@ import { cn } from "cn"
 import { TopicTags } from "@/components/syllabus/topic-tags"
 import { Badge } from "@/components/ui/badge"
 import { TYPE_LABEL } from "@/lib/assignments/model"
+import { formatPercent } from "@/lib/syllabus/model"
 import { relativeDay, WEEKDAYS, weekdayIndex, type DayKey } from "@/lib/calendar/dates"
 import {
   EVENT_KIND_LABEL,
   eventAudience,
   type DayPlacement,
   type EventItem,
+  type WeekPlan,
 } from "@/lib/calendar/model"
 
 import { Dot, key } from "./month-grid"
+import { PlanRow } from "./week-plans"
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", timeZone: "UTC" })
 
@@ -28,6 +31,9 @@ export function DayPanel({
   today,
   role,
   placements,
+  plans,
+  planHref,
+  showPerson,
   onEdit,
   className,
 }: {
@@ -35,6 +41,10 @@ export function DayPanel({
   today: DayKey
   role: "tutor" | "student"
   placements: DayPlacement[]
+  /** Syllabus topics planned for the week this day is in. */
+  plans: WeekPlan[]
+  planHref: (plan: WeekPlan) => string
+  showPerson: boolean
   onEdit: (event: EventItem) => void
   className?: string
 }) {
@@ -58,10 +68,15 @@ export function DayPanel({
         )}
       </header>
 
-      {placements.length === 0 ? (
+      {placements.length === 0 && plans.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-on-surface-muted">Nothing scheduled</p>
       ) : (
         <ul role="list" className="divide-y divide-outline">
+          {plans.map((plan) => (
+            <li key={plan.id}>
+              <PlanRow plan={plan} href={planHref(plan)} showPerson={showPerson} />
+            </li>
+          ))}
           {placements.map((placement) => (
             <li key={key(placement)}>
               <Row placement={placement} role={role} onEdit={onEdit} />
@@ -90,7 +105,9 @@ function Row({
   const meta =
     item.type === "deadline"
       ? ["Deadline", item.person ?? TYPE_LABEL[item.taskType]]
-      : [EVENT_KIND_LABEL[item.kind], eventAudience(item, role)]
+      : item.type === "exam"
+        ? ["Exam", item.person]
+        : [EVENT_KIND_LABEL[item.kind], eventAudience(item, role)]
 
   const body = (
     <>
@@ -102,11 +119,13 @@ function Row({
         </span>
         <span className="flex items-center justify-between gap-3">
           <span className="truncate text-xs text-on-surface-muted">{meta.filter(Boolean).join(" · ")}</span>
-          {item.type !== "event" ? (
+          {item.type === "deadline" ? (
             <Badge variant={item.status.tone}>{item.status.label}</Badge>
+          ) : item.type === "exam" ? (
+            <ExamResult percent={item.percent} ibGrade={item.ibGrade} />
           ) : null}
         </span>
-        {item.type === "deadline" ? <TopicTags tags={item.topics} max={4} inline /> : null}
+        {item.type !== "event" ? <TopicTags tags={item.topics} max={4} inline /> : null}
         {item.type === "event" && item.notes ? (
           <span
             className={cn(
@@ -163,4 +182,11 @@ function Time({ placement }: { placement: DayPlacement }) {
       </span>
     </span>
   )
+}
+
+/** "78% · 6", or nothing before it's marked. */
+function ExamResult({ percent, ibGrade }: { percent: number | null; ibGrade: number | null }) {
+  const parts = [percent === null ? null : formatPercent(percent), ibGrade === null ? null : `Grade ${ibGrade}`]
+  const text = parts.filter(Boolean).join(" · ")
+  return text ? <span className="shrink-0 font-mono text-xs text-on-surface-secondary tabular-nums">{text}</span> : null
 }

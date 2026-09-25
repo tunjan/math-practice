@@ -80,6 +80,11 @@ export function weekdayIndex(day: DayKey): number {
   return (toUtcDate(day).getUTCDay() + 6) % 7
 }
 
+/** The Monday of the week holding `day`. */
+export function weekStart(day: DayKey): DayKey {
+  return addDays(day, -weekdayIndex(day))
+}
+
 /**
  * The weeks a month view shows: Monday of the week holding the 1st through
  * Sunday of the week holding the last day. Four to six rows.

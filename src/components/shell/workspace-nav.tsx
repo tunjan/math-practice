@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   Bird,
+  BookOpen,
   CalendarDays,
   ClipboardList,
   LayoutGrid,
@@ -42,6 +43,7 @@ const ICONS = {
   students: Users,
   tasks: ListTodo,
   calendar: CalendarDays,
+  syllabus: BookOpen,
   aviary: Bird,
 } satisfies Record<string, LucideIcon>
 

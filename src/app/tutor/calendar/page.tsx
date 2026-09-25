@@ -7,6 +7,7 @@ import {
   calendarFeedUrl,
   loadCalendarItems,
   loadStudents,
+  loadWeekPlans,
   parseCalendarQuery,
 } from "@/lib/calendar/load"
 
@@ -25,7 +26,10 @@ export default async function TutorCalendarPage({ searchParams }: PageProps<"/tu
     ? parsed
     : { ...parsed, studentId: null }
 
-  const items = await loadCalendarItems(supabase, profile, query)
+  const [items, plans] = await Promise.all([
+    loadCalendarItems(supabase, profile, query),
+    loadWeekPlans(supabase, profile, query),
+  ])
 
   return (
     <CalendarView
@@ -37,6 +41,7 @@ export default async function TutorCalendarPage({ searchParams }: PageProps<"/tu
       today={query.today}
       timeZone={profile.timezone}
       items={items}
+      plans={plans}
       students={students}
       studentId={query.studentId}
       feedUrl={calendarFeedUrl(profile.calendarToken)}

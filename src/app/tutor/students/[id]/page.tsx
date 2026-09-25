@@ -3,11 +3,14 @@ import { notFound } from "next/navigation"
 
 import { Avatar, Page, PageHeader } from "@/components/brand/primitives"
 import { CourseCard } from "@/components/syllabus/course-card"
+import { ExamsSection } from "@/components/syllabus/exams-section"
 import { SyllabusTracker } from "@/components/syllabus/syllabus-tracker"
+import { CopyPromptButton, ExportCsvButton, ImportCsvDialog } from "@/components/syllabus/tracker-csv"
 import { requireRole } from "@/lib/auth/session"
 import { dayKeyOf } from "@/lib/calendar/dates"
 import { createClient } from "@/lib/supabase/server"
-import { loadTracker } from "@/lib/syllabus/load"
+import { loadExams, loadTracker } from "@/lib/syllabus/load"
+import { csvFilename } from "@/lib/syllabus/csv"
 import { courseShortName, studentCourse } from "@/lib/syllabus/model"
 
 export const metadata: Metadata = { title: "Student · Maths Tasks" }
@@ -31,7 +34,11 @@ export default async function StudentDetailPage({ params }: PageProps<"/tutor/st
 
   const name = student.full_name || "Unnamed student"
   const course = studentCourse(student)
-  const rows = course ? await loadTracker(supabase, student.id, course) : []
+  const [rows, exams] = await Promise.all([
+    course ? loadTracker(supabase, student.id, course) : [],
+    course ? loadExams(supabase, student.id) : [],
+  ])
+  const today = dayKeyOf(new Date(), tutor.timezone)
 
   return (
     <Page width="wide" className="dub">
@@ -53,10 +60,19 @@ export default async function StudentDetailPage({ params }: PageProps<"/tutor/st
             studentId={student.id}
             rows={rows}
             editable
-            today={dayKeyOf(new Date(), tutor.timezone)}
+            today={today}
+            toolbar={
+              <>
+                <CopyPromptButton rows={rows} courseName={courseShortName(course)} today={today} />
+                <ImportCsvDialog studentId={student.id} rows={rows} />
+                <ExportCsvButton rows={rows} filename={csvFilename(name, `${course.course} ${course.level}`, today)} />
+              </>
+            }
           />
         </section>
       ) : null}
+
+      {course ? <ExamsSection studentId={student.id} exams={exams} topics={rows} today={today} /> : null}
 
       <CourseCard studentId={student.id} current={course} />
     </Page>
