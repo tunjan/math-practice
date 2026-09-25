@@ -5,7 +5,7 @@ import { Avatar, Page, PageHeader } from "@/components/brand/primitives"
 import { CourseCard } from "@/components/syllabus/course-card"
 import { ExamsSection } from "@/components/syllabus/exams-section"
 import { SyllabusTracker } from "@/components/syllabus/syllabus-tracker"
-import { ExportCsvButton, ImportCsvDialog } from "@/components/syllabus/tracker-csv"
+import { CopyPromptButton, ExportCsvButton, ImportCsvDialog } from "@/components/syllabus/tracker-csv"
 import { requireRole } from "@/lib/auth/session"
 import { dayKeyOf } from "@/lib/calendar/dates"
 import { createClient } from "@/lib/supabase/server"
@@ -63,6 +63,7 @@ export default async function StudentDetailPage({ params }: PageProps<"/tutor/st
             today={today}
             toolbar={
               <>
+                <CopyPromptButton rows={rows} courseName={courseShortName(course)} today={today} />
                 <ImportCsvDialog studentId={student.id} rows={rows} />
                 <ExportCsvButton rows={rows} filename={csvFilename(name, `${course.course} ${course.level}`, today)} />
               </>

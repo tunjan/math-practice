@@ -163,7 +163,8 @@
 - **Verify by:** Round-trip an exported file unchanged (0 changes). A file with a bad code is rejected with the row number.
 
 ### Phase 9.17 — "Copy LLM prompt"
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
+- **Notes:** "LLM prompt" in the tutor's tracker toolbar opens a popover with From (today) and To (30 April before the next May session) and copies `llmPlanPrompt` (`src/lib/syllabus/csv.ts`). The prompt includes: the course, how many subtopics aren't seen yet, the exact header, the rules Import enforces (same codes, no extras/repeats, status values, stars 0–5, YYYY-MM-DD with start ≤ end), planning guidance (prerequisites, SL before the AHL that builds on it, 1–2 weeks each, review time before the end date, weaker topics earlier, seen rows untouched) and the current tracker as CSV (every code the student studies). The importer now strips a ```csv fence, since LLMs add one anyway. Checked with a script: a reply in the requested shape (unquoted, with 1.10) imports with only the planned dates and notes changing.
 - **Changes:** Copies a prompt with the CSV schema, the student's topic codes and the date range.
 - **Verify by:** Paste it into an LLM, import the result, and the preview is valid.
 

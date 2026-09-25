@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ArrowRight, Download, Upload } from "lucide-react"
+import { ArrowRight, Download, Sparkles, Upload } from "lucide-react"
 import { toast } from "sonner"
 
 import { FormMessage } from "@/components/auth/form-message"
@@ -15,9 +15,11 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { importTopicProgress } from "@/lib/syllabus/actions"
-import { parseTrackerCsv, trackerToCsv, type CsvImport } from "@/lib/syllabus/csv"
+import { defaultPlanEnd, llmPlanPrompt, parseTrackerCsv, trackerToCsv, type CsvImport } from "@/lib/syllabus/csv"
 import { STATUS_COLOR, STATUS_LABEL, type TopicProgress, type TrackerRow } from "@/lib/syllabus/model"
 
 /** Downloads the tracker as a CSV, built in the browser from what's on screen. */
@@ -245,5 +247,74 @@ export function ImportCsvDialog({ studentId, rows }: { studentId: string; rows: 
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/**
+ * Copies a prompt asking an LLM to plan the tracker between two dates. The
+ * reply is a CSV for Import, so the tutor checks every change before it lands.
+ */
+export function CopyPromptButton({
+  rows,
+  courseName,
+  today,
+}: {
+  rows: TrackerRow[]
+  courseName: string
+  today: string
+}) {
+  const [open, setOpen] = React.useState(false)
+  const [from, setFrom] = React.useState(today)
+  const [to, setTo] = React.useState(() => defaultPlanEnd(today))
+  const invalid = !from || !to || from > to
+
+  async function copy(event: React.FormEvent) {
+    event.preventDefault()
+    if (invalid) return
+    try {
+      await navigator.clipboard.writeText(llmPlanPrompt({ courseName, from, to, rows }))
+      toast.success("Prompt copied", { description: "Paste the reply into Import CSV to check it." })
+      setOpen(false)
+    } catch {
+      toast.error("Couldn't copy to the clipboard.")
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger render={<Button variant="secondary" size="sm" />}>
+        <Sparkles aria-hidden /> LLM prompt
+      </PopoverTrigger>
+      <PopoverContent className="dub w-80" align="end">
+        <form className="flex flex-col gap-3 p-1" onSubmit={copy}>
+          <p className="text-sm text-on-surface-secondary">
+            Copies a prompt that asks an LLM to plan every subtopic not yet seen, as a CSV you can import.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
+              From
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 text-sm" />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
+              To
+              <Input
+                type="date"
+                value={to}
+                min={from || undefined}
+                onChange={(e) => setTo(e.target.value)}
+                className="h-9 text-sm"
+                aria-invalid={invalid || undefined}
+              />
+            </label>
+          </div>
+          {from && to && from > to ? <p className="text-xs text-error">The end must be on or after the start.</p> : null}
+          <div className="flex justify-end">
+            <Button type="submit" variant="primary" size="sm" disabled={invalid}>
+              Copy prompt
+            </Button>
+          </div>
+        </form>
+      </PopoverContent>
+    </Popover>
   )
 }

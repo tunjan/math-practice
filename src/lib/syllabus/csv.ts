@@ -109,7 +109,9 @@ function daysBetween(a: string, b: string): number {
  * numbers are spreadsheet rows: the header is row 1.
  */
 export function parseTrackerCsv(text: string, rows: TrackerRow[]): CsvImport {
-  const parsed = Papa.parse<Record<string, string>>(text.trim(), {
+  // LLMs wrap CSV in a ```csv fence even when asked not to.
+  const body = text.trim().replace(/^```[\w-]*\s*\n/, "").replace(/\n\s*```\s*$/, "")
+  const parsed = Papa.parse<Record<string, string>>(body, {
     header: true,
     skipEmptyLines: "greedy",
     transformHeader: (header) => header.trim().toLowerCase().replace(/\s+/g, "_"),
@@ -213,4 +215,59 @@ export function parseTrackerCsv(text: string, rows: TrackerRow[]): CsvImport {
   })
 
   return { issues, warnings, changes: issues.length ? [] : changes, rows: parsed.data.length }
+}
+
+// ── LLM prompt ──────────────────────────────────────────────────────────────
+
+/**
+ * A prompt that asks an LLM to plan the tracker and answer with a CSV that
+ * Import accepts as is: the schema, the rules the import checks, the window
+ * and the student's current tracker (which lists every code they study).
+ */
+export function llmPlanPrompt({
+  courseName,
+  from,
+  to,
+  rows,
+}: {
+  /** "Maths AA HL" */
+  courseName: string
+  from: string
+  to: string
+  rows: TrackerRow[]
+}): string {
+  const open = rows.filter((row) => row.progress.status !== "seen").length
+  return `You are helping an IB Diploma mathematics tutor plan the syllabus for one student taking ${courseName}.
+
+Schedule the ${open} subtopics below that are not yet "seen" between ${from} and ${to}.
+
+Reply with the CSV only: no commentary, no code fences.
+
+Rules the import checks (a file that breaks one is rejected):
+- The header row is exactly: ${CSV_COLUMNS.join(",")}
+- One row per subtopic listed below, with the same code. Don't add, drop or repeat codes.
+- Keep code, title and level exactly as given.
+- status is one of: to_see, in_progress, seen. stars is a whole number from 0 to 5. Keep both as given.
+- planned_start and planned_end are dates written YYYY-MM-DD, with planned_start on or before planned_end.
+- notes are optional and under 2000 characters. Keep existing notes unless you have something to add.
+
+How to plan:
+- Every subtopic not yet "seen" gets a planned_start and planned_end between ${from} and ${to}.
+- Rows already "seen" keep their dates as given (blank stays blank).
+- Respect prerequisites: number and algebra and functions come before calculus, and SL content comes before the AHL content that builds on it.
+- A subtopic usually takes one or two weeks. Windows may overlap, but keep each week to a realistic load.
+- Leave the last weeks before ${to} for review rather than new content.
+- Subtopics with low stars or already in progress can come earlier.
+- A short note on why a subtopic is placed where it is is welcome.
+
+The student's current tracker:
+${trackerToCsv(rows)}
+`
+}
+
+/** IB exams sit in May: plan up to 30 April of the next exam session. */
+export function defaultPlanEnd(today: string): string {
+  const year = Number(today.slice(0, 4))
+  const month = Number(today.slice(5, 7))
+  return `${month <= 4 ? year : year + 1}-04-30`
 }
