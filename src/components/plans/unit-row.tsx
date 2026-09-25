@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { TickProgress } from "@/components/ui/progress"
+import { Progress } from "@/components/ui/progress"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import type { Topic } from "@/lib/assignments/task-options"
 import { formatDayShort, type DayKey } from "@/lib/calendar/dates"
@@ -125,13 +125,7 @@ export function UnitRow({
 
         <div className="flex w-full items-center gap-4 sm:w-auto">
           {self !== null ? (
-            <div
-              className="flex w-28 shrink-0 items-center gap-2"
-              title="Student's self-check"
-            >
-              <TickProgress value={self} ticks={12} label="Student's self-check" />
-              <span className="mono-data-sm w-9 text-right text-on-surface-secondary">{self}%</span>
-            </div>
+            <Progress value={self} label="Student’s self-check" hideLabel className="w-32 shrink-0" />
           ) : null}
 
           <SegmentedControl
@@ -264,7 +258,7 @@ function ConfidencePips({ value }: { value: Confidence | null }) {
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className={cn("h-3 w-1 rounded-full", i < filled ? "bg-accent-orange" : "bg-outline")}
+            className={cn("h-3 w-1 rounded-full", i < filled ? "bg-on-surface" : "bg-outline")}
           />
         ))}
       </span>

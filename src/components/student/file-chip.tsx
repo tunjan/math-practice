@@ -1,5 +1,5 @@
 import * as React from "react"
-import { ArrowUpRight, FileText, ImageIcon, LoaderCircle } from "lucide-react"
+import { ArrowUpRight, Download, FileText, ImageIcon, LoaderCircle } from "lucide-react"
 
 import { cn } from "cn"
 import type { SignedFile } from "@/components/assignments/file-list"
@@ -135,6 +135,108 @@ export function FileLinks({ files, label }: { files: SignedFile[]; label: string
       {files.map((file) => (
         <li key={file.id} className="min-w-0 max-w-full">
           <FileLink file={file} />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/* ── Attachments as cards ─────────────────────────────────────────────────── */
+
+/**
+ * Signed storage URLs are cross-origin, so `<a download>` is ignored. Storage
+ * honours a `download` parameter instead and serves the file as an attachment.
+ */
+function downloadUrl(url: string, name: string): string {
+  const next = new URL(url)
+  next.searchParams.set("download", name)
+  return next.toString()
+}
+
+function extensionOf(name: string, mimeType: string): string {
+  if (mimeType === "application/pdf") return "PDF"
+  if (mimeType === "image/png") return "PNG"
+  if (mimeType === "image/jpeg") return "JPG"
+  const dot = name.lastIndexOf(".")
+  return dot > 0 ? name.slice(dot + 1, dot + 5).toUpperCase() : "FILE"
+}
+
+/**
+ * One attachment as a tile: the file itself, not its name. It opens the file;
+ * a download button rises in its corner on hover or focus, and stays put on
+ * touch screens. A single tile stretches to fill its row. Tiles are square
+ * and edge to edge; whatever holds them rounds and borders the outside.
+ */
+function AttachmentTile({ file }: { file: SignedFile }) {
+  const name = displayName(file.fileName || "Attachment", file.mimeType)
+  const image = file.mimeType.startsWith("image/") && file.url
+
+  const preview = (
+    <>
+      {image ? (
+        // Signed storage URLs can't go through next/image.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={file.url!} alt="" className="size-full object-cover" />
+      ) : (
+        <span
+          aria-hidden
+          className="relative flex h-14 w-11 flex-col gap-1 rounded-[3px] bg-surface px-2 pt-3 shadow-[0_1px_2px_rgb(0_0_0/0.06)] ring-1 ring-outline transition-transform duration-200 ease-out group-hover/file:-translate-y-0.5"
+        >
+          <span className="h-0.5 w-full rounded-full bg-outline" />
+          <span className="h-0.5 w-full rounded-full bg-outline" />
+          <span className="h-0.5 w-2/3 rounded-full bg-outline" />
+          <span className="absolute right-1 bottom-1 font-mono text-[8px] leading-none font-medium text-on-surface-muted">
+            {extensionOf(name, file.mimeType)}
+          </span>
+        </span>
+      )}
+    </>
+  )
+
+  // Square: the card it sits in clips the corners, so they share its curve.
+  const tile = "relative flex h-36 items-center justify-center overflow-hidden bg-surface-sunken"
+
+  return (
+    <div className="group/file relative">
+      {file.url ? (
+        <a href={file.url} target="_blank" rel="noreferrer" className={tile}>
+          {preview}
+          <span className="sr-only">{name}, opens in a new tab</span>
+        </a>
+      ) : (
+        <span title="Unavailable right now" className={cn(tile, "opacity-60")}>
+          {preview}
+          <span className="sr-only">{name}, unavailable right now</span>
+        </span>
+      )}
+      {file.url ? (
+        <a
+          href={downloadUrl(file.url, file.fileName || name)}
+          aria-label={`Download ${name}`}
+          className={cn(
+            "absolute top-2.5 right-2.5 z-20 flex size-8 items-center justify-center rounded-lg bg-surface/90 text-on-surface-secondary shadow-[0_1px_2px_rgb(0_0_0/0.05)] ring-1 ring-outline backdrop-blur-sm",
+            "transition-[opacity,translate,color] duration-150 hover:text-on-surface",
+            "translate-y-0.5 opacity-0 group-hover/file:translate-y-0 group-hover/file:opacity-100",
+            "focus-visible:translate-y-0 focus-visible:opacity-100 pointer-coarse:translate-y-0 pointer-coarse:opacity-100"
+          )}
+        >
+          <Download aria-hidden className="size-4" />
+        </a>
+      ) : null}
+    </div>
+  )
+}
+
+export function AttachmentTiles({ files, className }: { files: SignedFile[]; className?: string }) {
+  return (
+    <ul
+      role="list"
+      aria-label="Attachments"
+      className={cn("grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-px", className)}
+    >
+      {files.map((file) => (
+        <li key={file.id} className="min-w-0">
+          <AttachmentTile file={file} />
         </li>
       ))}
     </ul>

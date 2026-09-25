@@ -3,11 +3,15 @@ import * as React from "react"
 import { cn } from "cn"
 import type { SignedFile } from "@/components/assignments/file-list"
 import { MathProse } from "@/components/assignments/math-prose"
-import { FileLinks } from "@/components/student/file-chip"
+import { TaskComments } from "@/components/assignments/task-comments"
+import { DifficultyMeter } from "@/components/aviary/difficulty-meter"
+import { AttachmentTiles, FileLinks } from "@/components/student/file-chip"
 import { UnsubmitControl, WorkTray, type TaskActions } from "@/components/student/hand-in"
 import { LateNotice } from "@/components/student/late-notice"
+import type { TaskComment } from "@/lib/assignments/comment-model"
 import { formatDue, isOverdue, relativeLate, relativeToNow } from "@/lib/assignments/dates"
 import { TYPE_LABEL, type AssignmentType, type ReviewVerdict, type Stage } from "@/lib/assignments/model"
+import { DIFFICULTY_LABEL, DIFFICULTY_POINTS, type Difficulty } from "@/lib/aviary/difficulty"
 import {
   phaseOf,
   TASK_TITLE_ID,
@@ -22,6 +26,7 @@ export type TaskData = {
   studentId: string
   title: string
   type: AssignmentType
+  difficulty: Difficulty
   topic: string | null
   description: string | null
   dueAt: string
@@ -34,6 +39,8 @@ export type TaskData = {
   handIns: HandIn[]
   draft: WorkFile[]
   reviews: Review[]
+  /** Oldest first. */
+  comments: TaskComment[]
 }
 
 /**
@@ -41,21 +48,26 @@ export type TaskData = {
  *
  *   what it is        title, with type and topic above, then its status
  *                     and deadline on one line
- *   what was asked    the tutor's attachments and instructions
+ *   what was asked    one card: the tutor's attachments on top, their
+ *                     instructions as its text
+ *   what was said     the thread between the student and the tutor
  *   what you send     the tray, always the student's own files and the one
  *                     action the moment allows
  *
- * Tutor's files above, the student's below, in the same chip, so nothing
- * needs a heading to say whose is whose.
+ * The tutor's files are cards; the student's are chips in the tray, so
+ * nothing needs a heading to say whose is whose.
  */
 export function TaskDialogBody({
   task,
   timeZone,
+  viewerName,
   actions,
   titleId = TASK_TITLE_ID,
 }: {
   task: TaskData
   timeZone: string
+  /** The student's name, for their own comments. */
+  viewerName: string
   actions?: TaskActions
   titleId?: string
 }) {
@@ -76,6 +88,13 @@ export function TaskDialogBody({
                 {tag}
               </li>
             ))}
+            <li className="inline-flex items-center gap-1.5 rounded-full border border-outline bg-surface-sunken px-2 py-px text-xs leading-4 font-medium text-on-surface-secondary">
+              <DifficultyMeter difficulty={task.difficulty} className="h-2.5 text-on-surface-muted" />
+              {DIFFICULTY_LABEL[task.difficulty]}
+              <span className="font-normal text-on-surface-muted">
+                {task.verdict === "approved" ? "earned " : null}+{DIFFICULTY_POINTS[task.difficulty]}
+              </span>
+            </li>
           </ul>
           <h2
             id={titleId}
@@ -88,20 +107,14 @@ export function TaskDialogBody({
 
         <div className="flex flex-col gap-5 border-t border-outline px-6 pt-5 pb-6 sm:min-h-0 sm:flex-1 sm:overflow-y-auto sm:overscroll-contain">
           <TutorFeedback task={task} />
-          {task.materials.length > 0 ? (
-            <section className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium text-on-surface">Attachments</h3>
-              <FileLinks files={task.materials} label="Attachments" />
-            </section>
-          ) : null}
-          {task.description ? (
-            <section className="flex flex-col gap-2">
-              <h3 className="text-sm font-medium text-on-surface">Instructions</h3>
-              <MathProse>{task.description}</MathProse>
-            </section>
-          ) : task.materials.length === 0 ? (
-            <p className="text-sm text-on-surface-muted">No instructions yet.</p>
-          ) : null}
+          <Brief task={task} />
+          <TaskComments
+            taskId={task.id}
+            comments={task.comments}
+            viewer={{ role: "student", name: viewerName }}
+            timeZone={timeZone}
+            className="mt-3"
+          />
         </div>
       </div>
 
@@ -154,6 +167,36 @@ function StatusLine({ task, phase, timeZone }: { task: TaskData; phase: Phase; t
           </span>
         ) : null}
       </span>
+    </div>
+  )
+}
+
+/* ── What was asked ──────────────────────────────────────────────────────── */
+
+/**
+ * The brief as one card across the dialog, framed twice like the dialog
+ * itself: a grey tray with an inset hairline around a white card with its
+ * own. Attachments sit on top as tiles; the instructions are the card's text.
+ */
+function Brief({ task }: { task: TaskData }) {
+  const files = task.materials.length > 0
+  if (!files && !task.description) {
+    return <p className="text-sm text-on-surface-muted">No instructions yet.</p>
+  }
+
+  return (
+    <div className="rounded-xl bg-surface-sunken p-1 ring-1 ring-outline ring-inset">
+      {/* The card clips the tiles to its corners and draws its hairline over
+          them, so image and border share one curve. */}
+      <div className="relative flex flex-col overflow-hidden rounded-lg bg-surface after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-1 after:ring-outline after:ring-inset">
+        {files ? (
+          <AttachmentTiles
+            files={task.materials}
+            className={cn(task.description && "border-b border-outline")}
+          />
+        ) : null}
+        {task.description ? <MathProse className="px-4 pt-3.5 pb-4">{task.description}</MathProse> : null}
+      </div>
     </div>
   )
 }

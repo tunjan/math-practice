@@ -1,27 +1,20 @@
 "use client"
 
 import * as React from "react"
-import { Check, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { logStudySession } from "@/lib/plans/actions"
 
 /**
- * Counts today as a study day. Once today already counts (a self-check or a
- * hand-in does that too), there is nothing to log, so it says so instead.
+ * Counts today as a study day. Once today counts (a self-check or a hand-in
+ * does that too), today's day is already filled, so there is nothing to show.
  */
 export function LogStudy({ todayCounted }: { todayCounted: boolean }) {
   const [pending, startTransition] = React.useTransition()
 
-  if (todayCounted) {
-    return (
-      <span className="flex h-8 items-center gap-1.5 text-sm text-on-surface-secondary">
-        <Check className="size-4 text-on-surface" aria-hidden />
-        Today counts
-      </span>
-    )
-  }
+  if (todayCounted) return null
 
   return (
     <Button

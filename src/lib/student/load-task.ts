@@ -4,6 +4,8 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 import type { SignedFile } from "@/components/assignments/file-list"
 import type { TaskData } from "@/components/student/task-dialog"
+import type { TaskComment } from "@/lib/assignments/comment-model"
+import { loadComments } from "@/lib/assignments/comments"
 import { MATERIALS_BUCKET, SUBMISSIONS_BUCKET } from "@/lib/assignments/files"
 import { asStage, boardColumn, type BoardColumn, type ReviewVerdict } from "@/lib/assignments/model"
 import { signFiles } from "@/lib/assignments/signing"
@@ -20,7 +22,7 @@ export type StudentTask = TaskData & {
   reviewedAt: string | null
 }
 
-const ASSIGNMENT_COLUMNS = `id, title, description, type, due_at, stage, verdict, feedback, reviewed_at,
+const ASSIGNMENT_COLUMNS = `id, title, description, type, difficulty, due_at, stage, verdict, feedback, reviewed_at,
   student_opened_at, submitted_at, created_at, completion_pct,
   superseded_verdict, superseded_feedback, superseded_reviewed_at, superseded_submitted_at,
   categories(name)`
@@ -45,7 +47,7 @@ export async function loadStudentTasks(supabase: Supabase, studentId: string): P
   if (!assignments || assignments.length === 0) return []
   const ids = assignments.map((row) => row.id)
 
-  const [{ data: materialRows }, { data: submissionRows }] = await Promise.all([
+  const [{ data: materialRows }, { data: submissionRows }, comments] = await Promise.all([
     supabase.from("assignment_files").select(MATERIAL_COLUMNS).in("assignment_id", ids).order("sort_order"),
     supabase
       .from("submissions")
@@ -53,6 +55,7 @@ export async function loadStudentTasks(supabase: Supabase, studentId: string): P
       .in("assignment_id", ids)
       .order("revision", { ascending: true })
       .order("created_at", { ascending: true }),
+    loadComments(supabase, ids.map((id) => ({ id, studentId })), studentId),
   ])
 
   const [materials, submissions] = await Promise.all([
@@ -68,7 +71,8 @@ export async function loadStudentTasks(supabase: Supabase, studentId: string): P
       assignment,
       studentId,
       (materialsByTask.get(assignment.id) ?? []).map((entry) => entry.file),
-      submissionsByTask.get(assignment.id) ?? []
+      submissionsByTask.get(assignment.id) ?? [],
+      comments.get(assignment.id) ?? []
     )
   )
 }
@@ -90,7 +94,7 @@ export async function loadStudentTask(
 
   if (!assignment) return null
 
-  const [{ data: materialRows }, { data: submissionRows }] = await Promise.all([
+  const [{ data: materialRows }, { data: submissionRows }, comments] = await Promise.all([
     supabase.from("assignment_files").select(MATERIAL_COLUMNS).eq("assignment_id", id).order("sort_order"),
     supabase
       .from("submissions")
@@ -98,6 +102,7 @@ export async function loadStudentTask(
       .eq("assignment_id", id)
       .order("revision", { ascending: true })
       .order("created_at", { ascending: true }),
+    loadComments(supabase, [{ id, studentId }], studentId),
   ])
 
   const [materials, submissions] = await Promise.all([
@@ -109,7 +114,8 @@ export async function loadStudentTask(
     assignment,
     studentId,
     materials,
-    (submissionRows ?? []).map((row, index) => ({ row, file: submissions[index]! }))
+    (submissionRows ?? []).map((row, index) => ({ row, file: submissions[index]! })),
+    comments.get(id) ?? []
   )
 }
 
@@ -118,6 +124,7 @@ type AssignmentRow = {
   title: string
   description: string | null
   type: TaskData["type"]
+  difficulty: TaskData["difficulty"]
   due_at: string
   stage: string | null
   verdict: string | null
@@ -155,7 +162,8 @@ function shapeTask(
   assignment: AssignmentRow,
   studentId: string,
   materials: SignedFile[],
-  submissions: { row: SubmissionRow; file: SignedFile }[]
+  submissions: { row: SubmissionRow; file: SignedFile }[],
+  comments: TaskComment[]
 ): StudentTask {
   // Rows are one file each; group handed-in ones by revision, keep drafts apart.
   const byRevision = new Map<number, HandIn>()
@@ -197,6 +205,7 @@ function shapeTask(
     studentId,
     title: assignment.title,
     type: assignment.type,
+    difficulty: assignment.difficulty,
     topic: assignment.categories?.name ?? null,
     description: assignment.description,
     dueAt: assignment.due_at,
@@ -208,6 +217,7 @@ function shapeTask(
     handIns: Array.from(byRevision.values()).sort((a, b) => a.revision - b.revision),
     draft,
     reviews,
+    comments,
     column: boardColumn({
       stage,
       verdict,

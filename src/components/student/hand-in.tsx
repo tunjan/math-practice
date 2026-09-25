@@ -28,8 +28,8 @@ import type { WorkFile } from "@/lib/student/task-trail"
 type Action<S> = (state: S, formData: FormData) => Promise<S>
 
 /**
- * The server actions behind the student's controls. Injectable so the public
- * styleguide can render the real components without writing anything.
+ * The server actions behind the student's controls. Injectable so the
+ * components can render without writing anything.
  */
 export type TaskActions = {
   submit?: Action<SubmitState>

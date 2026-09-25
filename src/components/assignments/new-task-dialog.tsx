@@ -23,10 +23,19 @@ import { createAssignment, type CreateAssignmentState } from "@/lib/assignments/
 import { DUE_PRESETS, fromDateTimeLocalValue, toDateTimeLocalValue } from "@/lib/assignments/dates"
 import { MATERIAL_ACCEPT } from "@/lib/assignments/files"
 import type { PlanUnitOption, Recipient, Topic } from "@/lib/assignments/task-options"
+import { DEFAULT_DIFFICULTY, type Difficulty } from "@/lib/aviary/difficulty"
 
 import { useMaterialUploads } from "./material-uploader"
 import { MathProse } from "./math-prose"
-import { AttachmentChips, DueChip, StudentChip, TopicChip, TypeChip, UnitChip } from "./new-task-fields"
+import {
+  AttachmentChips,
+  DifficultyChip,
+  DueChip,
+  StudentChip,
+  TopicChip,
+  TypeChip,
+  UnitChip,
+} from "./new-task-fields"
 
 type CreateAction = (
   state: CreateAssignmentState,
@@ -59,7 +68,7 @@ export function NewTaskDialog({
   units?: PlanUnitOption[]
   /** Open on arrival, for links to the old /tutor/assignments/new page. */
   defaultOpen?: boolean
-  /** Swapped out by the styleguide, which must never write. */
+  /** Injectable; defaults to the real server action. */
   action?: CreateAction
 }) {
   const router = useRouter()
@@ -247,6 +256,7 @@ function NewTaskForm({
     toDateTimeLocalValue(DUE_PRESETS[0]!.resolve(new Date()))
   )
   const [type, setType] = React.useState("problem_set")
+  const [difficulty, setDifficulty] = React.useState<Difficulty>(DEFAULT_DIFFICULTY)
   const [topic, setTopic] = React.useState<string | null>(null)
   const [unit, setUnit] = React.useState<string | null>(null)
   const studentUnits = target?.startsWith("student:")
@@ -364,6 +374,7 @@ function NewTaskForm({
       <input type="hidden" name="target" value={target ?? ""} />
       <input type="hidden" name="due_at" value={iso} />
       <input type="hidden" name="type" value={type} />
+      <input type="hidden" name="difficulty" value={difficulty} />
       <input type="hidden" name="category_id" value={topic ?? ""} />
       <input type="hidden" name="plan_unit_id" value={unit ?? ""} />
 
@@ -447,6 +458,7 @@ function NewTaskForm({
             describedBy={errors.due ? `${errorId}-chips` : undefined}
           />
           <TypeChip value={type} onValueChange={setType} />
+          <DifficultyChip value={difficulty} onValueChange={setDifficulty} />
           <TopicChip topics={topics} value={topic} onValueChange={setTopic} />
           {studentUnits.length > 0 ? (
             <UnitChip units={studentUnits} value={unit} onValueChange={setUnit} />

@@ -6,6 +6,7 @@ const NAV: NavItem[] = [
   { href: "/student", label: "Tasks", icon: "tasks", exact: true, also: ["/student/tasks"] },
   { href: "/student/plan", label: "Plan", icon: "plan" },
   { href: "/student/calendar", label: "Calendar", icon: "calendar" },
+  { href: "/student/aviary", label: "Aviary", icon: "aviary" },
 ]
 
 export default async function StudentLayout({ children, task }: LayoutProps<"/student">) {

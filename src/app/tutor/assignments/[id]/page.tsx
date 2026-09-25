@@ -8,11 +8,13 @@ import { LifecycleTracker } from "@/components/assignments/lifecycle-tracker"
 import { MathProse } from "@/components/assignments/math-prose"
 import { ReviewPanel } from "@/components/assignments/review-panel"
 import { StatusBadge } from "@/components/assignments/status-badge"
+import { TaskComments } from "@/components/assignments/task-comments"
 import { ButtonLink } from "@/components/ui/button"
 import { Card, CardHeader, CardSection, DetailList } from "@/components/ui/card"
-import { TickProgress } from "@/components/ui/progress"
+import { Progress } from "@/components/ui/progress"
 import { requireRole } from "@/lib/auth/session"
 import { createClient } from "@/lib/supabase/server"
+import { loadComments } from "@/lib/assignments/comments"
 import { formatDue, isOverdue, relativeToNow } from "@/lib/assignments/dates"
 import { MATERIALS_BUCKET, SUBMISSIONS_BUCKET } from "@/lib/assignments/files"
 import { signFiles } from "@/lib/assignments/signing"
@@ -34,7 +36,7 @@ export default async function AssignmentDetailPage({
   const { data: assignment } = await supabase
     .from("assignments")
     .select(
-      `id, title, description, type, due_at, stage, verdict, feedback, reviewed_at,
+      `id, student_id, title, description, type, due_at, stage, verdict, feedback, reviewed_at,
        student_opened_at, submitted_at, created_at, completion_pct,
        categories(name),
        profiles!assignments_student_id_fkey(id, full_name, email)`
@@ -44,7 +46,10 @@ export default async function AssignmentDetailPage({
 
   if (!assignment) notFound()
 
-  const [{ data: materialRows }, { data: submissionRows }] = await Promise.all([
+  const studentName =
+    assignment.profiles?.full_name || assignment.profiles?.email || "Unknown student"
+
+  const [{ data: materialRows }, { data: submissionRows }, comments] = await Promise.all([
     supabase
       .from("assignment_files")
       .select("id, file_name, mime_type, size_bytes, storage_path")
@@ -58,6 +63,11 @@ export default async function AssignmentDetailPage({
       .not("handed_in_at", "is", null)
       .order("revision", { ascending: false })
       .order("created_at", { ascending: true }),
+    loadComments(
+      supabase,
+      [{ id, studentId: assignment.student_id, studentName }],
+      profile.id
+    ),
   ])
 
   const [materials, submissions] = await Promise.all([
@@ -81,8 +91,6 @@ export default async function AssignmentDetailPage({
   const stage = asStage(assignment.stage)
   const overdue =
     isOverdue(assignment.due_at) && stage !== "submitted" && stage !== "reviewed"
-  const studentName =
-    assignment.profiles?.full_name || assignment.profiles?.email || "Unknown student"
 
   return (
     <Page>
@@ -157,6 +165,17 @@ export default async function AssignmentDetailPage({
             <CardHeader title="Materials" />
             <FileList files={materials} emptyLabel="No materials attached." />
           </Card>
+
+          <Card>
+            <CardSection>
+              <TaskComments
+                taskId={id}
+                comments={comments.get(id) ?? []}
+                viewer={{ role: "tutor", name: profile.fullName }}
+                timeZone={tz}
+              />
+            </CardSection>
+          </Card>
         </div>
 
         <aside className="flex flex-col gap-6">
@@ -186,13 +205,11 @@ export default async function AssignmentDetailPage({
                 },
               ]}
             />
-            <div className="flex flex-col gap-2 border-t border-outline px-6 py-4">
-              <div className="flex items-baseline justify-between gap-4">
-                <span className="body-sm text-on-surface-muted">Student&apos;s estimate</span>
-                <span className="mono-data-sm text-on-surface">{assignment.completion_pct}%</span>
-              </div>
-              <TickProgress value={assignment.completion_pct} />
-            </div>
+            <Progress
+              value={assignment.completion_pct}
+              label="Student’s estimate"
+              className="border-t border-outline px-6 py-4"
+            />
           </Card>
         </aside>
       </div>

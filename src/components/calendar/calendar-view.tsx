@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, ChevronRight, ChevronsUpDown, Plus, Users } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, Users } from "lucide-react"
 import { cn } from "cn"
 
 import { Button, ButtonLink } from "@/components/ui/button"
@@ -18,15 +18,9 @@ import {
   type DayKey,
   type MonthKey,
 } from "@/lib/calendar/dates"
-import {
-  placeByDay,
-  type CalendarItem,
-  type DayPlacement,
-  type EventItem,
-  type Person,
-} from "@/lib/calendar/model"
+import { placeByDay, type CalendarItem, type EventItem, type Person } from "@/lib/calendar/model"
 
-import { DayPanel, TOOLTIP_CLASS } from "./day-panel"
+import { DayPanel } from "./day-panel"
 import {
   EventDialog,
   type DeleteEventAction,
@@ -44,9 +38,9 @@ import { SubscribeDialog, type ResetLinkAction } from "./subscribe-dialog"
 let pendingSelection: { month: MonthKey; day: DayKey } | null = null
 
 /**
- * The calendar screen, in the Dub idiom of the student task page: a display
- * heading over a ruled column, a toolbar band, then the month as a ledger
- * with the selected day's cards beside it.
+ * The calendar screen in the Dub page anatomy (DESIGN.md › Layout): a 64px
+ * header with the one primary action, a toolbar row, then the month card with
+ * the selected day's agenda beside it.
  *
  * The month comes from the server (it decides what to load); the selected
  * day is local, mirrored into the URL with replaceState so a refresh or a
@@ -79,7 +73,7 @@ export function CalendarView({
   students?: Person[]
   studentId?: string | null
   feedUrl: string
-  /** Swapped out by the styleguide, which must never write. */
+  /** Injectable; default to the real server actions. */
   saveAction?: SaveEventAction
   deleteAction?: DeleteEventAction
   resetAction?: ResetLinkAction
@@ -143,7 +137,6 @@ export function CalendarView({
   )
   const openEdit = React.useCallback((event: EventItem) => setDraft({ mode: "edit", event }), [])
 
-  const filteredStudent = students.find((s) => s.id === studentId)
   const inThisMonth = today.startsWith(month)
 
   // N adds an event on the selected day; T jumps to today. Never while typing
@@ -171,133 +164,98 @@ export function CalendarView({
 
   return (
     <div className="dub flex flex-1 flex-col bg-surface">
-      {/* Anchored to the sidebar: its edge is the column's left rule, so only
-          the right rule is drawn. */}
-      <div className="flex w-full max-w-[1320px] flex-1 flex-col border-outline min-[1320px]:border-r">
-        <header className="relative flex flex-col gap-6 overflow-hidden px-4 pt-10 pb-8 sm:flex-row sm:items-end sm:justify-between sm:px-12 sm:pt-14 sm:pb-10">
-          <div className="relative flex min-w-0 flex-col gap-3">
-            <h1 className="animate-slide-up-fade font-display text-3xl leading-[1.2] font-medium text-on-surface sm:text-4xl sm:leading-[1.15]">
-              Calendar
-            </h1>
-            <p
-              style={{ animationDelay: "80ms" }}
-              className="max-w-lg animate-slide-up-fade text-base text-pretty text-on-surface-muted sm:text-lg sm:leading-7"
-            >
-              {summarise(placements, month, filteredStudent?.name)}
-            </p>
-          </div>
-          <div
-            style={{ animationDelay: "120ms" }}
-            className="relative flex shrink-0 animate-slide-up-fade items-center gap-2"
-          >
-            <SubscribeDialog feedUrl={feedUrl} resetAction={resetAction} />
-            <Button variant="primary" className="pr-2.5" onClick={() => openNew(selected)}>
-              <Plus aria-hidden />
-              New event
-              <Kbd className="ml-1 h-5 min-w-5 rounded border-white/20 max-sm:hidden bg-white/10 px-1 text-[11px] text-white/80">
-                N
-              </Kbd>
-            </Button>
-          </div>
-        </header>
+      <header className="border-b border-outline">
+        <div className="mx-auto flex h-12 w-full max-w-screen-xl items-center justify-between gap-4 px-3 sm:h-16 lg:px-6">
+          <h1 className="text-lg leading-7 font-semibold text-on-surface">Calendar</h1>
+          <Button variant="primary" className="h-9 gap-2 rounded-lg px-3 sm:h-10" onClick={() => openNew(selected)}>
+            <Plus aria-hidden />
+            New event
+            <Kbd className="hidden h-5 min-w-5 rounded-sm border-0 bg-neutral-700 px-1.5 text-xs font-light text-neutral-300 md:inline-flex">
+              N
+            </Kbd>
+          </Button>
+        </div>
+      </header>
 
-        <div
-          style={{ animationDelay: "160ms" }}
-          className="flex animate-slide-up-fade flex-wrap items-center gap-3 border-t border-outline px-4 py-3 sm:px-12"
-        >
-          <h2
-            id={monthTitleId}
-            aria-live="polite"
-            className="min-w-0 font-display text-xl leading-7 font-medium text-on-surface sm:w-48"
-          >
+      <div className="mx-auto flex w-full max-w-screen-xl flex-1 flex-col gap-4 px-3 pt-5 pb-12 lg:px-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                inThisMonth ? (
+                  <Button
+                    className={controlClass}
+                    disabled={selected === today}
+                    onClick={() => select(today, { focus: false })}
+                  />
+                ) : (
+                  <ButtonLink className={controlClass} href={href({})} prefetch scroll={false} />
+                )
+              }
+            >
+              Today
+            </TooltipTrigger>
+            <TooltipContent className={TOOLTIP_CLASS}>
+              <Kbd className="h-5 min-w-5 rounded-sm px-1.5 text-xs font-light">T</Kbd>
+            </TooltipContent>
+          </Tooltip>
+
+          <div className="flex h-10 overflow-hidden rounded-lg border border-outline">
+            <Link
+              href={href({ month: addMonths(month, -1) })}
+              prefetch
+              scroll={false}
+              aria-label={`Previous month, ${formatMonth(addMonths(month, -1))}`}
+              className={stepperClass}
+            >
+              <ChevronLeft aria-hidden className="size-4" />
+            </Link>
+            <Link
+              href={href({ month: addMonths(month, 1) })}
+              prefetch
+              scroll={false}
+              aria-label={`Next month, ${formatMonth(addMonths(month, 1))}`}
+              className={cn(stepperClass, "border-l border-outline")}
+            >
+              <ChevronRight aria-hidden className="size-4" />
+            </Link>
+          </div>
+
+          <h2 id={monthTitleId} aria-live="polite" className="ml-2 text-base font-semibold text-on-surface">
             {formatMonth(month)}
           </h2>
 
-          <div className="flex items-center gap-2">
-            <div className="flex overflow-hidden rounded-md border border-outline-strong shadow-[0_1px_2px_rgb(0_0_0/0.05)]">
-              <Link
-                href={href({ month: addMonths(month, -1) })}
-                prefetch
-                scroll={false}
-                aria-label={`Previous month, ${formatMonth(addMonths(month, -1))}`}
-                className={stepperClass}
-              >
-                <ChevronLeft aria-hidden className="size-4" />
-              </Link>
-              <Link
-                href={href({ month: addMonths(month, 1) })}
-                prefetch
-                scroll={false}
-                aria-label={`Next month, ${formatMonth(addMonths(month, 1))}`}
-                className={cn(stepperClass, "border-l border-outline-strong")}
-              >
-                <ChevronRight aria-hidden className="size-4" />
-              </Link>
-            </div>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  inThisMonth ? (
-                    <Button
-                      size="sm"
-                      disabled={selected === today}
-                      onClick={() => select(today, { focus: false })}
-                    />
-                  ) : (
-                    <ButtonLink size="sm" href={href({})} prefetch scroll={false} />
-                  )
-                }
-              >
-                Today
-              </TooltipTrigger>
-              <TooltipContent className={TOOLTIP_CLASS}>
-                <span className="inline-flex items-center gap-2">
-                  Jump to today
-                  <Kbd className="h-5 min-w-5 rounded px-1 text-[11px]">T</Kbd>
-                </span>
-              </TooltipContent>
-            </Tooltip>
+          <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
+            {role === "tutor" && students.length > 0 ? (
+              <StudentFilter
+                students={students}
+                value={studentId}
+                onChange={(next) => router.push(href({ month, student: next }), { scroll: false })}
+              />
+            ) : null}
+            <SubscribeDialog feedUrl={feedUrl} resetAction={resetAction} />
           </div>
-
-          {role === "tutor" && students.length > 0 ? (
-            <StudentFilter
-              students={students}
-              value={studentId}
-              onChange={(next) => router.push(href({ month, student: next }), { scroll: false })}
-            />
-          ) : null}
         </div>
 
-        <div
-          style={{ animationDelay: "240ms" }}
-          className="grid flex-1 animate-slide-up-fade items-start border-t border-outline xl:grid-cols-[minmax(0,1fr)_380px]"
-        >
-          <div className="flex min-w-0 flex-col">
-            <div ref={gridRef}>
-              <MonthGrid
-                month={month}
-                today={today}
-                selected={selected}
-                placements={placements}
-                onSelect={select}
-                labelledBy={monthTitleId}
-              />
-            </div>
-            <Legend />
-          </div>
-
-          <div className="self-stretch border-t border-outline xl:border-t-0 xl:border-l">
-            <DayPanel
-              day={selected}
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div ref={gridRef} className="min-w-0">
+            <MonthGrid
+              month={month}
               today={today}
-              role={role}
-              placements={placements.get(selected) ?? []}
-              onAdd={() => openNew(selected)}
-              onEdit={openEdit}
-              className="xl:sticky xl:top-0"
+              selected={selected}
+              placements={placements}
+              onSelect={select}
+              labelledBy={monthTitleId}
             />
           </div>
+          <DayPanel
+            day={selected}
+            today={today}
+            role={role}
+            placements={placements.get(selected) ?? []}
+            onEdit={openEdit}
+            className="lg:sticky lg:top-4"
+          />
         </div>
       </div>
 
@@ -315,9 +273,16 @@ export function CalendarView({
   )
 }
 
+/** DESIGN.md › Tooltip: white, hairline, 12px radius. Portalled, so scoped here. */
+const TOOLTIP_CLASS =
+  "dub rounded-xl border border-outline bg-surface px-2 py-1.5 text-sm text-on-surface-secondary shadow-sm **:data-[side]:hidden"
+
+/** DESIGN.md › Buttons (secondary): 40px, 8px radius, hairline. */
+const controlClass = "h-10 rounded-lg border-outline px-3"
+
 const stepperClass = cn(
-  "flex size-8 items-center justify-center bg-surface text-on-surface-secondary",
-  "transition-colors duration-150 hover:bg-surface-muted hover:text-on-surface"
+  "flex w-10 items-center justify-center bg-surface text-on-surface-muted",
+  "transition-colors duration-75 hover:bg-surface-muted hover:text-on-surface"
 )
 
 const ALL = "all"
@@ -341,98 +306,26 @@ function StudentFilter({
       <SelectTrigger
         aria-label="Show calendar for"
         className={cn(
-          "flex h-8 w-full items-center gap-2 rounded-md border border-outline-strong bg-surface pr-2 pl-2.5 text-sm font-medium text-on-surface shadow-[0_1px_2px_rgb(0_0_0/0.05)] outline-none sm:ml-auto sm:w-56",
-          "transition-colors duration-150 hover:border-on-surface-muted data-popup-open:border-on-surface-muted"
+          "flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-outline bg-surface px-3 text-sm text-on-surface outline-none sm:w-52 sm:flex-none",
+          "transition-[border-color,box-shadow] duration-150 hover:bg-surface-muted",
+          "data-popup-open:border-neutral-500 data-popup-open:ring-4 data-popup-open:ring-neutral-200"
         )}
       >
         <Users aria-hidden className="size-4 shrink-0 text-on-surface-muted" />
         <span className="min-w-0 flex-1 truncate text-left">{selected?.name ?? "All students"}</span>
-        <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-on-surface-muted" />
+        <ChevronDown aria-hidden className="size-4 shrink-0 text-on-surface-muted" />
       </SelectTrigger>
-      <SelectContent align="end" className="dub min-w-56 rounded-md p-1">
-        <SelectItem value={ALL} className="h-8 rounded-sm text-sm">
+      <SelectContent align="end" className="dub min-w-52 rounded-lg p-1">
+        <SelectItem value={ALL} className="h-9 rounded-md text-sm">
           All students
         </SelectItem>
         <SelectSeparator className="-mx-1 my-1" />
         {students.map((student) => (
-          <SelectItem key={student.id} value={student.id} className="h-8 rounded-sm text-sm">
-            <span className="flex size-5 shrink-0 items-center justify-center rounded-full border border-outline bg-surface-sunken text-[10px] font-medium text-on-surface-secondary">
-              {initials(student.name)}
-            </span>
+          <SelectItem key={student.id} value={student.id} className="h-9 rounded-md text-sm">
             {student.name}
           </SelectItem>
         ))}
       </SelectContent>
     </Select>
   )
-}
-
-function initials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]!.toUpperCase())
-    .join("")
-}
-
-function Legend() {
-  return (
-    <div
-      aria-hidden
-      className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-outline px-4 py-3 text-xs text-on-surface-muted sm:px-6"
-    >
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-1.5 rounded-full bg-on-surface-secondary" />
-        Deadline, coloured by status
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="size-1.5 rounded-full border border-on-surface-muted" />
-        Event
-      </span>
-      <span className="inline-flex items-center gap-1.5">
-        <span className="h-2.5 w-4 rounded-sm bg-surface-sunken ring-1 ring-outline" />
-        All day
-      </span>
-      <span className="ml-auto hidden items-center gap-1.5 md:inline-flex">
-        <Kbd className="h-5 min-w-5 rounded px-1 text-[11px]">←</Kbd>
-        <Kbd className="h-5 min-w-5 rounded px-1 text-[11px]">→</Kbd>
-        to move between days
-      </span>
-    </div>
-  )
-}
-
-/** "4 deadlines, 1 unit due and 2 events in September." Counts each item once. */
-function summarise(
-  placements: Map<DayKey, DayPlacement[]>,
-  month: MonthKey,
-  studentName: string | undefined
-): string {
-  const seen = new Set<string>()
-  let deadlines = 0
-  let units = 0
-  let events = 0
-  for (const [day, list] of placements) {
-    if (!day.startsWith(month)) continue
-    for (const { item } of list) {
-      const key = `${item.type}:${item.id}`
-      if (seen.has(key)) continue
-      seen.add(key)
-      if (item.type === "deadline") deadlines++
-      else if (item.type === "milestone") units++
-      else events++
-    }
-  }
-
-  const monthName = formatMonth(month).split(" ")[0]
-  const scope = studentName ? ` for ${studentName}` : ""
-  if (deadlines + units + events === 0) return `Nothing in ${monthName}${scope} yet.`
-
-  const parts: string[] = []
-  if (deadlines) parts.push(`${deadlines} ${deadlines === 1 ? "deadline" : "deadlines"}`)
-  if (units) parts.push(`${units} ${units === 1 ? "unit" : "units"} due`)
-  if (events) parts.push(`${events} ${events === 1 ? "event" : "events"}`)
-  const list = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}` : parts[0]
-  return `${list} in ${monthName}${scope}.`
 }

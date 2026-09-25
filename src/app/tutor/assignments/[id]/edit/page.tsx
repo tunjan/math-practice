@@ -24,7 +24,7 @@ export default async function EditAssignmentPage({
   const [{ data: assignment }, { data: categories }, { data: fileRows }] = await Promise.all([
     supabase
       .from("assignments")
-      .select("id, title, description, type, due_at, category_id, plan_unit_id, student_id")
+      .select("id, title, description, type, difficulty, due_at, category_id, plan_unit_id, student_id")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("categories").select("id, name").order("name"),
@@ -59,6 +59,7 @@ export default async function EditAssignmentPage({
           title: assignment.title,
           description: assignment.description ?? "",
           type: assignment.type,
+          difficulty: assignment.difficulty,
           dueAt: assignment.due_at,
           categoryId: assignment.category_id,
           planUnitId: assignment.plan_unit_id,

@@ -5,10 +5,12 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
+import { BirdFigure } from "@/components/aviary/bird-figure"
 import { TaskList, type BoardTask } from "@/components/student/task-board"
 import { TaskDialogBody, TaskUnavailable } from "@/components/student/task-dialog"
 import { TaskDialogShell } from "@/components/student/task-dialog-frame"
 import { isOverdue } from "@/lib/assignments/dates"
+import type { BirdArt, Outfit } from "@/lib/aviary/catalog"
 import { formatDayShort, type DayKey } from "@/lib/calendar/dates"
 import { recordOpen } from "@/lib/student/actions"
 import type { StudentTask } from "@/lib/student/load-task"
@@ -18,6 +20,9 @@ const STALE_AFTER_MS = 50 * 60_000
 
 /** The unit the student is on, for the link to their plan. */
 export type PlanGlance = { unitTitle: string; dueOn: DayKey; selfPct: number | null }
+
+/** The student's bird and points, for the link to their aviary. */
+export type CompanionGlance = { bird: BirdArt; outfit: Outfit; balance: number }
 
 /**
  * The student's task page. The list and every task's detail arrive together,
@@ -29,11 +34,13 @@ export function StudentTasks({
   firstName,
   tasks,
   plan = null,
+  companion = null,
   timeZone,
 }: {
   firstName: string
   tasks: StudentTask[]
   plan?: PlanGlance | null
+  companion?: CompanionGlance | null
   timeZone: string
 }) {
   const router = useRouter()
@@ -84,38 +91,41 @@ export function StudentTasks({
   return (
     <div className="dub flex flex-1 flex-col bg-surface">
       <div className="mx-auto flex w-full max-w-screen-xl flex-1 flex-col gap-10 px-4 pt-10 pb-20 sm:px-8 sm:pt-14">
-        <header className="flex min-w-0 flex-col gap-3">
-          <h1 className="animate-slide-up-fade font-display text-3xl leading-[1.2] font-medium text-pretty text-on-surface sm:text-4xl sm:leading-[1.15]">
-            {firstName ? `Hello, ${firstName}` : "Your tasks"}
-          </h1>
-          <p
-            suppressHydrationWarning
-            style={{ animationDelay: "80ms" }}
-            className="max-w-lg animate-slide-up-fade text-base text-pretty text-on-surface-muted sm:text-lg sm:leading-7"
-          >
-            {summarise(tasks)}
-          </p>
-          {plan ? (
-            <Link
-              href="/student/plan"
-              style={{ animationDelay: "120ms" }}
-              className="group/plan mt-1 flex w-fit max-w-full animate-slide-up-fade items-center gap-3 rounded-full border border-outline py-1.5 pr-3 pl-4 text-sm transition-colors hover:bg-surface-sunken"
+        <div className="flex items-start justify-between gap-6">
+          <header className="flex min-w-0 flex-col gap-3">
+            <h1 className="animate-slide-up-fade font-display text-3xl leading-[1.2] font-medium text-pretty text-on-surface sm:text-4xl sm:leading-[1.15]">
+              {firstName ? `Hello, ${firstName}` : "Your tasks"}
+            </h1>
+            <p
+              suppressHydrationWarning
+              style={{ animationDelay: "80ms" }}
+              className="max-w-lg animate-slide-up-fade text-base text-pretty text-on-surface-muted sm:text-lg sm:leading-7"
             >
-              <span className="truncate">
-                <span className="text-on-surface-muted">Now </span>
-                <span className="font-medium text-on-surface">{plan.unitTitle}</span>
-              </span>
-              <span className="shrink-0 font-mono text-xs text-on-surface-muted">
-                due {formatDayShort(plan.dueOn)}
-                {plan.selfPct !== null ? ` · ${plan.selfPct}%` : null}
-              </span>
-              <ArrowRight
-                aria-hidden
-                className="size-4 shrink-0 text-on-surface-muted transition-transform group-hover/plan:translate-x-0.5"
-              />
-            </Link>
-          ) : null}
-        </header>
+              {summarise(tasks)}
+            </p>
+            {plan ? (
+              <Link
+                href="/student/plan"
+                style={{ animationDelay: "120ms" }}
+                className="group/plan mt-1 flex w-fit max-w-full animate-slide-up-fade items-center gap-3 rounded-full border border-outline py-1.5 pr-3 pl-4 text-sm transition-colors hover:bg-surface-sunken"
+              >
+                <span className="truncate">
+                  <span className="text-on-surface-muted">Now </span>
+                  <span className="font-medium text-on-surface">{plan.unitTitle}</span>
+                </span>
+                <span className="shrink-0 font-mono text-xs text-on-surface-muted">
+                  due {formatDayShort(plan.dueOn)}
+                  {plan.selfPct !== null ? ` · ${plan.selfPct}%` : null}
+                </span>
+                <ArrowRight
+                  aria-hidden
+                  className="size-4 shrink-0 text-on-surface-muted transition-transform group-hover/plan:translate-x-0.5"
+                />
+              </Link>
+            ) : null}
+          </header>
+          {companion ? <CompanionLink companion={companion} /> : null}
+        </div>
 
         {tasks.length > 0 ? (
           <div className="animate-slide-up-fade" style={{ animationDelay: "160ms" }}>
@@ -132,7 +142,7 @@ export function StudentTasks({
         onClosed={() => setShownId(null)}
       >
         {shown ? (
-          <TaskDialogBody key={shown.id} task={shown} timeZone={timeZone} />
+          <TaskDialogBody key={shown.id} task={shown} timeZone={timeZone} viewerName={firstName} />
         ) : shownId ? (
           <TaskUnavailable />
         ) : null}
@@ -141,11 +151,40 @@ export function StudentTasks({
   )
 }
 
+/** The student's bird, dressed, with their points: the way into the aviary. */
+function CompanionLink({ companion }: { companion: CompanionGlance }) {
+  const { bird, outfit, balance } = companion
+  return (
+    <Link
+      href="/student/aviary"
+      aria-label={`Aviary: ${bird.name}, ${balance} points to spend`}
+      style={{ animationDelay: "120ms" }}
+      className="group/bird hidden shrink-0 animate-slide-up-fade items-end gap-2 rounded-xl py-1 pr-3 pl-1 transition-colors hover:bg-surface-sunken sm:flex"
+    >
+      <BirdFigure
+        bird={bird}
+        outfit={outfit}
+        className="w-[80px] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/bird:-translate-y-0.5"
+      />
+      <span className="flex flex-col pb-2">
+        <span className="font-display text-2xl leading-none font-medium text-on-surface tabular-nums">
+          {balance.toLocaleString("en-GB")}
+        </span>
+        <span className="mt-1 flex items-center gap-1 text-xs text-on-surface-muted">
+          points
+          <ArrowRight aria-hidden className="size-3 transition-transform group-hover/bird:translate-x-0.5" />
+        </span>
+      </span>
+    </Link>
+  )
+}
+
 function toBoardTask(task: StudentTask): BoardTask {
   return {
     id: task.id,
     title: task.title,
     type: task.type,
+    difficulty: task.difficulty,
     dueAt: task.dueAt,
     column: task.column,
     completionPct: task.completionPct,

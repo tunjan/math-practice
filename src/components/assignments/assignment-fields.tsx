@@ -7,8 +7,17 @@ import { cn } from "cn"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { SegmentedControl } from "@/components/ui/segmented-control"
 import { Textarea } from "@/components/ui/textarea"
 import type { AssignmentType } from "@/lib/assignments/model"
+import {
+  DEFAULT_DIFFICULTY,
+  DIFFICULTIES,
+  DIFFICULTY_LABEL,
+  DIFFICULTY_POINTS,
+  formatPoints,
+  type Difficulty,
+} from "@/lib/aviary/difficulty"
 
 import { MathProse } from "./math-prose"
 
@@ -59,6 +68,28 @@ const TYPES = [
   { value: "problem_set", label: "Problem set", hint: "Questions to work through", icon: Sigma },
   { value: "reading_notes", label: "Reading notes", hint: "Read and take notes", icon: BookOpen },
 ] as const
+
+const DIFFICULTY_OPTIONS = DIFFICULTIES.map((value) => ({ value, label: DIFFICULTY_LABEL[value] }))
+
+/** Easy to ultra; the caption says what the student earns when it is approved. */
+export function DifficultyChoice({ defaultValue = DEFAULT_DIFFICULTY }: { defaultValue?: Difficulty }) {
+  const [value, setValue] = React.useState<Difficulty>(defaultValue)
+
+  return (
+    <div className="flex flex-col gap-2">
+      <SegmentedControl
+        legend="Difficulty"
+        name="difficulty"
+        value={value}
+        onValueChange={setValue}
+        options={DIFFICULTY_OPTIONS}
+      />
+      <p className="body-sm text-on-surface-muted">
+        Approving it earns the student {formatPoints(DIFFICULTY_POINTS[value])}.
+      </p>
+    </div>
+  )
+}
 
 export function TypeChoice({ defaultValue = "problem_set" }: { defaultValue?: AssignmentType }) {
   const [value, setValue] = React.useState<string>(defaultValue)

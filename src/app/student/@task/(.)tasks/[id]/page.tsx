@@ -16,7 +16,7 @@ export default async function TaskDialogPage({ params }: PageProps<"/student/tas
   return (
     <>
       <OpenReceipt assignmentId={id} alreadyOpened={task.openedAt !== null} />
-      <TaskDialogBody task={task} timeZone={profile.timezone} />
+      <TaskDialogBody task={task} timeZone={profile.timezone} viewerName={profile.fullName} />
     </>
   )
 }

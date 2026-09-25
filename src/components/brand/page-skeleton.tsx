@@ -68,44 +68,41 @@ export function BoardSkeleton() {
 /** Loading shape for the calendar, in its ruled Dub column. */
 export function CalendarSkeleton() {
   return (
-    <div className="dub flex flex-1 flex-col bg-surface">
-      <div
-        aria-busy="true"
-        aria-label="Loading"
-        className="flex w-full max-w-[1320px] flex-1 flex-col border-outline min-[1320px]:border-r"
-      >
-        <div className="flex flex-col gap-3 px-4 pt-10 pb-8 sm:px-12 sm:pt-14 sm:pb-10">
-          <Bar className="h-9 w-48 bg-surface-sunken" />
-          <Bar className="h-5 w-72 max-w-full bg-surface-sunken" />
+    <div aria-busy="true" aria-label="Loading" className="dub flex flex-1 flex-col bg-surface">
+      <div className="border-b border-outline">
+        <div className="mx-auto flex h-12 w-full max-w-screen-xl items-center justify-between px-3 sm:h-16 lg:px-6">
+          <Bar className="h-6 w-24 bg-surface-sunken" />
+          <Bar className="h-9 w-32 rounded-lg bg-surface-sunken sm:h-10" />
         </div>
-        <div className="flex h-14 items-center gap-3 border-t border-outline px-4 sm:px-12">
-          <Bar className="h-6 w-40 bg-surface-sunken" />
-          <Bar className="h-8 w-16 bg-surface-sunken" />
+      </div>
+      <div className="mx-auto flex w-full max-w-screen-xl flex-col gap-4 px-3 pt-5 lg:px-6">
+        <div className="flex items-center gap-2">
+          <Bar className="h-10 w-16 rounded-lg bg-surface-sunken" />
+          <Bar className="h-10 w-20 rounded-lg bg-surface-sunken" />
+          <Bar className="ml-2 h-5 w-36 bg-surface-sunken" />
         </div>
-        <div className="grid flex-1 items-start border-t border-outline xl:grid-cols-[minmax(0,1fr)_380px]">
-          <div>
-            <div className="h-10 border-b border-outline" />
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="overflow-hidden rounded-xl border border-outline">
+            <div className="h-8 border-b border-outline" />
             {Array.from({ length: 5 }, (_, week) => (
               <div key={week} className="grid grid-cols-7 border-b border-outline last:border-b-0">
                 {Array.from({ length: 7 }, (_, day) => (
-                  <div
-                    key={day}
-                    className={`flex min-h-16 flex-col gap-2 border-l border-outline p-2 first:border-l-0 md:min-h-30 ${day >= 5 ? "bg-surface-muted" : ""}`}
-                  >
+                  <div key={day} className="min-h-14 border-l border-outline p-1.5 first:border-l-0 md:min-h-28">
                     <Bar className="size-5 rounded-full bg-surface-sunken" />
                   </div>
                 ))}
               </div>
             ))}
           </div>
-          <div className="flex flex-col gap-2 self-stretch border-t border-outline px-4 pt-6 sm:px-6 xl:border-t-0 xl:border-l">
-            <Bar className="h-4 w-32 bg-surface-sunken" />
-            <Bar className="mb-3 h-7 w-44 bg-surface-sunken" />
+          <div className="overflow-hidden rounded-xl border border-outline">
+            <div className="flex h-12 items-center border-b border-outline px-4">
+              <Bar className="h-4 w-40 bg-surface-sunken" />
+            </div>
             {Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className="flex gap-3 rounded-lg border border-outline p-3.5">
-                <Bar className="h-3.5 w-10 bg-surface-sunken" />
+              <div key={i} className="flex gap-3 border-b border-outline px-4 py-3 last:border-b-0">
+                <Bar className="h-4 w-12 bg-surface-sunken" />
                 <div className="flex flex-1 flex-col gap-2">
-                  <Bar className="h-3.5 w-full bg-surface-sunken" />
+                  <Bar className="h-4 w-full bg-surface-sunken" />
                   <Bar className="h-3 w-2/3 bg-surface-sunken" />
                 </div>
               </div>

@@ -1,15 +1,35 @@
 "use client"
 
+import * as React from "react"
+import { createPortal } from "react-dom"
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
 import { Paperclip } from "lucide-react"
+import { toast } from "sonner"
 import { cn } from "cn"
+
+import { DifficultyMeter } from "@/components/aviary/difficulty-meter"
+import { Progress } from "@/components/ui/progress"
 
 import { formatDue, formatShortDate, isOverdue, relativeLate, relativeToNow } from "@/lib/assignments/dates"
 import { TYPE_LABEL, type AssignmentType, type BoardColumn } from "@/lib/assignments/model"
+import { DIFFICULTY_LABEL, DIFFICULTY_POINTS, type Difficulty } from "@/lib/aviary/difficulty"
+import { startTask } from "@/lib/student/actions"
 
 export type BoardTask = {
   id: string
   title: string
   type: AssignmentType
+  difficulty: Difficulty
   dueAt: string
   column: BoardColumn
   completionPct: number
@@ -49,6 +69,41 @@ const LANES: Lane[] = [
   { key: "finished", title: "Finished", empty: "Approved work collects here.", sort: byLatest("reviewedAt") },
 ]
 
+/**
+ * The only colour on the board, from DESIGN.md: a dot by each lane's name in
+ * its hue's 600, and a badge count (100 fill, 300 border, 700 text for AA)
+ * once something is in it. Empty lanes stay neutral. Blue is new work,
+ * purple is underway, orange (attention) needs acting on, yellow (pending)
+ * waits on the tutor, green (success) is done.
+ */
+const LANE_COLOUR: Record<BoardColumn, { dot: string; count: string }> = {
+  assigned: { dot: "bg-blue-600", count: "border-blue-300 bg-blue-100 text-blue-700" },
+  in_progress: { dot: "bg-purple-600", count: "border-purple-300 bg-purple-100 text-purple-700" },
+  revise: { dot: "bg-orange-600", count: "border-orange-300 bg-orange-100 text-orange-700" },
+  submitted: { dot: "bg-yellow-600", count: "border-yellow-300 bg-yellow-100 text-yellow-800" },
+  finished: { dot: "bg-green-600", count: "border-green-300 bg-green-100 text-green-700" },
+}
+
+/**
+ * Where a card may be dragged, from the lane it sits in. Starting is only a
+ * matter of saying so; handing in needs work attached, so dropping there opens
+ * the task at its hand-in tray instead of moving the card.
+ */
+const MOVES: Partial<Record<BoardColumn, BoardColumn[]>> = {
+  assigned: ["in_progress", "submitted"],
+  in_progress: ["submitted"],
+}
+
+const noop = () => () => {}
+
+/** The drop highlight, in the lane's own hue. */
+const LANE_DROP: Partial<Record<BoardColumn, string>> = {
+  in_progress: "bg-purple-50 outline-purple-400",
+  submitted: "bg-yellow-50 outline-yellow-500",
+}
+
+type DropState = "idle" | "target" | "blocked"
+
 /** How many lanes, from the left, are the student's turn. */
 const YOUR_TURN_LANES = 3
 
@@ -63,10 +118,11 @@ export function groupTasks(tasks: BoardTask[]) {
 
 /**
  * The student's tasks as a board, one lane per stage. Lanes are trays of
- * tone, not boxes; a bracket above them says whose turn each one is. Cards
- * move by what the student does in the task (start, hand in), so there is no
- * dragging. Nothing here navigates: a task opens in place through `onOpen`.
- * Below `xl` the lanes scroll sideways and snap.
+ * tone, not boxes; a bracket above them says whose turn each one is. A card
+ * the student hasn't handed in can be dragged forward (see MOVES); otherwise
+ * cards move by what happens in the task. Nothing here navigates: a task
+ * opens in place through `onOpen`. Below `xl` the lanes scroll sideways and
+ * snap. Touch needs a short press before a card lifts, so lanes still scroll.
  */
 export function TaskList({
   tasks,
@@ -77,22 +133,101 @@ export function TaskList({
   timeZone: string
   onOpen?: (id: string) => void
 }) {
-  const lanes = groupTasks(tasks)
+  const [shownTasks, move] = React.useOptimistic(
+    tasks,
+    (state: BoardTask[], next: { id: string; column: BoardColumn }) =>
+      state.map((task) => (task.id === next.id ? { ...task, column: next.column } : task))
+  )
+  const [dragging, setDragging] = React.useState<BoardTask | null>(null)
+  // The overlay portals into <body>, which only exists once hydrated.
+  const mounted = React.useSyncExternalStore(noop, () => true, () => false)
+  // A drag that ends where it began still fires a click; don't open the task.
+  const draggedAt = React.useRef(0)
+  const open = React.useCallback(
+    (id: string) => {
+      if (Date.now() - draggedAt.current > 150) onOpen?.(id)
+    },
+    [onOpen]
+  )
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } })
+  )
+
+  const drop = ({ active, over }: DragEndEvent) => {
+    setDragging(null)
+    draggedAt.current = Date.now()
+    const task = shownTasks.find((candidate) => candidate.id === active.id)
+    const to = over?.id as BoardColumn | undefined
+    if (!task || !to || !MOVES[task.column]?.includes(to)) return
+
+    if (to === "submitted") {
+      onOpen?.(task.id)
+      return
+    }
+    React.startTransition(async () => {
+      move({ id: task.id, column: to })
+      const result = await startTask(task.id)
+      if (result.error) toast.error(result.error)
+    })
+  }
+
+  const allowed = dragging ? (MOVES[dragging.column] ?? []) : []
+  const dropStateOf = (lane: BoardColumn): DropState =>
+    !dragging || lane === dragging.column ? "idle" : allowed.includes(lane) ? "target" : "blocked"
+
+  const lanes = groupTasks(shownTasks)
   const yourTurn = lanes.slice(0, YOUR_TURN_LANES).reduce((sum, { tasks }) => sum + tasks.length, 0)
   const tutorTurn = lanes[YOUR_TURN_LANES]?.tasks.length ?? 0
 
   return (
-    <div className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:thin] snap-x snap-mandatory scroll-px-4 sm:-mx-8 sm:scroll-px-8 sm:px-8 xl:mx-0 xl:overflow-visible xl:px-0">
-      <div className="grid min-w-[68rem] grid-cols-5 gap-x-3 gap-y-3 xl:min-w-0">
-        <Turn className="col-span-3" label="Your turn" count={yourTurn} />
-        <Turn className="col-span-1" label="Your tutor's turn" count={tutorTurn} />
-        <div aria-hidden />
+    <DndContext
+      sensors={sensors}
+      onDragStart={({ active }) => setDragging(shownTasks.find((task) => task.id === active.id) ?? null)}
+      onDragCancel={() => {
+        setDragging(null)
+        draggedAt.current = Date.now()
+      }}
+      onDragEnd={drop}
+    >
+      <div className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:thin] snap-x snap-mandatory scroll-px-4 sm:-mx-8 sm:scroll-px-8 sm:px-8 xl:mx-0 xl:overflow-visible xl:px-0">
+        <div className="grid min-w-[68rem] grid-cols-5 gap-x-3 gap-y-3 xl:min-w-0">
+          <Turn className="col-span-3" label="Your turn" count={yourTurn} />
+          <Turn className="col-span-1" label="Your tutor's turn" count={tutorTurn} />
+          <div aria-hidden />
 
-        {lanes.map(({ lane, tasks }) => (
-          <LaneColumn key={lane.key} lane={lane} tasks={tasks} timeZone={timeZone} onOpen={onOpen} />
-        ))}
+          {lanes.map(({ lane, tasks }) => (
+            <LaneColumn
+              key={lane.key}
+              lane={lane}
+              tasks={tasks}
+              timeZone={timeZone}
+              onOpen={open}
+              dropState={dropStateOf(lane.key)}
+              draggingId={dragging?.id ?? null}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+      {/* Portalled: an animated (transformed) ancestor would otherwise become
+          the overlay's containing block and throw it off the cursor. */}
+      {!mounted
+        ? null
+        : createPortal(
+            <DragOverlay
+              className="dub"
+              dropAnimation={{ duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}
+            >
+              {dragging ? (
+                <div className="cursor-grabbing rounded-lg shadow-overlay">
+                  <Card task={dragging} timeZone={timeZone} />
+                </div>
+              ) : null}
+            </DragOverlay>,
+            document.body
+          )}
+    </DndContext>
   )
 }
 
@@ -112,12 +247,17 @@ function LaneColumn({
   tasks,
   timeZone,
   onOpen,
+  dropState,
+  draggingId,
 }: {
   lane: Lane
   tasks: BoardTask[]
   timeZone: string
   onOpen?: (id: string) => void
+  dropState: DropState
+  draggingId: string | null
 }) {
+  const { setNodeRef, isOver } = useDroppable({ id: lane.key, disabled: dropState !== "target" })
   const id = `lane-${lane.key}`
   const finished = lane.key === "finished"
   const shown = finished ? tasks.slice(0, FINISHED_VISIBLE) : tasks
@@ -125,14 +265,27 @@ function LaneColumn({
 
   return (
     <section
+      ref={setNodeRef}
       aria-labelledby={id}
-      className="flex min-h-72 snap-start flex-col gap-2 rounded-xl bg-surface-sunken p-2"
+      className={cn(
+        "flex min-h-72 snap-start flex-col gap-2 rounded-xl bg-surface-sunken p-2",
+        "outline-2 -outline-offset-2 outline-transparent transition-[background-color,outline-color,opacity] duration-150",
+        dropState === "target" && "outline-dashed outline-outline-strong",
+        dropState === "target" && isOver && cn("outline-solid", LANE_DROP[lane.key]),
+        dropState === "blocked" && "opacity-50"
+      )}
     >
       <div className="flex h-8 items-center gap-2 px-2">
+        <span aria-hidden className={cn("size-2 shrink-0 rounded-full", LANE_COLOUR[lane.key].dot)} />
         <h2 id={id} className="text-sm font-medium text-on-surface">
           {lane.title}
         </h2>
-        <span className="font-mono text-xs text-on-surface-muted">
+        <span
+          className={cn(
+            "rounded-full border px-1.5 py-px font-mono text-xs font-medium",
+            tasks.length > 0 ? LANE_COLOUR[lane.key].count : "border-transparent text-on-surface-muted"
+          )}
+        >
           {tasks.length}
           <span className="sr-only">{tasks.length === 1 ? " task" : " tasks"}</span>
         </span>
@@ -144,7 +297,7 @@ function LaneColumn({
         <ul role="list" className="flex flex-col gap-2">
           {shown.map((task) => (
             <li key={task.id}>
-              <Card task={task} timeZone={timeZone} onOpen={onOpen} />
+              <DraggableCard task={task} timeZone={timeZone} onOpen={onOpen} lifted={task.id === draggingId} />
             </li>
           ))}
         </ul>
@@ -159,7 +312,7 @@ function LaneColumn({
           <ul role="list" className="mt-2 flex flex-col gap-2">
             {older.map((task) => (
               <li key={task.id}>
-                <Card task={task} timeZone={timeZone} onOpen={onOpen} />
+                <DraggableCard task={task} timeZone={timeZone} onOpen={onOpen} lifted={task.id === draggingId} />
               </li>
             ))}
           </ul>
@@ -236,12 +389,50 @@ function Files({ count }: { count: number }) {
   )
 }
 
+/** What the task is worth: earned once it is finished, on offer until then. */
+function Points({ task }: { task: BoardTask }) {
+  const points = DIFFICULTY_POINTS[task.difficulty]
+  const earned = task.column === "finished"
+  return (
+    <span
+      title={`${DIFFICULTY_LABEL[task.difficulty]}: ${points} points ${earned ? "earned" : "when approved"}`}
+      className="inline-flex shrink-0 items-center gap-1.5 text-on-surface-muted"
+    >
+      <DifficultyMeter difficulty={task.difficulty} />
+      <span className={cn("font-mono text-xs tabular-nums", earned && "text-on-surface")}>+{points}</span>
+      <span className="sr-only">
+        {DIFFICULTY_LABEL[task.difficulty]}, {points} points {earned ? "earned" : "when approved"}
+      </span>
+    </span>
+  )
+}
+
 function metaOf(task: BoardTask): string {
   return [TYPE_LABEL[task.type], task.topic].filter(Boolean).join(" · ")
 }
 
 function notHandedIn(task: BoardTask): boolean {
   return task.column === "assigned" || task.column === "in_progress"
+}
+
+/** A card that can be dragged forward, when its lane allows a move. */
+function DraggableCard({
+  task,
+  timeZone,
+  onOpen,
+  lifted,
+}: {
+  task: BoardTask
+  timeZone: string
+  onOpen?: (id: string) => void
+  lifted: boolean
+}) {
+  const { setNodeRef, listeners } = useDraggable({ id: task.id, disabled: !MOVES[task.column] })
+  return (
+    <div ref={setNodeRef} {...listeners} className={cn("touch-manipulation transition-opacity duration-150", lifted && "opacity-40")}>
+      <Card task={task} timeZone={timeZone} onOpen={onOpen} />
+    </div>
+  )
 }
 
 /** One task on the board. The whole card opens it. */
@@ -265,26 +456,16 @@ function Card({ task, timeZone, onOpen }: { task: BoardTask; timeZone: string; o
         <span className="truncate text-xs text-on-surface-muted">{metaOf(task)}</span>
       </span>
 
-      {task.column === "in_progress" ? <Progress pct={task.completionPct} /> : null}
+      {task.column === "in_progress" ? <Progress value={task.completionPct} label="Done" hideLabel /> : null}
 
       <span className="flex items-center justify-between gap-2">
         <Moment task={task} timeZone={timeZone} className="truncate" />
-        <Files count={task.materialCount} />
+        <span className="flex shrink-0 items-center gap-3">
+          <Files count={task.materialCount} />
+          <Points task={task} />
+        </span>
       </span>
     </button>
-  )
-}
-
-function Progress({ pct }: { pct: number }) {
-  return (
-    <span className="flex items-center gap-2">
-      <span aria-hidden className="h-1 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-        <span className="block h-full rounded-full bg-on-surface" style={{ width: `${pct}%` }} />
-      </span>
-      <span className="font-mono text-xs text-on-surface-secondary">
-        {pct}%<span className="sr-only"> done</span>
-      </span>
-    </span>
   )
 }
 

@@ -61,6 +61,7 @@ export type Database = {
           completion_pct: number
           created_at: string
           description: string | null
+          difficulty: Database["public"]["Enums"]["task_difficulty"]
           due_at: string
           feedback: string | null
           id: string
@@ -85,6 +86,7 @@ export type Database = {
           completion_pct?: number
           created_at?: string
           description?: string | null
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
           due_at: string
           feedback?: string | null
           id?: string
@@ -108,6 +110,7 @@ export type Database = {
           completion_pct?: number
           created_at?: string
           description?: string | null
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
           due_at?: string
           feedback?: string | null
           id?: string
@@ -151,6 +154,144 @@ export type Database = {
           {
             foreignKeyName: "assignments_tutor_id_fkey"
             columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aviary_companions: {
+        Row: {
+          bird_id: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          bird_id: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          bird_id?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aviary_companions_bird_id_fkey"
+            columns: ["bird_id"]
+            isOneToOne: false
+            referencedRelation: "aviary_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aviary_companions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aviary_items: {
+        Row: {
+          cost: number
+          id: string
+          kind: string
+          position: number
+          slot: string | null
+        }
+        Insert: {
+          cost: number
+          id: string
+          kind: string
+          position: number
+          slot?: string | null
+        }
+        Update: {
+          cost?: number
+          id?: string
+          kind?: string
+          position?: number
+          slot?: string | null
+        }
+        Relationships: [
+
+        ]
+      }
+      aviary_outfits: {
+        Row: {
+          bird_id: string
+          item_id: string
+          slot: string
+          student_id: string
+        }
+        Insert: {
+          bird_id: string
+          item_id: string
+          slot: string
+          student_id: string
+        }
+        Update: {
+          bird_id?: string
+          item_id?: string
+          slot?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aviary_outfits_bird_id_fkey"
+            columns: ["bird_id"]
+            isOneToOne: false
+            referencedRelation: "aviary_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aviary_outfits_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "aviary_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aviary_outfits_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aviary_unlocks: {
+        Row: {
+          cost: number
+          item_id: string
+          student_id: string
+          unlocked_at: string
+        }
+        Insert: {
+          cost: number
+          item_id: string
+          student_id: string
+          unlocked_at?: string
+        }
+        Update: {
+          cost?: number
+          item_id?: string
+          student_id?: string
+          unlocked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aviary_unlocks_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "aviary_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aviary_unlocks_student_id_fkey"
+            columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -381,6 +522,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           description: string | null
+          difficulty: Database["public"]["Enums"]["task_difficulty"]
           due_at: string
           id: string
           invite_id: string
@@ -392,6 +534,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
           due_at: string
           id: string
           invite_id: string
@@ -403,6 +546,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           description?: string | null
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
           due_at?: string
           feedback?: string | null
           id?: string
@@ -532,6 +676,51 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "learning_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      point_awards: {
+        Row: {
+          assignment_id: string | null
+          awarded_at: string
+          difficulty: Database["public"]["Enums"]["task_difficulty"]
+          id: string
+          points: number
+          student_id: string
+          title: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          awarded_at?: string
+          difficulty: Database["public"]["Enums"]["task_difficulty"]
+          id?: string
+          points: number
+          student_id: string
+          title: string
+        }
+        Update: {
+          assignment_id?: string | null
+          awarded_at?: string
+          difficulty?: Database["public"]["Enums"]["task_difficulty"]
+          id?: string
+          points?: number
+          student_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_awards_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: true
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "point_awards_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -749,6 +938,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aviary_choose_bird: { Args: { p_bird: string }; Returns: undefined }
+      aviary_equip: {
+        Args: { p_bird: string; p_item: string }
+        Returns: undefined
+      }
+      aviary_unequip: {
+        Args: { p_bird: string; p_item: string }
+        Returns: undefined
+      }
+      aviary_unlock: { Args: { p_item: string }; Returns: number }
       consume_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window_secs: number }
         Returns: boolean
@@ -764,6 +963,7 @@ export type Database = {
       calendar_event_kind: "lesson" | "exam" | "study" | "other"
       plan_mastery: "not_started" | "developing" | "secure"
       review_verdict: "approved" | "changes_requested"
+      task_difficulty: "easy" | "medium" | "hard" | "ultra"
       user_role: "tutor" | "student"
     }
     CompositeTypes: {
@@ -879,6 +1079,7 @@ export const Constants = {
       calendar_event_kind: ["lesson", "exam", "study", "other"],
       plan_mastery: ["not_started", "developing", "secure"],
       review_verdict: ["approved", "changes_requested"],
+      task_difficulty: ["easy", "medium", "hard", "ultra"],
       user_role: ["tutor", "student"],
     },
   },

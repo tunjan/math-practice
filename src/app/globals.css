@@ -479,19 +479,6 @@
   color: var(--on-surface);
 }
 
-/* Buttons gain a 4px neutral ring on hover (DESIGN_3.md › Buttons). Only
-   buttons with an edge rest on a shadow; a ghost has nothing to lift. */
-.dub [data-slot="button"]:not(:disabled):is([data-variant="primary"], [data-variant="secondary"], [data-variant="danger"]) {
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
-  transition-property: background-color, border-color, color, box-shadow, transform;
-}
-.dub [data-slot="button"]:not(:disabled):hover {
-  box-shadow: 0 0 0 4px var(--outline);
-}
-.dub [data-slot="button"][data-variant="danger"]:not(:disabled):hover {
-  box-shadow: 0 0 0 4px #fee2e2;
-}
-
 .dub ::selection {
   background-color: var(--outline);
   color: var(--on-surface);

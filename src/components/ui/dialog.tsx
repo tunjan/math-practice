@@ -16,11 +16,11 @@ import { buttonVariants } from "./button"
  * depth in this system is tonal, never blurred.
  */
 const backdropClass =
-  "fixed inset-0 z-50 min-h-dvh bg-on-surface/20 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0"
+  "fixed inset-0 z-50 min-h-dvh bg-on-surface/18 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0"
 
 const popupClass = [
   "fixed top-1/2 left-1/2 z-50 flex w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col gap-6",
-  "rounded-xl bg-surface p-6 text-on-surface shadow-overlay outline-none",
+  "rounded-xl bg-surface p-6 text-on-surface outline-none",
   "transition-[scale,opacity] duration-150 ease-out",
   "data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0",
 ].join(" ")
@@ -56,7 +56,7 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           // `clip`, not `hidden`: a hidden overflow can still be scrolled by focus().
-          "fixed z-50 flex flex-col overflow-clip bg-surface text-on-surface shadow-overlay outline-none",
+          "fixed z-50 flex flex-col overflow-clip bg-surface text-on-surface outline-none",
           "transition-[translate,scale,opacity] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
           "data-ending-style:duration-150 data-ending-style:ease-in",
           // Phone: bottom sheet

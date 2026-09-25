@@ -4,6 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  Bird,
   CalendarDays,
   ClipboardList,
   LayoutGrid,
@@ -43,6 +44,7 @@ const ICONS = {
   tasks: ListTodo,
   calendar: CalendarDays,
   plan: Route,
+  aviary: Bird,
 } satisfies Record<string, LucideIcon>
 
 export type NavItem = {

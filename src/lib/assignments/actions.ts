@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 import { requireRole } from "@/lib/auth/session"
+import { asDifficulty } from "@/lib/aviary/difficulty"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/lib/supabase/database.types"
 import {
@@ -96,6 +97,7 @@ export async function createAssignment(
   const title = String(formData.get("title") ?? "").trim()
   const description = String(formData.get("description") ?? "").trim()
   const type = String(formData.get("type") ?? "problem_set") as AssignmentType
+  const difficulty = asDifficulty(formData.get("difficulty") ?? "medium")
   const dueAtIso = String(formData.get("due_at") ?? "")
   const target = String(formData.get("target") ?? "")
   const categoryId = String(formData.get("category_id") ?? "")
@@ -107,6 +109,7 @@ export async function createAssignment(
   if (type !== "problem_set" && type !== "reading_notes") {
     return { error: "Pick a task type." }
   }
+  if (!difficulty) return { error: "Pick a difficulty." }
 
   const dueAt = new Date(dueAtIso)
   if (!dueAtIso || Number.isNaN(dueAt.getTime())) {
@@ -153,6 +156,7 @@ export async function createAssignment(
       tutor_id: tutor.id,
       student_id: targetId!,
       type,
+      difficulty,
       title,
       description: description || null,
       category_id: resolvedCategoryId,
@@ -185,6 +189,7 @@ export async function createAssignment(
       invite_id: targetId!,
       tutor_id: tutor.id,
       type,
+      difficulty,
       title,
       description: description || null,
       category_id: resolvedCategoryId,
@@ -390,7 +395,14 @@ export async function updateAssignment(
     }
   }
 
-  // Only forms that offer the plan unit field may change it.
+  // Only forms that offer these fields may change them.
+  let difficulty: { difficulty: NonNullable<ReturnType<typeof asDifficulty>> } | object = {}
+  if (formData.has("difficulty")) {
+    const parsed = asDifficulty(formData.get("difficulty"))
+    if (!parsed) return { error: "Pick a difficulty." }
+    difficulty = { difficulty: parsed }
+  }
+
   let planUnit: { plan_unit_id: string | null } | object = {}
   if (formData.has("plan_unit_id")) {
     const { data: current } = await supabase
@@ -413,6 +425,7 @@ export async function updateAssignment(
       type,
       due_at: dueAt.toISOString(),
       category_id: resolvedCategoryId,
+      ...difficulty,
       ...planUnit,
     })
     .eq("id", assignmentId)

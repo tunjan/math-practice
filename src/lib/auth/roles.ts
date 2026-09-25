@@ -14,7 +14,6 @@ export const PUBLIC_PREFIXES = [
   "/reset-password",
   "/invite",
   "/auth",
-  "/styleguide",
   "/health",
   // Calendar apps poll the feed with no cookies; its token is the credential.
   "/api/calendar",

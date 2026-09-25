@@ -39,6 +39,32 @@ export async function recordOpen(assignmentId: string): Promise<void> {
   revalidatePath(`/student/tasks/${assignmentId}`)
 }
 
+/**
+ * Moves a task the student hasn't started into "In progress" by giving it the
+ * smallest progress there is. Progress is the student's own report (the guard
+ * lets them write it), so this is theirs to say. Only a task still at zero,
+ * and not yet handed in, moves.
+ */
+export async function startTask(assignmentId: string): Promise<{ error?: string }> {
+  if (!UUID.test(assignmentId)) return { error: "Unknown task." }
+
+  const profile = await requireRole("student")
+  const supabase = await createClient()
+
+  const { error } = await supabase
+    .from("assignments")
+    .update({ completion_pct: 1 })
+    .eq("id", assignmentId)
+    .eq("student_id", profile.id)
+    .eq("completion_pct", 0)
+    .is("submitted_at", null)
+
+  if (error) return { error: "Couldn't move that task. Try again." }
+
+  revalidateTask(assignmentId)
+  return {}
+}
+
 export type SubmitState = { error?: string; notice?: string }
 
 /**

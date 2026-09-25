@@ -19,8 +19,10 @@ import {
 } from "@/lib/assignments/actions"
 import { formatBytes, type UploadedFile } from "@/lib/assignments/files"
 import type { AssignmentType } from "@/lib/assignments/model"
+import type { Difficulty } from "@/lib/aviary/difficulty"
 
 import {
+  DifficultyChoice,
   FormSection,
   InstructionsField,
   TopicField,
@@ -100,6 +102,7 @@ export function EditAssignmentForm({
     title: string
     description: string
     type: AssignmentType
+    difficulty: Difficulty
     dueAt: string
     categoryId: string | null
     planUnitId?: string | null
@@ -131,6 +134,7 @@ export function EditAssignmentForm({
             <Input id="title" name="title" required maxLength={200} defaultValue={initial.title} />
           </Field>
           <TypeChoice defaultValue={initial.type} />
+          <DifficultyChoice defaultValue={initial.difficulty} />
         </FormSection>
 
         <FormSection title="Instructions">

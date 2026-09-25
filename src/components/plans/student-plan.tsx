@@ -1,16 +1,17 @@
 import { cn } from "cn"
 
 import { MathProse } from "@/components/assignments/math-prose"
-import { TickProgress } from "@/components/ui/progress"
-import { daysBetween, formatDayShort, type DayKey } from "@/lib/calendar/dates"
+import { daysBetween, formatDayLong, formatDayShort, WEEKDAYS, type DayKey } from "@/lib/calendar/dates"
 import { focusUnit, planProgress, type Plan } from "@/lib/plans/model"
-import { streakWeeks, weekStatus } from "@/lib/plans/streak"
+import { streakWeeks, weekStatus, type WeekStatus } from "@/lib/plans/streak"
 
 import { LogStudy } from "./log-study"
 import { StudentUnit } from "./student-unit"
-import { WeekDots } from "./week-dots"
 
-/** The student's plan: where it is heading, how far along, and each unit in order. */
+/**
+ * The student's plan, top to bottom: what it is and how long is left, this
+ * week's study days, then the units in order with the current one open.
+ */
 export function StudentPlan({
   plan,
   studyDays,
@@ -29,100 +30,68 @@ export function StudentPlan({
   return (
     <div className="flex flex-1 flex-col bg-surface">
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 pt-10 pb-20 sm:px-8 sm:pt-14">
-        <header className="flex min-w-0 flex-col gap-3">
-          <h1 className="animate-slide-up-fade font-display text-3xl leading-[1.2] font-medium text-pretty text-on-surface sm:text-4xl sm:leading-[1.15]">
+        <header className="flex min-w-0 animate-slide-up-fade flex-col gap-2">
+          <h1 className="font-display text-3xl leading-[1.2] font-medium text-pretty text-on-surface sm:text-4xl sm:leading-[1.15]">
             {plan.title}
           </h1>
-          <p
-            style={{ animationDelay: "80ms" }}
-            className="animate-slide-up-fade font-mono text-xs text-on-surface-muted"
-          >
-            {formatDayShort(plan.startsOn)} – {formatDayShort(plan.endsOn)}
-            {daysLeft > 0 ? ` · ${weeksLeft(daysLeft)} left` : null}
+          <p className="text-sm text-on-surface-muted">
+            <span className="font-mono text-xs">
+              {formatDayShort(plan.startsOn)} – {formatDayShort(plan.endsOn)}
+            </span>
+            {daysLeft > 0 ? ` · ${timeLeft(daysLeft)} left` : null}
           </p>
           {plan.goal ? (
-            <div
-              style={{ animationDelay: "120ms" }}
-              className="max-w-xl animate-slide-up-fade text-base text-pretty text-on-surface-secondary"
-            >
+            <div className="mt-2 max-w-xl text-base text-pretty text-on-surface-secondary">
               <MathProse>{plan.goal}</MathProse>
             </div>
           ) : null}
         </header>
 
-        {plan.units.length > 0 ? (
-          <section
-            aria-label="Progress"
-            style={{ animationDelay: "160ms" }}
-            className="flex animate-slide-up-fade flex-col rounded-xl bg-surface-sunken"
-          >
-            <div className="grid gap-6 p-5 sm:grid-cols-2">
-              <div className="flex flex-col gap-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm font-medium text-on-surface">Secure</span>
-                  <span className="font-mono text-xs text-on-surface-muted">
-                    {progress.secure}/{progress.total}
-                  </span>
-                </div>
-                {/* One segment per unit, filled as your tutor rates it. */}
-                <div className="flex h-3 gap-1" aria-hidden>
-                  {plan.units.map((u) => (
-                    <span
-                      key={u.id}
-                      className={cn(
-                        "flex-1 rounded-full",
-                        u.mastery === "secure"
-                          ? "bg-accent-orange"
-                          : u.mastery === "developing"
-                            ? "bg-accent-orange/35"
-                            : "bg-outline"
-                      )}
-                    />
-                  ))}
-                </div>
-                <span className="sr-only">
-                  {progress.secure} of {progress.total} units rated secure by your tutor
-                </span>
-              </div>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm font-medium text-on-surface">Confidence</span>
-                  <span className="font-mono text-xs text-on-surface-muted">
-                    {progress.selfPct === null ? "–" : `${progress.selfPct}%`}
-                  </span>
-                </div>
-                <TickProgress value={progress.selfPct ?? 0} label="Your confidence across the plan" />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 border-t border-outline px-5 py-4">
-              <div className="flex items-center gap-5">
-                <WeekDots week={week} />
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-on-surface">
-                    {week.active}/{week.goal} days
-                  </span>
-                  <span className="text-xs text-on-surface-muted">
-                    {streak > 0 ? `${streak}-week streak` : "This week"}
-                  </span>
-                </div>
-              </div>
-              <LogStudy todayCounted={studyDays.has(today)} />
-            </div>
-          </section>
-        ) : null}
+        <section
+          aria-label="This week"
+          style={{ animationDelay: "80ms" }}
+          className="flex animate-slide-up-fade flex-wrap items-center justify-between gap-x-6 gap-y-4 rounded-xl border border-outline px-4 py-3"
+        >
+          <div className="flex items-center gap-4">
+            <WeekDays week={week} />
+            <p className="flex flex-col">
+              <span className="text-sm font-medium text-on-surface">
+                <span className="font-mono tabular-nums">
+                  {week.active}/{week.goal}
+                </span>{" "}
+                days
+              </span>
+              {streak > 0 ? (
+                <span className="text-xs text-on-surface-muted">{streak}-week streak</span>
+              ) : null}
+            </p>
+          </div>
+          <LogStudy todayCounted={studyDays.has(today)} />
+        </section>
 
         {plan.units.length > 0 ? (
-          <ol aria-label="Units" className="animate-slide-up-fade" style={{ animationDelay: "200ms" }}>
-            {plan.units.map((unit, index) => (
-              <StudentUnit
-                key={unit.id}
-                unit={unit}
-                today={today}
-                isFocus={unit.id === focus?.id}
-                isLast={index === plan.units.length - 1}
-              />
-            ))}
-          </ol>
+          <section
+            aria-labelledby="plan-units"
+            style={{ animationDelay: "140ms" }}
+            className="flex animate-slide-up-fade flex-col gap-3"
+          >
+            <div className="flex items-baseline justify-between gap-4 px-1">
+              <h2 id="plan-units" className="text-base font-medium text-on-surface">
+                Units
+              </h2>
+              <span className="text-sm text-on-surface-muted">
+                <span className="font-mono text-xs tabular-nums">
+                  {progress.secure}/{progress.total}
+                </span>{" "}
+                secure
+              </span>
+            </div>
+            <ol className="flex flex-col divide-y divide-outline rounded-xl border border-outline">
+              {plan.units.map((unit) => (
+                <StudentUnit key={unit.id} unit={unit} today={today} isFocus={unit.id === focus?.id} />
+              ))}
+            </ol>
+          </section>
         ) : (
           <p className="text-base text-on-surface-muted">Your tutor is still adding units.</p>
         )}
@@ -131,8 +100,34 @@ export function StudentPlan({
   )
 }
 
-function weeksLeft(days: number): string {
+/** Monday to Sunday, each day filled once it counts. Today carries the halo. */
+function WeekDays({ week }: { week: WeekStatus }) {
+  return (
+    <ol className="flex items-center gap-1" aria-label="Study days this week">
+      {week.days.map((d, i) => (
+        <li
+          key={d.day}
+          className={cn(
+            "flex size-7 items-center justify-center rounded-full text-xs font-medium",
+            d.active
+              ? "bg-on-surface text-surface"
+              : d.isFuture
+                ? "text-on-surface-muted/60"
+                : "bg-surface-sunken text-on-surface-muted",
+            d.isToday && "ring-4 ring-outline"
+          )}
+        >
+          <span aria-hidden>{WEEKDAYS[i]!.short.charAt(0)}</span>
+          <span className="sr-only">
+            {formatDayLong(d.day)}: {d.active ? "studied" : d.isFuture ? "still to come" : "no study"}
+          </span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+function timeLeft(days: number): string {
   if (days < 14) return `${days} ${days === 1 ? "day" : "days"}`
-  const weeks = Math.round(days / 7)
-  return `${weeks} weeks`
+  return `${Math.round(days / 7)} weeks`
 }
