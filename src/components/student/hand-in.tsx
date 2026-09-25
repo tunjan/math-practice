@@ -2,12 +2,13 @@
 
 import * as React from "react"
 import { startTransition, useActionState } from "react"
-import { LoaderCircle, Plus, Undo2, X } from "lucide-react"
+import { CircleAlert, LoaderCircle, Plus, Undo2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "cn"
 import { FormMessage } from "@/components/auth/form-message"
 import { ChipContent, chipClass } from "@/components/student/file-chip"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -386,13 +387,16 @@ export function WorkTray({
       </div>
 
       {rejected.length > 0 ? (
-        <ul role="alert" className="flex flex-col gap-1 rounded-md bg-error-container px-3 py-2.5">
-          {rejected.map((message) => (
-            <li key={message} className="body-sm text-on-error-container">
-              {message}
-            </li>
-          ))}
-        </ul>
+        <Alert>
+          <CircleAlert aria-hidden />
+          <AlertDescription>
+            <ul className="flex flex-col gap-1">
+              {rejected.map((message) => (
+                <li key={message}>{message}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       <FormMessage error={state.error} />

@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { ArrowRight, Download, Sparkles, Upload } from "lucide-react"
+import { ArrowRight, CircleAlert, Download, Sparkles, Upload } from "lucide-react"
 import { toast } from "sonner"
 
 import { FormMessage } from "@/components/auth/form-message"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,7 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
+import { DateField } from "@/components/ui/date-field"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { importTopicProgress } from "@/lib/syllabus/actions"
@@ -168,19 +169,22 @@ export function ImportCsvDialog({ studentId, rows }: { studentId: string; rows: 
           {result ? (
             <div className="flex flex-col gap-3" aria-live="polite">
               {result.issues.length ? (
-                <div role="alert" className="flex flex-col gap-2 rounded-md bg-error-container px-3 py-2.5 text-sm text-on-error-container">
-                  <p className="font-medium">
+                <Alert className="text-sm">
+                  <CircleAlert aria-hidden />
+                  <AlertTitle>
                     {result.issues.length} problem{result.issues.length === 1 ? "" : "s"}: fix the file and check it again.
-                  </p>
-                  <ul className="flex flex-col gap-1">
-                    {result.issues.map((issue, i) => (
-                      <li key={i}>
-                        {issue.row ? <span className="font-mono tabular-nums">Row {issue.row}: </span> : null}
-                        {issue.message}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                  </AlertTitle>
+                  <AlertDescription>
+                    <ul className="flex flex-col gap-1">
+                      {result.issues.map((issue, i) => (
+                        <li key={i}>
+                          {issue.row ? <span className="font-mono tabular-nums">Row {issue.row}: </span> : null}
+                          {issue.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
               ) : null}
               {result.warnings.map((warning) => (
                 <p key={warning} className="text-sm text-on-surface-muted">
@@ -293,15 +297,14 @@ export function CopyPromptButton({
           <div className="grid grid-cols-2 gap-2">
             <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
               From
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 text-sm" />
+              <DateField value={from} onChange={setFrom} className="h-9 text-sm" />
             </label>
             <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
               To
-              <Input
-                type="date"
+              <DateField
                 value={to}
                 min={from || undefined}
-                onChange={(e) => setTo(e.target.value)}
+                onChange={setTo}
                 className="h-9 text-sm"
                 aria-invalid={invalid || undefined}
               />

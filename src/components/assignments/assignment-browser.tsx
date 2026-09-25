@@ -4,7 +4,6 @@ import * as React from "react"
 import { useActionState } from "react"
 import Link from "next/link"
 import { ClipboardList, MoreHorizontal, Pencil, Search, SquareArrowOutUpRight, Trash2, X } from "lucide-react"
-import { cn } from "cn"
 
 import { EmptyState } from "@/components/brand/primitives"
 import {
@@ -32,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { NativeSelect } from "@/components/ui/select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { deleteAssignments, type DeleteState } from "@/lib/assignments/actions"
 import { formatDue, relativeToNow } from "@/lib/assignments/dates"
 import {
@@ -142,33 +142,19 @@ export function AssignmentBrowser({
 
       <Card>
         <CardHeader className="gap-3">
-          <div
-            role="group"
+          <ToggleGroup
+            variant="track"
             aria-label="Filter tasks"
-            className="flex h-9 max-w-full items-center gap-0.5 overflow-x-auto rounded-full bg-surface-sunken p-1 [scrollbar-width:none]"
+            value={[filter]}
+            onValueChange={(next) => next[0] && setFilter(next[0] as Filter)}
           >
-            {FILTERS.map((option) => {
-              const active = filter === option
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  onClick={() => setFilter(option)}
-                  aria-pressed={active}
-                  title={FILTER_HINT[option]}
-                  className={cn(
-                    "inline-flex h-7 shrink-0 items-center gap-2 rounded-full px-3 label-md transition-colors duration-100",
-                    active
-                      ? "bg-surface text-on-surface"
-                      : "text-on-surface-muted hover:text-on-surface"
-                  )}
-                >
-                  {FILTER_LABEL[option]}
-                  <span className="mono-data-sm text-on-surface-muted">{counts[option]}</span>
-                </button>
-              )
-            })}
-          </div>
+            {FILTERS.map((option) => (
+              <ToggleGroupItem key={option} value={option} title={FILTER_HINT[option]}>
+                {FILTER_LABEL[option]}
+                <span className="mono-data-sm text-on-surface-muted">{counts[option]}</span>
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
 
           <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
             <div className="relative sm:w-72">

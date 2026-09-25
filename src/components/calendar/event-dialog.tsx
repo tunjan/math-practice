@@ -27,6 +27,7 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog"
+import { DateField } from "@/components/ui/date-field"
 import { Input } from "@/components/ui/input"
 import { SegmentedControl } from "@/components/ui/segmented-control"
 import {
@@ -449,30 +450,27 @@ function EventForm({
             <Row icon={Clock}>
               <div className="flex flex-col gap-2.5">
                 <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2">
-                  <Input
+                  <DateField
                     name="date"
-                    type="date"
                     variant="filled"
                     mono
-                    required
                     aria-label={values.allDay ? "First day" : "Date"}
                     value={values.date}
-                    onChange={(e) => e.target.value && set("date", e.target.value)}
+                    onChange={(date) => set("date", date)}
                     className={valueField}
                   />
                   {values.allDay ? (
                     <>
                       <Dash />
-                      <Input
+                      <DateField
                         name="end_date"
-                        type="date"
                         variant="filled"
                         mono
                         aria-label="Last day"
                         min={values.date}
                         max={addDays(values.date, 30)}
                         value={values.endDate}
-                        onChange={(e) => e.target.value && set("endDate", e.target.value)}
+                        onChange={(date) => set("endDate", date)}
                         className={valueField}
                       />
                     </>

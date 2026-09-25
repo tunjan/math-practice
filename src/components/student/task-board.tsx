@@ -19,6 +19,7 @@ import { cn } from "cn"
 
 import { DifficultyMeter } from "@/components/aviary/difficulty-meter"
 import { Badge } from "@/components/ui/badge"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Progress } from "@/components/ui/progress"
 
 import { formatDue, formatShortDate, isOverdue, relativeLate, relativeToNow } from "@/lib/assignments/dates"
@@ -308,19 +309,19 @@ function LaneColumn({
       )}
 
       {older.length > 0 ? (
-        <details className="group/more">
-          <summary className="flex h-8 cursor-pointer list-none items-center justify-center rounded-lg text-sm font-medium text-on-surface-muted transition-colors duration-150 hover:bg-surface-hover hover:text-on-surface [&::-webkit-details-marker]:hidden">
-            <span className="group-open/more:hidden">Show {older.length} older</span>
-            <span className="hidden group-open/more:inline">Show fewer</span>
-          </summary>
-          <ul role="list" className="mt-2 flex flex-col gap-2">
+        <Collapsible className="group/more">
+          <CollapsibleTrigger className="flex h-8 w-full items-center justify-center rounded-lg text-sm font-medium text-on-surface-muted transition-colors duration-150 outline-none hover:bg-surface-hover hover:text-on-surface focus-visible:ring-2 focus-visible:ring-on-surface/25">
+            <span className="group-data-open/more:hidden">Show {older.length} older</span>
+            <span className="hidden group-data-open/more:inline">Show fewer</span>
+          </CollapsibleTrigger>
+          <CollapsibleContent render={<ul role="list" />} className="mt-2 flex flex-col gap-2">
             {older.map((task) => (
               <li key={task.id}>
                 <DraggableCard task={task} timeZone={timeZone} onOpen={onOpen} lifted={task.id === draggingId} />
               </li>
             ))}
-          </ul>
-        </details>
+          </CollapsibleContent>
+        </Collapsible>
       ) : null}
     </section>
   )
