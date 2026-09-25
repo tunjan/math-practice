@@ -88,69 +88,69 @@
 - **Verify by:** Setting AA HL persists after reload; clearing it hides the course everywhere.
 
 ### Phase 9.5 — Topic tags schema and task form field
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** `0019_assignment_topics.sql`: a join table, a trigger that requires the topic to be in the student's course/level, and RLS (tutor manages, participants read). Tested on the harness. Picker = shadcn Base UI `combobox` (added `combobox.tsx` + `input-group.tsx` only, without overwriting the restyled button/input/textarea), restyled to tokens, with chips as Airtable pills coloured by strand (1 blue, 2 purple, 3 teal, 4 orange, 5 pink). Search by code prefix or title. The new-task dialog shows it under the chip row once a student with a course is chosen, and resets it when the student changes. Invites (pending tasks) get no tags. On edit, only the current course's tags are replaced; tags from a previous course are kept.
 - **Changes:** `assignment_topics` join table + RLS. Adds a multi-select combobox in the new/edit task forms, listing only the student's topics, searchable by code or title.
 - **Does NOT include yet:** Showing tags on lists.
 - **Verify by:** Tag a task with 1.1 + 1.3, reopen edit and both are selected; a student with no course shows no field.
 
 ### Phase 9.6 — Show topic tags on tasks
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Changes:** Shows topic pills (code, title on hover) on task lists, cards, the task detail and the calendar popovers.
 - **Verify by:** Tagged tasks show pills everywhere; untagged tasks are unchanged.
 
 ### Phase 9.7 — Tracker progress schema
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Changes:** `topic_progress` (student, topic, status enum, stars 0–5, planned_start, planned_end, notes) + RLS (tutor writes, student reads own).
 - **Verify by:** A student can read their own row but can't update it.
 
 ### Phase 9.8 — Tutor tracker grid (read + inline edit)
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Changes:** Adds a "Syllabus" tab on the tutor student page with a ReUI Data Grid grouped by topic 1–5. Columns: code, title, level, status (pill select), stars, planned start/end, tasks count, notes. Each cell saves on its own.
 - **Verify by:** Edit each column type, reload, and the values persist. The AHL rows only appear for HL students.
 
 ### Phase 9.9 — Bulk edit in the tracker
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Changes:** Adds row selection and a toolbar to set status or date range on the selected rows.
 - **Verify by:** Select 5 rows and set the week; all 5 update.
 
 ### Phase 9.10 — Student tracker view
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** `/student/syllabus` renders `SyllabusTracker` with `editable={false}`: no checkboxes or bulk bar, status as a plain pill, stars read-only, planned window and notes as text. The summary strip (seen, in progress, scheduled, average stars, progress bar) is the tracker's own. `SessionProfile` now carries `course`, so the student layout adds the Syllabus link (book icon, between Calendar and Aviary) only when a course is set; the page 404s without one.
 - **Changes:** Adds a read-only `/student/syllabus` page with the same grid, plus a nav link (only when a course is set) and a progress summary.
 - **Verify by:** A student with a course sees their tracker and can't edit it; a student without one has no link.
 
 ### Phase 9.11 — Planned topics on the calendar
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** `weekPlans` (`src/lib/calendar/model.ts`) groups planned subtopics into one bar per student × Monday–Sunday week × strand. A window with only a start or only an end counts as that one day's week. Windows are capped at 54 weeks. Rows from a course the student is no longer on are dropped, the same as in the tracker. In the month grid, bars sit in a strip under each week row in the strand's tag colour (up to 3, then "n more planned"). The tutor's unfiltered view prefixes each bar with the student's name. The day panel lists the selected day's week bars first, each linking to the tracker (tutor: student page, student: `/student/syllabus`). ICS: one all-day Monday–Sunday event per bar, with a stable UID and a sequence taken from the latest edit.
 - **Changes:** Shows planned topics as week bars grouped by topic on the tutor + student calendar and in the ICS feed.
 - **Verify by:** Topics scheduled in a week appear on that week for both roles and in the subscribed calendar.
 
 ### Phase 9.12 — Exams schema
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** `0021_exams.sql`. `exams` has `exam_date` (a date), a title (1–200 chars), `percent` 0–100 and `ib_grade` 1–7 (both nullable, so an exam can be added before it's marked) and notes (≤2000). `exam_topics` is a join table whose trigger requires the topic to be in the student's course/level, the same rule as task tags. A guard keeps exams on student profiles and stops an exam moving to another student. RLS: the student manages their own exams (`with check` blocks creating one for someone else); the tutor manages all. `exam_topics` follows whoever can see the exam. Tested on a local Postgres with a Supabase shim, applying 0001–0021: the student can create/edit/tag/delete their own exam; creating one for another student is refused by RLS; update/delete on another's exam touch 0 rows; tagging another's exam is refused; grade 8 / 101% / blank title are rejected; an exam can't be created for the tutor. Types are hand-added to `database.types.ts`.
 - **Changes:** `exams` (student, date, title, percent, ib_grade 1–7, notes) + `exam_topics`. RLS: tutor all; student full CRUD on own.
 - **Verify by:** A student can insert/update their own exam but can't touch another student's.
 
 ### Phase 9.13 — Exams UI
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** `ExamsSection` (`src/components/syllabus/exams-section.tsx`) sits under the tracker on the tutor student page and on `/student/syllabus`. It's a table of date, exam (with an "Upcoming" pill from today on), topic pills, score %, IB grade pill (6–7 green, 4–5 yellow, 1–3 red) and notes, latest first. "Add exam" or clicking a title opens a dialog with name, date, score, grade (native select, "Not marked" allowed), topics (the 9.5 `TopicPicker`) and notes; delete asks for confirmation. Actions `saveExam`/`deleteExam` are in `src/lib/syllabus/actions.ts`: the tutor may manage anyone's exams and a student only their own (RLS enforces the same). Saving replaces the exam's topics with exactly the chosen set.
 - **Changes:** Adds an Exams table + dialog (topics multi-select) under the tracker for both roles.
 - **Verify by:** Add, edit and delete an exam as student and as tutor.
 
 ### Phase 9.14 — Exams on the calendar
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** Exams are a third calendar item type (`ExamItem`), all day on their date and sorted before deadlines and events. In the month grid they're an ink (inverse) bar so they stand out from grey all-day events; on phones they're an ink dot. The day panel row shows "Exam · student" (tutor), the result ("78% · Grade 6") once marked, and topic pills, and links to the tracker page. The tutor's student filter narrows exams too. ICS: an all-day event "Exam: title (student)" with topics, result and notes in the description. Students get an alarm at 18:00 the evening before an upcoming exam.
 - **Verify by:** Exams appear on their date for both roles and in the ICS feed.
 
 ### Phase 9.15 — CSV export
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** `papaparse` added. `trackerToCsv` (`src/lib/syllabus/csv.ts`) writes one quoted row per subtopic in syllabus order, with status as its stored value (`to_see`/`in_progress`/`seen`), dates as `YYYY-MM-DD` and blanks for unset values, so a file round-trips. The download is built in the browser with a UTF-8 BOM (for Excel) and named like `syllabus-ana-garcia-aa-hl-2026-09-25.csv`. "Export CSV" is in the tracker toolbar for the tutor and for the student (read-only data, so harmless). Caveat: Sheets/Excel turn code `1.10` into `1.1` on open; 9.16's import falls back to the title in that case.
 - **Changes:** Adds an Export button that downloads `code,title,level,status,stars,planned_start,planned_end,notes`.
 - **Verify by:** The file opens in Sheets with one row per topic.
 
 ### Phase 9.16 — CSV import with preview
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** "Import CSV" in the tutor's tracker toolbar opens a dialog: choose a file or paste (pasting into the empty box checks straight away), then Check, then a diff table (code, subtopic, each changed field before → after), then "Apply n changes". `parseTrackerCsv` (`src/lib/syllabus/csv.ts`) is pure and writes nothing:
   - Headers are case/space-insensitive.
   - Only `code` is required. A missing column leaves that field alone; unknown columns are ignored with a note.
@@ -164,7 +164,7 @@
 - **Verify by:** Round-trip an exported file unchanged (0 changes). A file with a bad code is rejected with the row number.
 
 ### Phase 9.17 — "Copy LLM prompt"
-- **Status:** implemented, awaiting user verification
+- **Status:** done
 - **Notes:** "LLM prompt" in the tutor's tracker toolbar opens a popover with From (today) and To (30 April before the next May session) and copies `llmPlanPrompt` (`src/lib/syllabus/csv.ts`). The prompt includes: the course, how many subtopics aren't seen yet, the exact header, the rules Import enforces (same codes, no extras/repeats, status values, stars 0–5, YYYY-MM-DD with start ≤ end), planning guidance (prerequisites, SL before the AHL that builds on it, 1–2 weeks each, review time before the end date, weaker topics earlier, seen rows untouched) and the current tracker as CSV (every code the student studies). The importer now strips a ```csv fence, since LLMs add one anyway. Checked with a script: a reply in the requested shape (unquoted, with 1.10) imports with only the planned dates and notes changing.
 - **Changes:** Copies a prompt with the CSV schema, the student's topic codes and the date range.
 - **Verify by:** Paste it into an LLM, import the result, and the preview is valid.
