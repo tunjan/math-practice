@@ -143,7 +143,8 @@
 - **Verify by:** Exams appear on their date for both roles and in the ICS feed.
 
 ### Phase 9.15 — CSV export
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
+- **Notes:** `papaparse` added. `trackerToCsv` (`src/lib/syllabus/csv.ts`) writes one quoted row per subtopic in syllabus order, with status as its stored value (`to_see`/`in_progress`/`seen`), dates as `YYYY-MM-DD` and blanks for unset values, so a file round-trips. The download is built in the browser with a UTF-8 BOM (for Excel) and named like `syllabus-ana-garcia-aa-hl-2026-09-25.csv`. "Export CSV" is in the tracker toolbar for the tutor and for the student (read-only data, so harmless). Caveat: Sheets/Excel turn code `1.10` into `1.1` on open; 9.16's import falls back to the title in that case.
 - **Changes:** Adds an Export button that downloads `code,title,level,status,stars,planned_start,planned_end,notes`.
 - **Verify by:** The file opens in Sheets with one row per topic.
 

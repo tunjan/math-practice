@@ -4,10 +4,12 @@ import { notFound } from "next/navigation"
 import { Page, PageHeader } from "@/components/brand/primitives"
 import { ExamsSection } from "@/components/syllabus/exams-section"
 import { SyllabusTracker } from "@/components/syllabus/syllabus-tracker"
+import { ExportCsvButton } from "@/components/syllabus/tracker-csv"
 import { requireRole } from "@/lib/auth/session"
 import { dayKeyOf } from "@/lib/calendar/dates"
 import { createClient } from "@/lib/supabase/server"
 import { loadExams, loadTracker } from "@/lib/syllabus/load"
+import { csvFilename } from "@/lib/syllabus/csv"
 import { courseShortName } from "@/lib/syllabus/model"
 
 export const metadata: Metadata = { title: "Syllabus · Maths Tasks" }
@@ -36,6 +38,12 @@ export default async function StudentSyllabusPage() {
         rows={rows}
         editable={false}
         today={today}
+        toolbar={
+          <ExportCsvButton
+            rows={rows}
+            filename={csvFilename(profile.fullName, `${profile.course.course} ${profile.course.level}`, today)}
+          />
+        }
       />
       <ExamsSection studentId={profile.id} exams={exams} topics={rows} today={today} />
     </Page>

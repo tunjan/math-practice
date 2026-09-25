@@ -5,10 +5,12 @@ import { Avatar, Page, PageHeader } from "@/components/brand/primitives"
 import { CourseCard } from "@/components/syllabus/course-card"
 import { ExamsSection } from "@/components/syllabus/exams-section"
 import { SyllabusTracker } from "@/components/syllabus/syllabus-tracker"
+import { ExportCsvButton } from "@/components/syllabus/tracker-csv"
 import { requireRole } from "@/lib/auth/session"
 import { dayKeyOf } from "@/lib/calendar/dates"
 import { createClient } from "@/lib/supabase/server"
 import { loadExams, loadTracker } from "@/lib/syllabus/load"
+import { csvFilename } from "@/lib/syllabus/csv"
 import { courseShortName, studentCourse } from "@/lib/syllabus/model"
 
 export const metadata: Metadata = { title: "Student · Maths Tasks" }
@@ -59,6 +61,9 @@ export default async function StudentDetailPage({ params }: PageProps<"/tutor/st
             rows={rows}
             editable
             today={today}
+            toolbar={
+              <ExportCsvButton rows={rows} filename={csvFilename(name, `${course.course} ${course.level}`, today)} />
+            }
           />
         </section>
       ) : null}
