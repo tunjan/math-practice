@@ -126,7 +126,8 @@
 - **Verify by:** Topics scheduled in a week appear on that week for both roles and in the subscribed calendar.
 
 ### Phase 9.12 — Exams schema
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
+- **Notes:** `0021_exams.sql`. `exams` has `exam_date` (a date), a title (1–200 chars), `percent` 0–100 and `ib_grade` 1–7 (both nullable, so an exam can be added before it's marked) and notes (≤2000). `exam_topics` is a join table whose trigger requires the topic to be in the student's course/level, the same rule as task tags. A guard keeps exams on student profiles and stops an exam moving to another student. RLS: the student manages their own exams (`with check` blocks creating one for someone else); the tutor manages all. `exam_topics` follows whoever can see the exam. Tested on a local Postgres with a Supabase shim, applying 0001–0021: the student can create/edit/tag/delete their own exam; creating one for another student is refused by RLS; update/delete on another's exam touch 0 rows; tagging another's exam is refused; grade 8 / 101% / blank title are rejected; an exam can't be created for the tutor. Types are hand-added to `database.types.ts`.
 - **Changes:** `exams` (student, date, title, percent, ib_grade 1–7, notes) + `exam_topics`. RLS: tutor all; student full CRUD on own.
 - **Verify by:** A student can insert/update their own exam but can't touch another student's.
 
