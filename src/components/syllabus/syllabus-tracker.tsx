@@ -10,8 +10,10 @@ import { StarRating } from "@/components/syllabus/star-rating"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { DateField } from "@/components/ui/date-field"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { DayKey } from "@/lib/calendar/dates"
@@ -141,24 +143,17 @@ export function SyllabusTracker({
             className="h-8 pl-9 text-sm"
           />
         </div>
-        <div role="group" aria-label="Show" className="flex flex-wrap gap-1">
+        <ToggleGroup
+          aria-label="Show"
+          value={[filter]}
+          onValueChange={(next) => next[0] && setFilter(next[0] as Filter)}
+        >
           {(["all", ...STATUSES] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={filter === value}
-              onClick={() => setFilter(value)}
-              className={cn(
-                "h-8 rounded-md px-2.5 text-sm transition-colors",
-                filter === value
-                  ? "bg-surface-sunken font-medium text-on-surface"
-                  : "text-on-surface-muted hover:bg-surface-hover hover:text-on-surface"
-              )}
-            >
+            <ToggleGroupItem key={value} value={value}>
               {value === "all" ? "All" : STATUS_LABEL[value]}
-            </button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
         {toolbar ? <div className="ml-auto flex items-center gap-2">{toolbar}</div> : null}
       </div>
 
@@ -421,15 +416,16 @@ function DateRangeForm({
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
           Start
-          <Input type="date" value={from} onChange={(event) => setFrom(event.target.value)} className="h-9 text-sm" />
+          <DateField value={from} onChange={setFrom} placeholder="Any" clearable className="h-9 text-sm" />
         </label>
         <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
           End
-          <Input
-            type="date"
+          <DateField
             value={to}
             min={from || undefined}
-            onChange={(event) => setTo(event.target.value)}
+            onChange={setTo}
+            placeholder="Any"
+            clearable
             className="h-9 text-sm"
             aria-invalid={invalid || undefined}
           />

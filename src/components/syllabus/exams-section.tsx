@@ -18,6 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog"
+import { DateField } from "@/components/ui/date-field"
 import { Input } from "@/components/ui/input"
 import { Field } from "@/components/ui/label"
 import { NativeSelect } from "@/components/ui/select"
@@ -237,7 +238,7 @@ function ExamForm({
         </Field>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Date" htmlFor="exam-date">
-            <Input id="exam-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-required />
+            <DateField id="exam-date" value={date} onChange={setDate} aria-required />
           </Field>
           <Field label="Score (%)" htmlFor="exam-percent" error={percentInvalid ? "0 to 100" : undefined}>
             <Input

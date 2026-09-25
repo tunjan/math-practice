@@ -169,6 +169,22 @@
 - **Changes:** Copies a prompt with the CSV schema, the student's topic codes and the date range.
 - **Verify by:** Paste it into an LLM, import the result, and the preview is valid.
 
+### Phase 10 — Registry components where the app hand-rolled them
+- **Status:** done (awaiting user verification)
+- **Notes:** An audit of shadcn/ui, ReUI, 21st.dev, shadcnblocks and shadcncraft against every screen. Added only where a registry component replaces a hand-rolled widget; each is restyled to the Dub tokens, not left on shadcn defaults. Sources came from the shadcn-ui/ui and keenthemes/reui GitHub repos (the registry sites are blocked in the agent's network). `react-day-picker` added.
+  - **Calendar + DateField** (shadcn Calendar / Date Picker) replace every native `type="date"` input: tracker Plan start/end (cell and bulk bar), LLM prompt range, exam date, event dates. `DateField` keeps the `YYYY-MM-DD` string contract, `min`/`max`, and posts through a hidden input when given a `name`, so no action code changed. Weeks start Monday. Time and `datetime-local` inputs stay native.
+  - **ToggleGroup** (shadcn, Base UI) replaces the aria-pressed button rows: task browser filter (`track` variant) and tracker status filter (`chips`). One tab stop, arrow keys.
+  - **Collapsible** (shadcn) replaces `<details>` for "Show N older" on the student board.
+  - **Alert** (shadcn) now backs `FormMessage` and the upload-rejection / CSV-problem boxes in hand-in, material uploader and CSV import.
+  - `/styleguide/components` renders all of them with sample data.
+  - Considered and not adopted: ReUI Stepper, Rating, File upload, Kanban and Timeline duplicate existing, accessible custom builds (lifecycle tracker, star rating, uploaders, task board, comments). ReUI Data Grid (named in §2 for the tracker) would be a rewrite of a working 600-line grid and is left for its own phase. shadcnblocks/shadcncraft/21st.dev are mainly marketing blocks (hero, pricing, footer) with no screen to host them.
+- **Verify by:**
+  1. Tracker: Plan a subtopic with the date pickers; End can't be before Start; Clear works; the bulk bar's Plan works.
+  2. Exams: add an exam with the date picker. Calendar: create an all-day event across days and a timed event; both save the chosen dates.
+  3. Task browser and tracker filters work by click and by arrow keys.
+  4. Student board: "Show N older" expands and collapses.
+  5. Upload a too-large file, and import a CSV with a bad code: both errors show in the red alert box.
+
 ## 6. Working Agreement
 
 - Implementation proceeds **one phase at a time**. Each phase is announced before it starts (what will and won't change).

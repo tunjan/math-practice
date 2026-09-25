@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { FileText, ImageIcon, LoaderCircle, Upload, X } from "lucide-react"
+import { CircleAlert, FileText, ImageIcon, LoaderCircle, Upload, X } from "lucide-react"
 import { cn } from "cn"
 
 import { IconTile } from "@/components/brand/primitives"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -178,13 +179,16 @@ export function MaterialUploader({
       </div>
 
       {errors.length > 0 ? (
-        <ul role="alert" className="flex flex-col gap-1 rounded-md bg-error-container px-3 py-2.5">
-          {errors.map((message) => (
-            <li key={message} className="body-sm text-on-error-container">
-              {message}
-            </li>
-          ))}
-        </ul>
+        <Alert>
+          <CircleAlert aria-hidden />
+          <AlertDescription>
+            <ul className="flex flex-col gap-1">
+              {errors.map((message) => (
+                <li key={message}>{message}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       {items.length > 0 ? (
