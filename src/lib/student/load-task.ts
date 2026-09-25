@@ -11,6 +11,7 @@ import { asStage, boardColumn, type BoardColumn, type ReviewVerdict } from "@/li
 import { signFiles } from "@/lib/assignments/signing"
 import type { HandIn, Review, WorkFile } from "@/lib/student/task-trail"
 import type { Database } from "@/lib/supabase/database.types"
+import { toTopicTags, type TopicTag } from "@/lib/syllabus/model"
 
 type Supabase = SupabaseClient<Database>
 
@@ -25,7 +26,7 @@ export type StudentTask = TaskData & {
 const ASSIGNMENT_COLUMNS = `id, title, description, type, difficulty, due_at, stage, verdict, feedback, reviewed_at,
   student_opened_at, submitted_at, created_at, completion_pct,
   superseded_verdict, superseded_feedback, superseded_reviewed_at, superseded_submitted_at,
-  categories(name)`
+  categories(name), assignment_topics(syllabus_topics(code, title, topic, subtopic))`
 
 const MATERIAL_COLUMNS = "id, assignment_id, file_name, mime_type, size_bytes, storage_path"
 const SUBMISSION_COLUMNS =
@@ -139,6 +140,7 @@ type AssignmentRow = {
   superseded_reviewed_at: string | null
   superseded_submitted_at: string | null
   categories: { name: string } | null
+  assignment_topics: { syllabus_topics: TopicTag | null }[]
 }
 
 type SubmissionRow = { id: string; revision: number; handed_in_at: string | null }
@@ -207,6 +209,7 @@ function shapeTask(
     type: assignment.type,
     difficulty: assignment.difficulty,
     topic: assignment.categories?.name ?? null,
+    topics: toTopicTags(assignment.assignment_topics),
     description: assignment.description,
     dueAt: assignment.due_at,
     assignedAt: assignment.created_at,

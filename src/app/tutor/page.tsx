@@ -59,6 +59,7 @@ export default async function TutorOverviewPage() {
     studentId: a.profiles?.id ?? "",
     studentName: a.profiles?.full_name || a.profiles?.email || "Unknown student",
     topic: null,
+    topics: [],
     submittedAt: a.submitted_at,
     openedAt: a.student_opened_at,
   }))

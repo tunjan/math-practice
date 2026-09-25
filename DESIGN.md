@@ -72,13 +72,18 @@ colors:
   chart-axis: "#00000066"
   chart-grid: "#00000026"
 
-  # --- Tag palette (bg-100 / border-300 / text-600) ---------------------------
-  tag-red: "#DC2626"
-  tag-yellow: "#CA8A04"
-  tag-green: "#16A34A"
-  tag-blue: "#2563EB"
-  tag-purple: "#9333EA"
-  tag-brown: "#A18072"
+  # --- Tag palette (Airtable single-select fills, one shared ink) ------------
+  tag-gray: "#EEEEEE"
+  tag-blue: "#CFDFFF"
+  tag-cyan: "#D0F0FD"
+  tag-teal: "#C2F5E9"
+  tag-green: "#D1F7C4"
+  tag-yellow: "#FFEAB6"
+  tag-orange: "#FEE2D5"
+  tag-red: "#FFDCE5"
+  tag-pink: "#FFDAF6"
+  tag-purple: "#EDE2FE"
+  on-tag: "#1D1F25"
 
   # --- Dark theme (applied under the `.dark` class) ---------------------------
   dark-surface: "#000000"
@@ -181,12 +186,12 @@ typography:
 rounded:
   none: 0px
   sm: 4px        # rounded      — kbd hints, tiny count chips, checkbox inner
-  md: 6px        # rounded-md   — inputs, menu items, tags, status badges, pagination buttons
+  md: 6px        # rounded-md   — inputs, menu items, pagination buttons
   lg: 8px        # rounded-lg   — buttons, sidebar items, filter/select triggers, search input
   xl: 12px       # rounded-xl   — cards, card lists, tooltips, toolbar, content canvas, sidebar panel
   2xl: 16px      # rounded-2xl  — modals, empty-state icon tiles
   3xl: 20px      # marketing nav dropdown panels
-  full: 9999px   # avatars, badges, switches, progress bars
+  full: 9999px   # tags, status pills, avatars, switches, progress bars
 
 spacing:
   base: 4px
@@ -431,27 +436,13 @@ components:
     typography: "{typography.body-md}"
     rounded: "{rounded.md}"
     padding: 2px 8px
-  tag-badge:
-    backgroundColor: "#DBEAFE"
-    textColor: "{colors.tag-blue}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.md}"
-    padding: 2px 8px
-  tag-badge-red:
-    backgroundColor: "#FEE2E2"
-    textColor: "{colors.tag-red}"
-  tag-badge-yellow:
-    backgroundColor: "#FEF9C3"
-    textColor: "{colors.tag-yellow}"
-  tag-badge-green:
-    backgroundColor: "#DCFCE7"
-    textColor: "{colors.tag-green}"
-  tag-badge-purple:
-    backgroundColor: "#F3E8FF"
-    textColor: "{colors.tag-purple}"
-  tag-badge-brown:
-    backgroundColor: "#F2E8E5"
-    textColor: "{colors.tag-brown}"
+  tag:
+    backgroundColor: "{colors.tag-gray}"   # any tag-* fill
+    textColor: "{colors.on-tag}"
+    typography: "{typography.caption}"     # 12px, regular
+    rounded: "{rounded.full}"
+    height: 20px
+    padding: 0 8px
   status-badge-info:
     backgroundColor: "{colors.info-container}"
     textColor: "{colors.info}"
@@ -658,7 +649,7 @@ The palette is **Tailwind's neutral scale plus a single blue accent**, with sema
 - **Text hierarchy:** `on-surface-emphasis` (#171717) for titles and key labels, `on-surface` (#404040) for body and nav items, `on-surface-subtle` (#737373) for descriptions and section labels ("Insights", "Library"), `on-surface-muted` (#A3A3A3) for placeholders and disabled text.
 - **Feedback pairs:** Always use the container + content pair together — info (#DBEAFE/#2563EB), success (#DCFCE7/#16A34A), attention (#FFEDD5/#EA580C), warning (#FEF9C3/#CA8A04), error (#FEE2E2/#DC2626). Destructive buttons use red‑500 (#EF4444).
 - **Analytics colors:** Clicks = blue‑500, Leads = purple‑500, Sales = teal‑500. Keep this mapping consistent across charts, badges and legends. Chart axes use black at 40% (#00000066) and gridlines black at 15% (#00000026).
-- **Tag colors:** Tags use a `100` background, `300` border and `600` text of one hue (red, yellow, green, blue, purple, brown).
+- **Tag colors:** Tags are Airtable single-select pills: a pale fill from ten hues (gray, blue, cyan, teal, green, yellow, orange, red, pink, purple) with one shared near-black ink (`on-tag`, #1D1F25). Status tones map onto them: success → green, warning → yellow, error → red, info → blue, violet → purple, accent → orange, neutral → gray. Free-text options (categories) get a stable hue from their name; gray means "nothing set".
 - **Borders & dark theme tokens:** `border-*` and `dark-*` tokens are applied through Tailwind utilities (`border-border-subtle`, the `.dark` class) rather than component properties, so they are intentionally not referenced from `components`.
 - **Dark mode:** Applied via the `.dark` class. Surfaces invert to pure black (#000000) → #171717 → #262626, text to #FAFAFA/#D4D4D4, borders to #404040/#525252. The dashboard ships light-first; build light first and use semantic tokens so dark mode follows automatically.
 
@@ -721,11 +712,11 @@ Depth comes from **tonal layering and 1px borders**, not shadows:
 The shape language is **softly engineered** — rounded enough to feel friendly, never pill-shaped for actions.
 
 - `rounded-sm` 4px — kbd chips, tiny count chips.
-- `rounded-md` 6px — text inputs, menu items, tags, status badges, analytics badges, pagination buttons, checkboxes.
+- `rounded-md` 6px — text inputs, menu items, analytics badges, pagination buttons, checkboxes.
 - `rounded-lg` 8px — **all buttons**, sidebar nav items, rail icons, filter/select triggers, search input, popovers.
 - `rounded-xl` 12px — cards, card lists (first/last row only), tooltips, toggle groups, content canvas, sidebar panel, floating bars.
 - `rounded-2xl` 16px — modals, empty-state icon tiles (64×64).
-- `rounded-full` — avatars, favicons, generic badges, switches, meters, grab handles.
+- `rounded-full` — tags and status pills, avatars, favicons, switches, meters, grab handles.
 
 Nested radii step down one level (e.g. a `rounded-xl` toggle group contains `rounded-lg` selected pills with 4px padding). Borders are always 1px.
 
@@ -754,7 +745,7 @@ Icons: 16px (`size-4`) inline with 14px text, 20px (`size-5`) in the rail/header
 
 **Card list / Link card** — rows share borders to form one `rounded-xl` block (compact mode) or float as separate `rounded-xl` bordered cards (loose mode). Row: 32px favicon circle, **short link** in 14px semibold neutral‑800 (hover black), destination URL below/next to it in neutral‑500 with a ↳ arrow; right side holds an **analytics badge** (`rounded-md border-neutral-200 bg-neutral-50 px-2 py-0.5 text-sm`, e.g. "⤷ 1.2K clicks"), tag badges, creator avatar, relative time, and a kebab menu. Hover: `bg-neutral-50`.
 
-**Badges** — *Badge*: `rounded-full border px-2 py-px text-xs font-medium` (neutral outline default; black, blue, violet, green, amber variants; gradient variants for "New"/plan labels). *StatusBadge*: `rounded-md px-2 py-1 text-xs font-medium` with a 12px leading icon, using feedback container/content pairs. *Tag*: `rounded-md border px-2 py-0.5 text-sm` in its tag hue.
+**Badges and tags** — every tag and status pill in the app is the *Tag* (`Badge` in `src/components/ui/badge.tsx`): `h-5 rounded-full px-2 text-xs font-normal`, a `tag-*` fill, `on-tag` ink, no border, optional 12px leading icon. Several tags sit in a row with `gap-1.5`, exactly like a multi-select cell in Airtable. Use the variant for the colour; never hand-roll a pill. `outline`, `solid` and `count` are not tags and keep their own shapes.
 
 **Empty state** — centered in the bordered content area: an illustration stack of three ghost link-card skeletons (white cards with light-gray bars, link icon and click icon, faded at top), or a 64×64 `rounded-2xl` neutral‑50 icon tile; title "No links yet" (16px medium); description max‑w‑sm 14px neutral‑500 `text-balance`; actions: primary "Create link [C]" + secondary "Learn more", 8px apart.
 

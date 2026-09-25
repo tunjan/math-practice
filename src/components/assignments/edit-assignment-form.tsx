@@ -10,7 +10,6 @@ import { Button, ButtonLink } from "@/components/ui/button"
 import { Card, CardFooter } from "@/components/ui/card"
 import { ConfirmDialog } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { NativeSelect } from "@/components/ui/select"
 import { Field } from "@/components/ui/label"
 import {
   removeAssignmentFile,
@@ -29,6 +28,9 @@ import {
   TypeChoice,
   type Topic,
 } from "./assignment-fields"
+import { TopicPicker } from "@/components/syllabus/topic-picker"
+import type { SyllabusTopic } from "@/lib/syllabus/model"
+
 import { DuePicker } from "./due-picker"
 import type { SignedFile } from "./file-list"
 import { MaterialUploader } from "./material-uploader"
@@ -95,7 +97,7 @@ export function EditAssignmentForm({
   initial,
   existingFiles,
   topics,
-  units = [],
+  syllabus,
 }: {
   assignmentId: string
   initial: {
@@ -105,12 +107,12 @@ export function EditAssignmentForm({
     difficulty: Difficulty
     dueAt: string
     categoryId: string | null
-    planUnitId?: string | null
+    syllabusTopicIds: string[]
   }
   existingFiles: SignedFile[]
   topics: Topic[]
-  /** The student's plan units; the field only appears when there are some. */
-  units?: { id: string; title: string }[]
+  /** The student's subtopics; empty when they have no course. */
+  syllabus: SyllabusTopic[]
 }) {
   const [state, action, pending] = useActionState<UpdateAssignmentState, FormData>(
     updateAssignment,
@@ -118,6 +120,7 @@ export function EditAssignmentForm({
   )
   const [files, setFiles] = React.useState<UploadedFile[]>([])
   const handleFiles = React.useCallback((next: UploadedFile[]) => setFiles(next), [])
+  const [syllabusTopics, setSyllabusTopics] = React.useState(initial.syllabusTopicIds)
 
   // Each file's removal form lives in its confirm dialog, which is portaled
   // to <body>, so it never nests inside this form.
@@ -154,16 +157,15 @@ export function EditAssignmentForm({
 
         <FormSection title="Schedule">
           <TopicField topics={topics} defaultValue={initial.categoryId ?? ""} />
-          {units.length > 0 ? (
-            <Field label="Plan unit" htmlFor="plan_unit_id">
-              <NativeSelect id="plan_unit_id" name="plan_unit_id" defaultValue={initial.planUnitId ?? ""}>
-                <option value="">None</option>
-                {units.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.title}
-                  </option>
-                ))}
-              </NativeSelect>
+          {syllabus.length > 0 ? (
+            <Field label="Syllabus topics" htmlFor="syllabus_topics">
+              <input type="hidden" name="syllabus_topics_offered" value="1" />
+              <TopicPicker
+                id="syllabus_topics"
+                topics={syllabus}
+                value={syllabusTopics}
+                onValueChange={setSyllabusTopics}
+              />
             </Field>
           ) : null}
           <DuePicker name="due_at" defaultValue={initial.dueAt} />

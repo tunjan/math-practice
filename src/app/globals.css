@@ -65,6 +65,19 @@
   --color-accent-container: var(--accent-container);
   --color-on-accent-container: var(--on-accent-container);
   --color-highlight-container: var(--highlight-container);
+
+  /* Tags: Airtable single-select pills (DESIGN.md › Tags) */
+  --color-tag-gray: var(--tag-gray);
+  --color-tag-blue: var(--tag-blue);
+  --color-tag-cyan: var(--tag-cyan);
+  --color-tag-teal: var(--tag-teal);
+  --color-tag-green: var(--tag-green);
+  --color-tag-yellow: var(--tag-yellow);
+  --color-tag-orange: var(--tag-orange);
+  --color-tag-red: var(--tag-red);
+  --color-tag-pink: var(--tag-pink);
+  --color-tag-purple: var(--tag-purple);
+  --color-on-tag: var(--on-tag);
   --color-on-highlight-container: var(--on-highlight-container);
 
   /* shadcn semantic names, resolved to Quiet Console */
@@ -122,6 +135,20 @@
 }
 
 :root {
+  /* Tags: Airtable's light pill fills, one shared near-black ink. Global, so
+     tags read the same inside and outside the `.dub` scope. */
+  --tag-gray: #eeeeee;
+  --tag-blue: #cfdfff;
+  --tag-cyan: #d0f0fd;
+  --tag-teal: #c2f5e9;
+  --tag-green: #d1f7c4;
+  --tag-yellow: #ffeab6;
+  --tag-orange: #fee2d5;
+  --tag-red: #ffdce5;
+  --tag-pink: #ffdaf6;
+  --tag-purple: #ede2fe;
+  --on-tag: #1d1f25;
+
   color-scheme: light;
 
   --canvas: #dddcd8;

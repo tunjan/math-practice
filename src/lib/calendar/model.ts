@@ -1,3 +1,4 @@
+import type { TopicTag } from "@/lib/syllabus/model"
 import type { AssignmentType, StatusTone } from "@/lib/assignments/model"
 import type { Database } from "@/lib/supabase/database.types"
 
@@ -32,6 +33,8 @@ export type DeadlineItem = {
   status: { label: string; tone: StatusTone }
   /** The student it is for, on the tutor's calendar. */
   person: string | null
+  /** Syllabus subtopics the task covers. */
+  topics: TopicTag[]
 }
 
 /** Something a person put on their calendar themselves. */
@@ -53,20 +56,7 @@ export type EventItem = {
   from: string | null
 }
 
-/** A plan unit's due date. A floating date, like an all-day event. */
-export type MilestoneItem = {
-  type: "milestone"
-  id: string
-  title: string
-  dueOn: DayKey
-  href: string
-  /** The tutor's rating, so a secure unit reads as done. */
-  status: { label: string; tone: StatusTone }
-  /** The student it is for, on the tutor's calendar. */
-  person: string | null
-}
-
-export type CalendarItem = DeadlineItem | EventItem | MilestoneItem
+export type CalendarItem = DeadlineItem | EventItem
 
 export type Person = { id: string; name: string }
 
@@ -76,7 +66,6 @@ const MAX_SPAN_DAYS = 31
 /** Every day an item appears on, in the viewer's zone. */
 export function itemDays(item: CalendarItem, timeZone: string): DayKey[] {
   if (item.type === "deadline") return [dayKeyOf(item.dueAt, timeZone)]
-  if (item.type === "milestone") return [item.dueOn]
 
   let first: DayKey
   let last: DayKey
@@ -115,7 +104,7 @@ function placementFor(item: CalendarItem, day: DayKey, timeZone: string): DayPla
     const time = timeOf(item.dueAt, timeZone)
     return { item, time, until: null, allDay: false, continues: false, order: minutes(time) }
   }
-  if (item.type === "milestone" || item.allDay) {
+  if (item.allDay) {
     return { item, time: null, until: null, allDay: true, continues: false, order: -1 }
   }
 
@@ -144,11 +133,11 @@ function minutes(time: string): number {
   return h! * 60 + m!
 }
 
-const TYPE_RANK: Record<CalendarItem["type"], number> = { deadline: 0, milestone: 1, event: 2 }
+const TYPE_RANK: Record<CalendarItem["type"], number> = { deadline: 0, event: 1 }
 
 /**
  * Items keyed by the day they appear on, each day in reading order: all-day
- * first, then by time; deadlines, then unit due dates, then events.
+ * first, then by time; deadlines, then events.
  */
 export function placeByDay(items: CalendarItem[], timeZone: string): Map<DayKey, DayPlacement[]> {
   const byDay = new Map<DayKey, DayPlacement[]>()

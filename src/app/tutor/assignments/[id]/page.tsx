@@ -19,6 +19,8 @@ import { formatDue, isOverdue, relativeToNow } from "@/lib/assignments/dates"
 import { MATERIALS_BUCKET, SUBMISSIONS_BUCKET } from "@/lib/assignments/files"
 import { signFiles } from "@/lib/assignments/signing"
 import { asStage, TYPE_LABEL } from "@/lib/assignments/model"
+import { TopicTags } from "@/components/syllabus/topic-tags"
+import { toTopicTags } from "@/lib/syllabus/model"
 
 export const metadata: Metadata = { title: "Task · Maths Tasks" }
 export const dynamic = "force-dynamic"
@@ -38,7 +40,7 @@ export default async function AssignmentDetailPage({
     .select(
       `id, student_id, title, description, type, due_at, stage, verdict, feedback, reviewed_at,
        student_opened_at, submitted_at, created_at, completion_pct,
-       categories(name),
+       categories(name), assignment_topics(syllabus_topics(code, title, topic, subtopic)),
        profiles!assignments_student_id_fkey(id, full_name, email)`
     )
     .eq("id", id)
@@ -46,6 +48,7 @@ export default async function AssignmentDetailPage({
 
   if (!assignment) notFound()
 
+  const syllabusTags = toTopicTags(assignment.assignment_topics)
   const studentName =
     assignment.profiles?.full_name || assignment.profiles?.email || "Unknown student"
 
@@ -195,6 +198,9 @@ export default async function AssignmentDetailPage({
                 { label: "Student", value: studentName },
                 { label: "Type", value: TYPE_LABEL[assignment.type] },
                 { label: "Topic", value: assignment.categories?.name ?? "None" },
+                ...(syllabusTags.length > 0
+                  ? [{ label: "Syllabus", value: <TopicTags tags={syllabusTags} className="justify-end" /> }]
+                  : []),
                 {
                   label: "Due",
                   value: <span className="mono-data-sm">{formatDue(assignment.due_at, tz)}</span>,

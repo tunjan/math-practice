@@ -22,7 +22,9 @@ import {
 import { createAssignment, type CreateAssignmentState } from "@/lib/assignments/actions"
 import { DUE_PRESETS, fromDateTimeLocalValue, toDateTimeLocalValue } from "@/lib/assignments/dates"
 import { MATERIAL_ACCEPT } from "@/lib/assignments/files"
-import type { PlanUnitOption, Recipient, Topic } from "@/lib/assignments/task-options"
+import type { Recipient, Topic } from "@/lib/assignments/task-options"
+import { TopicPicker } from "@/components/syllabus/topic-picker"
+import { topicsForCourse, type SyllabusTopic } from "@/lib/syllabus/model"
 import { DEFAULT_DIFFICULTY, type Difficulty } from "@/lib/aviary/difficulty"
 
 import { useMaterialUploads } from "./material-uploader"
@@ -34,7 +36,6 @@ import {
   StudentChip,
   TopicChip,
   TypeChip,
-  UnitChip,
 } from "./new-task-fields"
 
 type CreateAction = (
@@ -58,14 +59,14 @@ type OpenChangeDetails = Parameters<
 export function NewTaskDialog({
   recipients,
   topics,
-  units = [],
+  syllabus = [],
   defaultOpen = false,
   action = createAssignment,
 }: {
   recipients: Recipient[]
   topics: Topic[]
-  /** Every student's plan units; the dialog offers the chosen student's. */
-  units?: PlanUnitOption[]
+  /** Every syllabus subtopic; the dialog offers the chosen student's. */
+  syllabus?: SyllabusTopic[]
   /** Open on arrival, for links to the old /tutor/assignments/new page. */
   defaultOpen?: boolean
   /** Injectable; defaults to the real server action. */
@@ -160,7 +161,7 @@ export function NewTaskDialog({
             titleRef={titleRef}
             recipients={recipients}
             topics={topics}
-            units={units}
+            syllabus={syllabus}
             action={action}
             onCreated={handleCreated}
           />
@@ -223,7 +224,7 @@ function NewTaskForm({
   titleRef,
   recipients,
   topics,
-  units,
+  syllabus,
   action,
   onCreated,
 }: {
@@ -231,7 +232,7 @@ function NewTaskForm({
   titleRef: React.RefObject<HTMLInputElement | null>
   recipients: Recipient[]
   topics: Topic[]
-  units: PlanUnitOption[]
+  syllabus: SyllabusTopic[]
   action: CreateAction
   onCreated: (created: Created) => void
 }) {
@@ -258,10 +259,12 @@ function NewTaskForm({
   const [type, setType] = React.useState("problem_set")
   const [difficulty, setDifficulty] = React.useState<Difficulty>(DEFAULT_DIFFICULTY)
   const [topic, setTopic] = React.useState<string | null>(null)
-  const [unit, setUnit] = React.useState<string | null>(null)
-  const studentUnits = target?.startsWith("student:")
-    ? units.filter((u) => u.studentId === target.slice("student:".length))
-    : []
+  const [syllabusTopics, setSyllabusTopics] = React.useState<string[]>([])
+  const course = recipients.find((r) => r.value === target)?.course ?? null
+  const courseTopics = React.useMemo(
+    () => (course ? topicsForCourse(syllabus, course) : []),
+    [course, syllabus]
+  )
   const [dragging, setDragging] = React.useState(false)
 
   // Reserved up front so materials upload to their final path before the row exists.
@@ -376,7 +379,6 @@ function NewTaskForm({
       <input type="hidden" name="type" value={type} />
       <input type="hidden" name="difficulty" value={difficulty} />
       <input type="hidden" name="category_id" value={topic ?? ""} />
-      <input type="hidden" name="plan_unit_id" value={unit ?? ""} />
 
       <DialogBody className="flex flex-col gap-2 pt-2 pb-5">
         {serverError ? (
@@ -442,7 +444,7 @@ function NewTaskForm({
             value={target}
             onValueChange={(next) => {
               setTarget(next)
-              setUnit(null)
+              setSyllabusTopics([])
               clearError("target")
             }}
             invalid={Boolean(errors.target)}
@@ -460,10 +462,15 @@ function NewTaskForm({
           <TypeChip value={type} onValueChange={setType} />
           <DifficultyChip value={difficulty} onValueChange={setDifficulty} />
           <TopicChip topics={topics} value={topic} onValueChange={setTopic} />
-          {studentUnits.length > 0 ? (
-            <UnitChip units={studentUnits} value={unit} onValueChange={setUnit} />
-          ) : null}
         </div>
+        {courseTopics.length > 0 ? (
+          <TopicPicker
+            topics={courseTopics}
+            value={syllabusTopics}
+            onValueChange={setSyllabusTopics}
+            aria-label="Syllabus topics"
+          />
+        ) : null}
         {chipError ? (
           <p id={`${errorId}-chips`} className="body-sm text-error">
             {chipError}

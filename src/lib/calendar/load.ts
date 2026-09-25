@@ -2,8 +2,8 @@ import "server-only"
 
 import type { SessionProfile } from "@/lib/auth/session"
 import { asStage, assignmentStatus } from "@/lib/assignments/model"
-import { MASTERY } from "@/lib/plans/model"
 import type { createClient } from "@/lib/supabase/server"
+import { toTopicTags } from "@/lib/syllabus/model"
 
 import {
   addDays,
@@ -91,6 +91,7 @@ export async function loadCalendarItems(
     .from("assignments")
     .select(
       `id, title, type, due_at, stage, verdict, student_id,
+       assignment_topics(syllabus_topics(code, title, topic, subtopic)),
        profiles!assignments_student_id_fkey(full_name, email)`
     )
     .gte("due_at", from)
@@ -108,30 +109,14 @@ export async function loadCalendarItems(
     .gt("ends_at", from)
     .order("starts_at")
 
-  let units = supabase
-    .from("plan_units")
-    .select(
-      `id, title, due_on, mastery,
-       learning_plans!inner(student_id, profiles(full_name, email))`
-    )
-    .gte("due_on", weeks[0]![0]!)
-    .lte("due_on", weeks.at(-1)!.at(-1)!)
-    .order("due_on")
-
   if (isTutor && query.studentId) {
     deadlines = deadlines.eq("student_id", query.studentId)
-    units = units.eq("learning_plans.student_id", query.studentId)
     events = events.or(`owner_id.eq.${query.studentId},shared_with.eq.${query.studentId}`)
   } else if (!isTutor) {
     deadlines = deadlines.eq("student_id", profile.id)
-    units = units.eq("learning_plans.student_id", profile.id)
   }
 
-  const [{ data: tasks }, { data: rows }, { data: milestones }] = await Promise.all([
-    deadlines,
-    events,
-    units,
-  ])
+  const [{ data: tasks }, { data: rows }] = await Promise.all([deadlines, events])
 
   const items: CalendarItem[] = []
 
@@ -150,6 +135,7 @@ export async function loadCalendarItems(
       person: isTutor
         ? task.profiles?.full_name || task.profiles?.email || "Unknown student"
         : null,
+      topics: toTopicTags(task.assignment_topics),
     })
   }
 
@@ -172,21 +158,6 @@ export async function loadCalendarItems(
           ? { id: row.shared_with, name: row.recipient?.full_name || capitalise(otherSide) }
           : null,
       from: mine ? null : row.owner?.full_name || otherSide,
-    })
-  }
-
-  for (const unit of milestones ?? []) {
-    const plan = unit.learning_plans
-    items.push({
-      type: "milestone",
-      id: unit.id,
-      title: unit.title,
-      dueOn: unit.due_on,
-      href: isTutor ? `/tutor/students/${plan.student_id}` : "/student/plan",
-      status: MASTERY[unit.mastery],
-      person: isTutor
-        ? plan.profiles?.full_name || plan.profiles?.email || "Unknown student"
-        : null,
     })
   }
 

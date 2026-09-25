@@ -215,7 +215,7 @@ export function key({ item }: DayPlacement): string {
   return `${item.type}-${item.id}`
 }
 
-/** Deadlines and units carry their status colour; events stay neutral. */
+/** Deadlines carry their status colour; events stay neutral. */
 export function Dot({ placement, className }: { placement: DayPlacement; className?: string }) {
   const { item } = placement
   return (
@@ -237,7 +237,6 @@ function Chip({ placement }: { placement: DayPlacement }) {
   if (placement.allDay) {
     return (
       <li className="flex min-w-0 items-center gap-1.5 rounded-md bg-surface-sunken px-1.5 text-xs leading-5 text-on-surface-secondary">
-        {item.type === "milestone" ? <Dot placement={placement} /> : null}
         <span className="truncate">{item.title}</span>
       </li>
     )

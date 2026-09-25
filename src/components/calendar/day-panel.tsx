@@ -3,7 +3,9 @@
 import Link from "next/link"
 import { cn } from "cn"
 
-import { TYPE_LABEL, type StatusTone } from "@/lib/assignments/model"
+import { TopicTags } from "@/components/syllabus/topic-tags"
+import { Badge } from "@/components/ui/badge"
+import { TYPE_LABEL } from "@/lib/assignments/model"
 import { relativeDay, WEEKDAYS, weekdayIndex, type DayKey } from "@/lib/calendar/dates"
 import {
   EVENT_KIND_LABEL,
@@ -14,21 +16,11 @@ import {
 
 import { Dot, key } from "./month-grid"
 
-/** DESIGN.md › StatusBadge: feedback container with its own ink, no border. */
-const STATUS_BADGE: Record<StatusTone, string> = {
-  violet: "bg-violet-container text-on-violet-container",
-  accent: "bg-accent-container text-on-accent-container",
-  info: "bg-info-container text-on-info-container",
-  warning: "bg-warning-container text-on-warning-container",
-  success: "bg-success-container text-on-success-container",
-  error: "bg-error-container text-on-error-container",
-}
-
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", timeZone: "UTC" })
 
 /**
  * The selected day as a card list (DESIGN.md › Card list): one bordered block,
- * rows split by hairlines, time on the left. Deadlines and units link to their
+ * rows split by hairlines, time on the left. Deadlines link to their
  * page; your own events open for editing; shared events are read-only.
  */
 export function DayPanel({
@@ -60,7 +52,7 @@ export function DayPanel({
           {weekday} {date}
         </h2>
         {relative === "Today" ? (
-          <span className="rounded-full bg-blue-100 px-2 py-px text-xs font-medium text-blue-700">Today</span>
+          <Badge variant="blue">Today</Badge>
         ) : (
           <span className="shrink-0 text-xs text-on-surface-muted">{relative}</span>
         )}
@@ -98,9 +90,7 @@ function Row({
   const meta =
     item.type === "deadline"
       ? ["Deadline", item.person ?? TYPE_LABEL[item.taskType]]
-      : item.type === "milestone"
-        ? ["Unit due", item.person]
-        : [EVENT_KIND_LABEL[item.kind], eventAudience(item, role)]
+      : [EVENT_KIND_LABEL[item.kind], eventAudience(item, role)]
 
   const body = (
     <>
@@ -113,16 +103,10 @@ function Row({
         <span className="flex items-center justify-between gap-3">
           <span className="truncate text-xs text-on-surface-muted">{meta.filter(Boolean).join(" · ")}</span>
           {item.type !== "event" ? (
-            <span
-              className={cn(
-                "shrink-0 rounded-md px-1.5 py-px text-xs font-medium",
-                STATUS_BADGE[item.status.tone]
-              )}
-            >
-              {item.status.label}
-            </span>
+            <Badge variant={item.status.tone}>{item.status.label}</Badge>
           ) : null}
         </span>
+        {item.type === "deadline" ? <TopicTags tags={item.topics} max={4} inline /> : null}
         {item.type === "event" && item.notes ? (
           <span
             className={cn(

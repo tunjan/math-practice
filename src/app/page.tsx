@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Check, FileText, X } from "lucide-react"
 
 import { Wordmark } from "@/components/brand/primitives"
+import { Badge } from "@/components/ui/badge"
 import { ButtonLink } from "@/components/ui/button"
 
 export const metadata: Metadata = {
@@ -71,7 +72,7 @@ export default function Home() {
                 <p className="text-sm leading-6 font-semibold text-on-surface">Sam Lee</p>
                 <p className="text-xs text-on-surface-muted">Thu 25 Sep, 18:40</p>
               </div>
-              <Pill className="bg-info-container text-on-info-container">Handed in</Pill>
+              <Badge variant="info">Handed in</Badge>
             </div>
             <div className="flex flex-1 flex-col gap-2 rounded-lg border border-outline bg-surface-muted p-3">
               {[80, 64, 72, 48].map((w) => (
@@ -86,7 +87,7 @@ export default function Home() {
               <p className="font-mono text-2xl text-on-surface">
                 2<span className="text-on-surface-muted">/3</span>
               </p>
-              <Pill className="bg-success-container text-on-success-container">Marked</Pill>
+              <Badge variant="success">Marked</Badge>
             </div>
             <ul className="flex gap-2">
               {[true, false, true].map((ok, i) => (
@@ -136,8 +137,4 @@ function FileChip({ name }: { name: string }) {
   )
 }
 
-function Pill({ className, children }: { className: string; children: React.ReactNode }) {
-  return (
-    <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${className}`}>{children}</span>
-  )
-}
+

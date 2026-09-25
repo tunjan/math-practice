@@ -18,12 +18,15 @@ import { toast } from "sonner"
 import { cn } from "cn"
 
 import { DifficultyMeter } from "@/components/aviary/difficulty-meter"
+import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 
 import { formatDue, formatShortDate, isOverdue, relativeLate, relativeToNow } from "@/lib/assignments/dates"
 import { TYPE_LABEL, type AssignmentType, type BoardColumn } from "@/lib/assignments/model"
 import { DIFFICULTY_LABEL, DIFFICULTY_POINTS, type Difficulty } from "@/lib/aviary/difficulty"
 import { startTask } from "@/lib/student/actions"
+import { TopicTags } from "@/components/syllabus/topic-tags"
+import type { TopicTag } from "@/lib/syllabus/model"
 
 export type BoardTask = {
   id: string
@@ -37,6 +40,7 @@ export type BoardTask = {
   submittedAt: string | null
   reviewedAt: string | null
   topic: string | null
+  topics: TopicTag[]
   materialCount: number
 }
 
@@ -327,9 +331,7 @@ function LaneColumn({
 /** A state worth naming above the title. The lane says the rest; overdue is carried by the date. */
 function stateOf(task: BoardTask): React.ReactNode {
   if (task.column === "assigned" && task.openedAt === null) return (
-      <span className="rounded-full border border-violet/30 bg-violet-container px-2 py-px text-xs font-medium text-on-violet-container">
-        New
-      </span>
+      <Badge variant="purple">New</Badge>
     )
   return null
 }
@@ -454,6 +456,7 @@ function Card({ task, timeZone, onOpen }: { task: BoardTask; timeZone: string; o
         {state ? <span className="flex">{state}</span> : null}
         <span className="line-clamp-3 text-sm leading-5 font-medium text-pretty text-on-surface">{task.title}</span>
         <span className="truncate text-xs text-on-surface-muted">{metaOf(task)}</span>
+        <TopicTags tags={task.topics} max={3} inline className="mt-1" />
       </span>
 
       {task.column === "in_progress" ? <Progress value={task.completionPct} label="Done" hideLabel /> : null}

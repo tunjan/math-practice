@@ -6,6 +6,7 @@ import { MathProse } from "@/components/assignments/math-prose"
 import { TaskComments } from "@/components/assignments/task-comments"
 import { DifficultyMeter } from "@/components/aviary/difficulty-meter"
 import { AttachmentTiles, FileLinks } from "@/components/student/file-chip"
+import { Badge, tagColorFor } from "@/components/ui/badge"
 import { UnsubmitControl, WorkTray, type TaskActions } from "@/components/student/hand-in"
 import { LateNotice } from "@/components/student/late-notice"
 import type { TaskComment } from "@/lib/assignments/comment-model"
@@ -20,6 +21,8 @@ import {
   type Review,
   type WorkFile,
 } from "@/lib/student/task-trail"
+import { TopicTags } from "@/components/syllabus/topic-tags"
+import type { TopicTag } from "@/lib/syllabus/model"
 
 export type TaskData = {
   id: string
@@ -28,6 +31,8 @@ export type TaskData = {
   type: AssignmentType
   difficulty: Difficulty
   topic: string | null
+  /** Syllabus subtopics, in syllabus order. */
+  topics: TopicTag[]
   description: string | null
   dueAt: string
   assignedAt: string
@@ -72,7 +77,6 @@ export function TaskDialogBody({
   titleId?: string
 }) {
   const phase = phaseOf(task.stage, task.verdict)
-  const tags = [TYPE_LABEL[task.type], task.topic].filter((tag): tag is string => Boolean(tag))
 
   return (
     <>
@@ -80,22 +84,23 @@ export function TaskDialogBody({
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain sm:overflow-visible">
         <header className="flex shrink-0 flex-col gap-3 px-6 pt-6 pr-16 pb-5 max-sm:pt-4">
           <ul role="list" aria-label="About this task" className="flex flex-wrap gap-1.5">
-            {tags.map((tag) => (
-              <li
-                key={tag}
-                className="rounded-full border border-outline bg-surface-sunken px-2 py-px text-xs leading-4 font-medium text-on-surface-secondary"
-              >
-                {tag}
-              </li>
-            ))}
-            <li className="inline-flex items-center gap-1.5 rounded-full border border-outline bg-surface-sunken px-2 py-px text-xs leading-4 font-medium text-on-surface-secondary">
-              <DifficultyMeter difficulty={task.difficulty} className="h-2.5 text-on-surface-muted" />
+            <Badge render={<li />} variant="gray">
+              {TYPE_LABEL[task.type]}
+            </Badge>
+            {task.topic ? (
+              <Badge render={<li />} variant={tagColorFor(task.topic)}>
+                {task.topic}
+              </Badge>
+            ) : null}
+            <Badge render={<li />} variant="gray" className="gap-1.5">
+              <DifficultyMeter difficulty={task.difficulty} className="h-2.5 text-on-tag/60" />
               {DIFFICULTY_LABEL[task.difficulty]}
-              <span className="font-normal text-on-surface-muted">
+              <span className="text-on-tag/60">
                 {task.verdict === "approved" ? "earned " : null}+{DIFFICULTY_POINTS[task.difficulty]}
               </span>
-            </li>
+            </Badge>
           </ul>
+          <TopicTags tags={task.topics} />
           <h2
             id={titleId}
             className="font-display text-2xl leading-[1.33] font-medium text-pretty text-on-surface"

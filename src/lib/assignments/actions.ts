@@ -68,22 +68,30 @@ function parseFiles(raw: string, assignmentId: string): UploadedFile[] {
 }
 
 /**
- * The plan unit a task goes under, if it is one of this student's own. A unit
- * from someone else's plan is dropped rather than refused: it is only a label.
+ * The syllabus subtopics posted as `syllabus_topic`, narrowed to those in the
+ * student's own course and level. Anything else is dropped rather than
+ * refused: the database would refuse it, and a tag is not worth losing the
+ * task over.
  */
-async function resolvePlanUnit(
+async function resolveSyllabusTopics(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  unitId: string,
+  formData: FormData,
   studentId: string
-): Promise<string | null> {
-  if (!UUID.test(unitId)) return null
-  const { data } = await supabase
-    .from("plan_units")
-    .select("id, learning_plans!inner(student_id)")
-    .eq("id", unitId)
-    .eq("learning_plans.student_id", studentId)
+): Promise<string[]> {
+  const ids = [...new Set(formData.getAll("syllabus_topic").map(String))].filter((id) => UUID.test(id)).slice(0, 40)
+  if (ids.length === 0) return []
+
+  const { data: student } = await supabase
+    .from("profiles")
+    .select("course, level")
+    .eq("id", studentId)
     .maybeSingle()
-  return data?.id ?? null
+  if (!student?.course || !student.level) return []
+
+  let query = supabase.from("syllabus_topics").select("id").in("id", ids).eq("course", student.course)
+  if (student.level === "SL") query = query.eq("level", "SL")
+  const { data } = await query
+  return (data ?? []).map((row) => row.id)
 }
 
 export async function createAssignment(
@@ -150,7 +158,6 @@ export async function createAssignment(
   const files = parseFiles(String(formData.get("files") ?? ""), assignmentId)
 
   if (targetKind === "student") {
-    const planUnitId = await resolvePlanUnit(supabase, String(formData.get("plan_unit_id") ?? ""), targetId!)
     const { error } = await supabase.from("assignments").insert({
       id: assignmentId,
       tutor_id: tutor.id,
@@ -160,7 +167,6 @@ export async function createAssignment(
       title,
       description: description || null,
       category_id: resolvedCategoryId,
-      plan_unit_id: planUnitId,
       due_at: dueAt.toISOString(),
     })
     if (error) return { error: error.message }
@@ -179,6 +185,14 @@ export async function createAssignment(
           }))
         )
       if (filesError) return { error: filesError.message }
+    }
+
+    const topicIds = await resolveSyllabusTopics(supabase, formData, targetId!)
+    if (topicIds.length > 0) {
+      const { error: topicsError } = await supabase
+        .from("assignment_topics")
+        .insert(topicIds.map((topicId) => ({ assignment_id: assignmentId, topic_id: topicId })))
+      if (topicsError) return { error: topicsError.message }
     }
   } else {
     // Queued against an invite. The row carries the id the real assignment will
@@ -403,20 +417,6 @@ export async function updateAssignment(
     difficulty = { difficulty: parsed }
   }
 
-  let planUnit: { plan_unit_id: string | null } | object = {}
-  if (formData.has("plan_unit_id")) {
-    const { data: current } = await supabase
-      .from("assignments")
-      .select("student_id")
-      .eq("id", assignmentId)
-      .maybeSingle()
-    planUnit = {
-      plan_unit_id: current
-        ? await resolvePlanUnit(supabase, String(formData.get("plan_unit_id") ?? ""), current.student_id)
-        : null,
-    }
-  }
-
   const { error } = await supabase
     .from("assignments")
     .update({
@@ -426,11 +426,46 @@ export async function updateAssignment(
       due_at: dueAt.toISOString(),
       category_id: resolvedCategoryId,
       ...difficulty,
-      ...planUnit,
     })
     .eq("id", assignmentId)
 
   if (error) return { error: error.message }
+
+  // Only forms that offer the syllabus picker may change the tags. Tags from
+  // a course the student has since left are not shown, so they are kept.
+  if (formData.has("syllabus_topics_offered")) {
+    const { data: current } = await supabase
+      .from("assignments")
+      .select("student_id, assignment_topics(topic_id, syllabus_topics(course))")
+      .eq("id", assignmentId)
+      .maybeSingle()
+    if (current) {
+      const chosen = await resolveSyllabusTopics(supabase, formData, current.student_id)
+      const { data: student } = await supabase
+        .from("profiles")
+        .select("course")
+        .eq("id", current.student_id)
+        .maybeSingle()
+      const existing = current.assignment_topics
+      const removed = existing
+        .filter((row) => row.syllabus_topics?.course === student?.course && !chosen.includes(row.topic_id))
+        .map((row) => row.topic_id)
+      const added = chosen.filter((id) => !existing.some((row) => row.topic_id === id))
+
+      if (removed.length > 0) {
+        await supabase
+          .from("assignment_topics")
+          .delete()
+          .eq("assignment_id", assignmentId)
+          .in("topic_id", removed)
+      }
+      if (added.length > 0) {
+        await supabase
+          .from("assignment_topics")
+          .insert(added.map((topicId) => ({ assignment_id: assignmentId, topic_id: topicId })))
+      }
+    }
+  }
 
   // Newly attached materials, uploaded by the browser before this ran.
   const files = parseFiles(String(formData.get("files") ?? ""), assignmentId)

@@ -12,6 +12,7 @@ import { requireRole } from "@/lib/auth/session"
 import { createClient } from "@/lib/supabase/server"
 import { asStage, type AssignmentRow } from "@/lib/assignments/model"
 import { loadTaskOptions } from "@/lib/assignments/task-options"
+import { toTopicTags } from "@/lib/syllabus/model"
 
 export const metadata: Metadata = { title: "Assignments · Maths Tasks" }
 export const dynamic = "force-dynamic"
@@ -27,7 +28,7 @@ export default async function AssignmentsPage({
       .from("assignments")
       .select(
         `id, title, type, due_at, stage, verdict, submitted_at, student_opened_at,
-         categories(name),
+         categories(name), assignment_topics(syllabus_topics(code, title, topic, subtopic)),
          profiles!assignments_student_id_fkey(id, full_name, email)`
       )
       .order("due_at", { ascending: true }),
@@ -49,6 +50,7 @@ export default async function AssignmentsPage({
     studentName:
       assignment.profiles?.full_name || assignment.profiles?.email || "Unknown student",
     topic: assignment.categories?.name ?? null,
+    topics: toTopicTags(assignment.assignment_topics),
     submittedAt: assignment.submitted_at,
     openedAt: assignment.student_opened_at,
   }))

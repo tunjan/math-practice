@@ -10,7 +10,6 @@ import {
   LayoutGrid,
   ListTodo,
   LogOut,
-  Route,
   Users,
   X,
   type LucideIcon,
@@ -43,7 +42,6 @@ const ICONS = {
   students: Users,
   tasks: ListTodo,
   calendar: CalendarDays,
-  plan: Route,
   aviary: Bird,
 } satisfies Record<string, LucideIcon>
 

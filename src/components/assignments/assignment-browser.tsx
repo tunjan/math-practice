@@ -49,6 +49,8 @@ import {
   type Sort,
 } from "@/lib/assignments/model"
 
+import { TopicTags } from "@/components/syllabus/topic-tags"
+
 import { StatusBadge } from "./status-badge"
 
 export type QueuedRow = {
@@ -265,6 +267,7 @@ export function AssignmentBrowser({
                           }
                         />
                       </Link>
+                      <TopicTags tags={row.topics} max={4} className="relative z-[1] mt-1.5" />
                       <div className="mt-1.5 sm:hidden">
                         <StatusBadge stage={row.stage} verdict={row.verdict} overdue={overdue} />
                       </div>
@@ -316,7 +319,7 @@ export function AssignmentBrowser({
                   primary={task.title}
                   secondary={`${task.inviteeName} · due ${formatDue(task.dueAt, timeZone)}`}
                 />
-                <Badge variant="outline">Queued</Badge>
+                <Badge variant="gray">Queued</Badge>
               </li>
             ))}
           </ul>

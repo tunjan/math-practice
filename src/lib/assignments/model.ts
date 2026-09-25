@@ -1,3 +1,4 @@
+import type { TopicTag } from "@/lib/syllabus/model"
 import type { Database } from "@/lib/supabase/database.types"
 
 export type AssignmentType = Database["public"]["Enums"]["assignment_type"]
@@ -159,6 +160,8 @@ export type AssignmentRow = {
   studentName: string
   studentId: string
   topic: string | null
+  /** Syllabus subtopics, in syllabus order. */
+  topics: TopicTag[]
   submittedAt: string | null
   openedAt: string | null
 }
