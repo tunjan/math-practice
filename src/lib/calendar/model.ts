@@ -8,6 +8,7 @@ import {
   dayKeyOf,
   timeOf,
   utcDayKey,
+  weekStart,
   type DayKey,
 } from "./dates"
 
@@ -166,4 +167,99 @@ export function eventAudience(item: EventItem, role: "tutor" | "student"): strin
     return role === "student" ? "Shared with your tutor" : `Shared with ${item.sharedWith.name}`
   }
   return "Only you"
+}
+
+// ── Planned syllabus topics ─────────────────────────────────────────────────
+
+/** One subtopic with a planned window, as the tracker records it. */
+export type PlannedTopic = {
+  studentId: string
+  /** The student's name, on the tutor's calendar. */
+  person: string | null
+  tag: TopicTag
+  plannedStart: DayKey | null
+  plannedEnd: DayKey | null
+  updatedAt: string
+}
+
+/**
+ * The subtopics of one strand a student has planned in one Monday–Sunday
+ * week. A calendar shows these as a bar across the week rather than a chip on
+ * every day, so a term's plan stays readable.
+ */
+export type WeekPlan = {
+  /** Stable: student, week and strand. */
+  id: string
+  studentId: string
+  person: string | null
+  /** The Monday. */
+  week: DayKey
+  topic: number
+  topics: TopicTag[]
+  /** The latest edit among its subtopics, for calendar feeds. */
+  updatedAt: string
+}
+
+/** Past this, a window is a typo; matches the database's one-year limit. */
+const MAX_PLAN_WEEKS = 54
+
+/**
+ * Groups planned subtopics into week bars: one per student, week and strand.
+ * A window with only a start or only an end is that one day's week. Weeks
+ * outside `from`–`to` (inclusive day keys) are dropped.
+ */
+export function weekPlans(
+  planned: PlannedTopic[],
+  range: { from: DayKey; to: DayKey } | null = null
+): WeekPlan[] {
+  const byKey = new Map<string, WeekPlan>()
+  const firstWeek = range ? weekStart(range.from) : null
+
+  for (const row of planned) {
+    const first = row.plannedStart ?? row.plannedEnd
+    const last = row.plannedEnd ?? row.plannedStart
+    if (!first || !last) continue
+
+    const lastWeek = weekStart(last)
+    let week = weekStart(first)
+    for (let i = 0; i < MAX_PLAN_WEEKS && week <= lastWeek; i++, week = addDays(week, 7)) {
+      if (range && (week < firstWeek! || week > range.to)) continue
+      const id = `${row.studentId}:${week}:${row.tag.topic}`
+      const plan = byKey.get(id)
+      if (plan) {
+        plan.topics.push(row.tag)
+        if (row.updatedAt > plan.updatedAt) plan.updatedAt = row.updatedAt
+      } else {
+        byKey.set(id, {
+          id,
+          studentId: row.studentId,
+          person: row.person,
+          week,
+          topic: row.tag.topic,
+          topics: [row.tag],
+          updatedAt: row.updatedAt,
+        })
+      }
+    }
+  }
+
+  const plans = [...byKey.values()]
+  for (const plan of plans) plan.topics.sort((a, b) => a.subtopic - b.subtopic)
+  return plans.sort(
+    (a, b) =>
+      a.week.localeCompare(b.week) ||
+      (a.person ?? "").localeCompare(b.person ?? "") ||
+      a.topic - b.topic
+  )
+}
+
+/** Week bars keyed by their Monday. */
+export function plansByWeek(plans: WeekPlan[]): Map<DayKey, WeekPlan[]> {
+  const byWeek = new Map<DayKey, WeekPlan[]>()
+  for (const plan of plans) {
+    const list = byWeek.get(plan.week) ?? []
+    list.push(plan)
+    byWeek.set(plan.week, list)
+  }
+  return byWeek
 }

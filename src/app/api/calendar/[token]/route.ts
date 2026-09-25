@@ -2,10 +2,11 @@ import { NextResponse, type NextRequest } from "next/server"
 
 import { createAdminClient } from "@/lib/supabase/admin"
 import { buildCalendar, type CalendarEvent } from "@/lib/calendar/ics"
-import { EVENT_KIND_LABEL } from "@/lib/calendar/model"
+import { EVENT_KIND_LABEL, weekPlans } from "@/lib/calendar/model"
+import { PLANNED_TOPICS_SELECT, toPlannedTopics } from "@/lib/calendar/load"
 import { TYPE_LABEL } from "@/lib/assignments/model"
-import { dayKeyOf, utcDayKey } from "@/lib/calendar/dates"
-import { toTopicTags } from "@/lib/syllabus/model"
+import { addDays, dayKeyOf, utcDayKey, utcMidnight } from "@/lib/calendar/dates"
+import { TOPIC_NAME, toTopicTags } from "@/lib/syllabus/model"
 
 /**
  * A subscribable calendar feed: /api/calendar/<token>.ics
@@ -14,7 +15,8 @@ import { toTopicTags } from "@/lib/syllabus/model"
  * in, so the token in the path IS the credential. It is an unguessable uuid
  * held only by its owner, rotatable without touching their password, and it
  * grants read access to nothing but what their own calendar page shows:
- * deadlines, their own events, and events shared with them.
+ * deadlines, their own events, events shared with them, and planned syllabus
+ * topics.
  *
  * Worth being clear-eyed about the trade: subscribing in Google Calendar means
  * Google's servers fetch this URL, so titles leave our infrastructure. That is
@@ -58,7 +60,14 @@ export async function GET(
   const isTutor = profile.role === "tutor"
   const since = new Date(Date.now() - HISTORY_DAYS * 86_400_000).toISOString()
 
-  const [{ data: assignments }, { data: calendarEvents }] = await Promise.all([
+  let planned = admin
+    .from("topic_progress")
+    .select(PLANNED_TOPICS_SELECT)
+    .or(`planned_end.gte.${since.slice(0, 10)},and(planned_end.is.null,planned_start.gte.${since.slice(0, 10)})`)
+  // The tutor plans for every student; a student sees only their own plan.
+  if (!isTutor) planned = planned.eq("student_id", profile.id)
+
+  const [{ data: assignments }, { data: calendarEvents }, { data: plannedRows }] = await Promise.all([
     admin
       .from("assignments")
       .select(
@@ -78,6 +87,7 @@ export async function GET(
       .or(`owner_id.eq.${profile.id},shared_with.eq.${profile.id}`)
       .gte("ends_at", since)
       .order("starts_at", { ascending: true }),
+    planned,
   ])
 
   const origin =
@@ -141,12 +151,28 @@ export async function GET(
     }
   })
 
+  const plans: CalendarEvent[] = weekPlans(toPlannedTopics(plannedRows, isTutor)).map((plan) => {
+    const strand = TOPIC_NAME[plan.topic] ?? `Topic ${plan.topic}`
+    const codes = plan.topics.map((t) => t.code).join(", ")
+    return {
+      uid: `plan-${plan.studentId}-${plan.week}-${plan.topic}@maths-tasks`,
+      // A bar across the week, Monday to Sunday.
+      start: new Date(utcMidnight(plan.week)),
+      end: new Date(utcMidnight(addDays(plan.week, 7))),
+      allDay: true,
+      summary: `${plan.person ? `${plan.person}: ` : ""}${strand} ${codes}`,
+      description: ["Planned this week", ...plan.topics.map((t) => `${t.code} ${t.title}`)].join("\n"),
+      url: isTutor ? `${origin}/tutor/students/${plan.studentId}` : `${origin}/student/syllabus`,
+      sequence: Math.floor(new Date(plan.updatedAt).getTime() / 1000),
+    }
+  })
+
   const body = buildCalendar({
     name: `Maths Tasks: ${profile.full_name || (isTutor ? "tutor" : "deadlines")}`,
     description: isTutor
-      ? "Deadlines you've set and your calendar events."
-      : "Deadlines from your tutor and your calendar events.",
-    events: [...deadlines, ...events],
+      ? "Deadlines you've set, your calendar events and your students' syllabus plans."
+      : "Deadlines from your tutor, your calendar events and your syllabus plan.",
+    events: [...deadlines, ...events, ...plans],
   })
 
   return new NextResponse(body, {

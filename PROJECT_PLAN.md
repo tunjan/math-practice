@@ -120,7 +120,8 @@
 - **Verify by:** A student with a course sees their tracker and can't edit it; a student without one has no link.
 
 ### Phase 9.11 — Planned topics on the calendar
-- **Status:** pending
+- **Status:** implemented, awaiting user verification
+- **Notes:** `weekPlans` (`src/lib/calendar/model.ts`) groups planned subtopics into one bar per student × Monday–Sunday week × strand. A window with only a start or only an end counts as that one day's week. Windows are capped at 54 weeks. Rows from a course the student is no longer on are dropped, the same as in the tracker. In the month grid, bars sit in a strip under each week row in the strand's tag colour (up to 3, then "n more planned"). The tutor's unfiltered view prefixes each bar with the student's name. The day panel lists the selected day's week bars first, each linking to the tracker (tutor: student page, student: `/student/syllabus`). ICS: one all-day Monday–Sunday event per bar, with a stable UID and a sequence taken from the latest edit.
 - **Changes:** Shows planned topics as week bars grouped by topic on the tutor + student calendar and in the ICS feed.
 - **Verify by:** Topics scheduled in a week appear on that week for both roles and in the subscribed calendar.
 

@@ -15,10 +15,18 @@ import {
   addMonths,
   formatMonth,
   monthOf,
+  weekStart,
   type DayKey,
   type MonthKey,
 } from "@/lib/calendar/dates"
-import { placeByDay, type CalendarItem, type EventItem, type Person } from "@/lib/calendar/model"
+import {
+  placeByDay,
+  plansByWeek,
+  type CalendarItem,
+  type EventItem,
+  type Person,
+  type WeekPlan,
+} from "@/lib/calendar/model"
 
 import { DayPanel } from "./day-panel"
 import {
@@ -55,6 +63,7 @@ export function CalendarView({
   today,
   timeZone,
   items,
+  plans = [],
   students = [],
   studentId = null,
   feedUrl,
@@ -69,6 +78,8 @@ export function CalendarView({
   today: DayKey
   timeZone: string
   items: CalendarItem[]
+  /** Planned syllabus topics as week bars. */
+  plans?: WeekPlan[]
   /** Tutor only: the roster, for filtering and sharing. */
   students?: Person[]
   studentId?: string | null
@@ -88,6 +99,13 @@ export function CalendarView({
   const [draft, setDraft] = React.useState<EventDraft | null>(null)
 
   const placements = React.useMemo(() => placeByDay(items, timeZone), [items, timeZone])
+  const weekPlans = React.useMemo(() => plansByWeek(plans), [plans])
+  // Several students' plans share a week only on the tutor's unfiltered view.
+  const showPerson = role === "tutor" && !studentId
+  const planHref = React.useCallback(
+    (plan: WeekPlan) => (role === "tutor" ? `/tutor/students/${plan.studentId}` : "/student/syllabus"),
+    [role]
+  )
 
   const href = React.useCallback(
     (next: { month?: MonthKey; day?: DayKey; student?: string | null }) => {
@@ -244,6 +262,8 @@ export function CalendarView({
               today={today}
               selected={selected}
               placements={placements}
+              plans={weekPlans}
+              showPerson={showPerson}
               onSelect={select}
               labelledBy={monthTitleId}
             />
@@ -253,6 +273,9 @@ export function CalendarView({
             today={today}
             role={role}
             placements={placements.get(selected) ?? []}
+            plans={weekPlans.get(weekStart(selected)) ?? []}
+            planHref={planHref}
+            showPerson={showPerson}
             onEdit={openEdit}
             className="lg:sticky lg:top-4"
           />

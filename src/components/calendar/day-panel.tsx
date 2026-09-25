@@ -12,9 +12,11 @@ import {
   eventAudience,
   type DayPlacement,
   type EventItem,
+  type WeekPlan,
 } from "@/lib/calendar/model"
 
 import { Dot, key } from "./month-grid"
+import { PlanRow } from "./week-plans"
 
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", timeZone: "UTC" })
 
@@ -28,6 +30,9 @@ export function DayPanel({
   today,
   role,
   placements,
+  plans,
+  planHref,
+  showPerson,
   onEdit,
   className,
 }: {
@@ -35,6 +40,10 @@ export function DayPanel({
   today: DayKey
   role: "tutor" | "student"
   placements: DayPlacement[]
+  /** Syllabus topics planned for the week this day is in. */
+  plans: WeekPlan[]
+  planHref: (plan: WeekPlan) => string
+  showPerson: boolean
   onEdit: (event: EventItem) => void
   className?: string
 }) {
@@ -58,10 +67,15 @@ export function DayPanel({
         )}
       </header>
 
-      {placements.length === 0 ? (
+      {placements.length === 0 && plans.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-on-surface-muted">Nothing scheduled</p>
       ) : (
         <ul role="list" className="divide-y divide-outline">
+          {plans.map((plan) => (
+            <li key={plan.id}>
+              <PlanRow plan={plan} href={planHref(plan)} showPerson={showPerson} />
+            </li>
+          ))}
           {placements.map((placement) => (
             <li key={key(placement)}>
               <Row placement={placement} role={role} onEdit={onEdit} />

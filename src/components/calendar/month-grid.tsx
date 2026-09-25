@@ -15,7 +15,9 @@ import {
   type DayKey,
   type MonthKey,
 } from "@/lib/calendar/dates"
-import type { DayPlacement } from "@/lib/calendar/model"
+import type { DayPlacement, WeekPlan } from "@/lib/calendar/model"
+
+import { WeekBars } from "./week-plans"
 
 /** Three lines fit a cell; past that, two items and a count. */
 const CELL_LINES = 3
@@ -35,6 +37,8 @@ export function MonthGrid({
   today,
   selected,
   placements,
+  plans,
+  showPerson,
   onSelect,
   labelledBy,
 }: {
@@ -42,6 +46,10 @@ export function MonthGrid({
   today: DayKey
   selected: DayKey
   placements: Map<DayKey, DayPlacement[]>
+  /** Planned syllabus topics, keyed by the Monday of their week. */
+  plans: Map<DayKey, WeekPlan[]>
+  /** Name the student on each bar (the tutor's unfiltered calendar). */
+  showPerson: boolean
   /** `focus` is true when the keyboard moved, so the new cell takes focus. */
   onSelect: (day: DayKey, options: { focus: boolean }) => void
   labelledBy: string
@@ -104,19 +112,22 @@ export function MonthGrid({
       </div>
 
       {weeks.map((week) => (
-        <div key={week[0]} role="row" className="grid grid-cols-7 border-b border-outline last:border-b-0">
-          {week.map((day) => (
-            <DayCell
-              key={day}
-              day={day}
-              outside={monthOf(day) !== month}
-              isToday={day === today}
-              isSelected={day === selected}
-              placements={placements.get(day) ?? []}
-              onSelect={onSelect}
-              onKeyDown={handleKeyDown}
-            />
-          ))}
+        <div key={week[0]} role="presentation" className="border-b border-outline last:border-b-0">
+          <div role="row" className="grid grid-cols-7">
+            {week.map((day) => (
+              <DayCell
+                key={day}
+                day={day}
+                outside={monthOf(day) !== month}
+                isToday={day === today}
+                isSelected={day === selected}
+                placements={placements.get(day) ?? []}
+                onSelect={onSelect}
+                onKeyDown={handleKeyDown}
+              />
+            ))}
+          </div>
+          <WeekBars plans={plans.get(week[0]!) ?? []} showPerson={showPerson} />
         </div>
       ))}
     </div>
