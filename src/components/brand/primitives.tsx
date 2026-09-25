@@ -3,6 +3,8 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { cn } from "cn"
 
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
+
 /**
  * Layout building blocks shared by every screen. DESIGN.md › Layout: content
  * is capped at 1280px with a 32px page margin (16px on phones), and the only
@@ -122,7 +124,7 @@ function IconTile({
   )
 }
 
-/** Empty state for the inside of a card. */
+/** Empty state for the inside of a card: shadcn Empty with the app's defaults. */
 function EmptyState({
   icon,
   title,
@@ -137,22 +139,18 @@ function EmptyState({
   className?: string
 }) {
   return (
-    <div
-      data-slot="empty-state"
-      className={cn(
-        "flex flex-col items-center justify-center gap-3 px-6 py-14 text-center",
-        className
-      )}
-    >
-      {icon ? <IconTile>{icon}</IconTile> : null}
-      <div className="flex flex-col gap-1">
-        <p className="title-md text-on-surface">{title}</p>
-        {description ? (
-          <p className="body-sm max-w-sm text-on-surface-muted">{description}</p>
-        ) : null}
-      </div>
-      {action ? <div className="pt-2">{action}</div> : null}
-    </div>
+    <Empty className={cn("gap-3 py-14", className)}>
+      {icon ? (
+        <EmptyMedia variant="icon" className="mb-0">
+          {icon}
+        </EmptyMedia>
+      ) : null}
+      <EmptyHeader className="gap-1">
+        <EmptyTitle>{title}</EmptyTitle>
+        {description ? <EmptyDescription>{description}</EmptyDescription> : null}
+      </EmptyHeader>
+      {action ? <EmptyContent className="pt-2">{action}</EmptyContent> : null}
+    </Empty>
   )
 }
 

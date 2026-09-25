@@ -23,6 +23,8 @@ export type AviaryAccessory = AccessoryArt & Priced
 
 export type PointAward = {
   id: string
+  /** The task it was for; null once that task is deleted. */
+  assignmentId: string | null
   title: string
   difficulty: Difficulty
   points: number
@@ -52,7 +54,7 @@ export async function loadAviary(supabase: Client, studentId: string): Promise<A
     supabase.from("aviary_items").select("id, kind, slot, cost").order("position"),
     supabase
       .from("point_awards")
-      .select("id, title, difficulty, points, awarded_at")
+      .select("id, assignment_id, title, difficulty, points, awarded_at")
       .eq("student_id", studentId)
       .order("awarded_at", { ascending: false }),
     supabase.from("aviary_unlocks").select("item_id, cost").eq("student_id", studentId),
@@ -87,6 +89,7 @@ export async function loadAviary(supabase: Client, studentId: string): Promise<A
     earned,
     awards: (awards.data ?? []).map((row) => ({
       id: row.id,
+      assignmentId: row.assignment_id,
       title: row.title,
       difficulty: row.difficulty,
       points: row.points,

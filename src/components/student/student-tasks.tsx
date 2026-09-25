@@ -2,13 +2,14 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ClipboardList } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import { BirdFigure } from "@/components/aviary/bird-figure"
 import { TaskList, type BoardTask } from "@/components/student/task-board"
 import { TaskDialogBody, TaskUnavailable } from "@/components/student/task-dialog"
 import { TaskDialogShell } from "@/components/student/task-dialog-frame"
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { isOverdue } from "@/lib/assignments/dates"
 import type { BirdArt, Outfit } from "@/lib/aviary/catalog"
 import { recordOpen } from "@/lib/student/actions"
@@ -31,11 +32,17 @@ export function StudentTasks({
   tasks,
   companion = null,
   timeZone,
+  overview = null,
+  insights = null,
 }: {
   firstName: string
   tasks: StudentTask[]
   companion?: CompanionGlance | null
   timeZone: string
+  /** Between the greeting and the board: stats, this week, the next exam. */
+  overview?: React.ReactNode
+  /** Under the board: how the student is getting on. */
+  insights?: React.ReactNode
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -101,9 +108,31 @@ export function StudentTasks({
           {companion ? <CompanionLink companion={companion} /> : null}
         </div>
 
-        {tasks.length > 0 ? (
-          <div className="animate-slide-up-fade" style={{ animationDelay: "160ms" }}>
+        {overview ? (
+          <div className="animate-slide-up-fade" style={{ animationDelay: "120ms" }}>
+            {overview}
+          </div>
+        ) : null}
+
+        <div className="animate-slide-up-fade" style={{ animationDelay: "160ms" }}>
+          {tasks.length > 0 ? (
             <TaskList tasks={boardTasks} timeZone={timeZone} onOpen={open} />
+          ) : (
+            <Empty variant="outline">
+              <EmptyMedia variant="icon">
+                <ClipboardList />
+              </EmptyMedia>
+              <EmptyHeader>
+                <EmptyTitle>No tasks yet</EmptyTitle>
+                <EmptyDescription>When your tutor sets you work, it appears here with its deadline.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          )}
+        </div>
+
+        {insights ? (
+          <div className="animate-slide-up-fade" style={{ animationDelay: "200ms" }}>
+            {insights}
           </div>
         ) : null}
       </div>

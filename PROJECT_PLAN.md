@@ -198,6 +198,23 @@
   3. On a tracker, the By topic chart matches the counts in the grid and updates when you change a status.
   4. Right-click a tracker row: status and stars change, and the menu closes. Clear plan and Clear note work, and are disabled when there's nothing to clear. No menu appears for the student.
 
+### Phase 12 — Student dashboard
+- **Status:** done (awaiting user verification)
+- **Notes:** The student home gains a dashboard around the task board, from components found on ReUI, shadcnblocks, shadcncraft, 21st.dev and shadcn/ui. The paid blocks were used as design references and built from primitives the app already has. Every figure comes from `buildDashboard` (`src/lib/student/dashboard.ts`), a pure function that `StudentHome` calls on the server with the request's clock. That keeps dates out of hydration, and the styleguide can call it with a fixture.
+  - **Above the board:** a stat strip (due in the next 7 days, overdue, with your tutor, points), **This week** (Monday–Sunday, one row per day: deadlines with status, exams, events, and the week's planned-topic bars), and **Next exam** (a countdown, then its subtopics weakest first by stars from the tracker). This week reuses `loadCalendarItems`/`loadWeekPlans` for the current month, whose grid always contains this week.
+  - **Under the board ("Your progress"):** a **Syllabus** card (seen / in progress / to see overall and per strand, in the By topic chart's greens), **Activity** (a heatmap of hand-ins and first opens over 18 weeks, 12 on phones), **Recent feedback** (the latest 5 verdicts as a ReUI Timeline, with feedback and points earned), and **Exam scores** (shadcn Chart line on a time axis with the average, shown from 2 marked exams).
+  - **Decisions:** (1) The streak counts *weeks* in a row with a hand-in, not days: tasks are set weekly, so a daily streak would break on every normal weekend. The current week doesn't break the run until it's over. (2) The score chart has no IB grade bands, because grade boundaries change from paper to paper; each exam's recorded grade shows in the tooltip instead. (3) Activity counts the student's own actions (hand-ins and first opens), not tutor reviews.
+  - Added **shadcn Empty** (`ui/empty.tsx`). The brand `EmptyState` is now built on it, and it's used for a board with no tasks, a clear week, no upcoming exam, no activity and no feedback. Added **ReUI Timeline** (`reui/timeline.tsx`, MIT), restyled to tokens. `loadAviary` now returns each award's `assignmentId`, so feedback can show the points an approval earned.
+  - The Syllabus card and Next exam card only show for students with a course (exams are added on the Syllabus page).
+  - `/styleguide/dashboard` renders it all with sample data (Fri 25 Sep 2026), and `?empty` shows a new student with no course.
+- **Verify by:**
+  1. Open `/styleguide/dashboard` and `/styleguide/dashboard?empty`, at desktop and phone widths.
+  2. As a student with tasks: the stat numbers match the board (Overdue matches the red cards; With your tutor matches Submitted).
+  3. This week lists this week's deadlines, exams and events. Clicking a deadline opens the task dialog.
+  4. Add an upcoming exam with topics on the Syllabus page: Next exam counts down to it and lists its topics weakest first.
+  5. Hand in a task: today's heatmap cell darkens and the streak includes this week. After the tutor approves, Recent feedback shows it with its points.
+  6. With two marked exams, the Exam scores chart appears. A student without a course sees no Syllabus or Next exam card.
+
 ## 6. Working Agreement
 
 - Implementation proceeds **one phase at a time**. Each phase is announced before it starts (what will and won't change).
