@@ -1,21 +1,41 @@
 "use client"
 
 import * as React from "react"
-import { CircleAlert, CircleCheck, Info, TriangleAlert } from "lucide-react"
+import { CalendarDays, CircleAlert, CircleCheck, ClipboardList, Info, LayoutGrid, Search, TriangleAlert, Users } from "lucide-react"
 
+import { CommandPalette } from "@/components/shell/command-palette"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Calendar } from "@/components/ui/calendar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DateField } from "@/components/ui/date-field"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Button } from "@/components/ui/button"
+import type { CommandEntry } from "@/lib/search/actions"
 
-/** The registry components added in Phase 10, with sample data. */
+const PAGES = [
+  { href: "/tutor", label: "Overview", Icon: LayoutGrid },
+  { href: "/tutor/assignments", label: "Assignments", Icon: ClipboardList },
+  { href: "/tutor/students", label: "Students", Icon: Users },
+  { href: "/tutor/calendar", label: "Calendar", Icon: CalendarDays },
+]
+
+const SAMPLE: CommandEntry[] = [
+  { id: "s1", group: "Students", label: "Ana García", hint: "ana@example.com", href: "#" },
+  { id: "s2", group: "Students", label: "Tom Okafor", hint: "tom@example.com", href: "#" },
+  { id: "t1", group: "Tasks", label: "Sequences and series: problem set 2", hint: "Ana García", href: "#" },
+  { id: "t2", group: "Tasks", label: "Differentiation from first principles", hint: "Tom Okafor", href: "#" },
+  { id: "t3", group: "Tasks", label: "Vectors: lines and planes", hint: "Ana García", href: "#" },
+]
+const loadSample = async () => SAMPLE
+
+/** The registry components added in Phases 10 and 11, with sample data. */
 export default function Page() {
   const [day, setDay] = React.useState("2026-09-25")
   const [from, setFrom] = React.useState("")
   const [to, setTo] = React.useState("2026-10-09")
   const [chip, setChip] = React.useState("all")
   const [track, setTrack] = React.useState("attention")
+  const [searching, setSearching] = React.useState(false)
 
   return (
     <div className="dub min-h-screen bg-surface p-10">
@@ -66,6 +86,14 @@ export default function Page() {
               ))}
             </CollapsibleContent>
           </Collapsible>
+        </section>
+
+        <section className="flex flex-col gap-3" data-section="command">
+          <h2 className="label-caps text-on-surface-muted">Command (⌘K)</h2>
+          <Button className="w-fit" onClick={() => setSearching(true)}>
+            <Search aria-hidden /> Search
+          </Button>
+          <CommandPalette open={searching} onOpenChange={setSearching} pages={PAGES} scope="dub" load={loadSample} />
         </section>
 
         <section className="flex flex-col gap-3" data-section="alert">

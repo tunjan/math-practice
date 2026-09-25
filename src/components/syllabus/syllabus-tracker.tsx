@@ -1,15 +1,30 @@
 "use client"
 
 import * as React from "react"
-import { CalendarRange, ChevronRight, Search, X } from "lucide-react"
+import { CalendarRange, CalendarX, ChevronRight, Eraser, Search, SquareCheck, Star, X } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "cn"
 
 import { TopicTags } from "@/components/syllabus/topic-tags"
 import { StarRating } from "@/components/syllabus/star-rating"
+import { TopicProgressChart } from "@/components/syllabus/topic-progress-chart"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuRadioGroup,
+  ContextMenuRadioItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu"
 import { DateField } from "@/components/ui/date-field"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -131,6 +146,8 @@ export function SyllabusTracker({
           />
         </div>
       </div>
+
+      <TopicProgressChart rows={optimistic} />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">
@@ -294,11 +311,13 @@ function Row({
   const { progress } = row
   const late = progress.status !== "seen" && progress.plannedEnd !== null && progress.plannedEnd < today
 
-  return (
-    <tr
-      data-selected={selected || undefined}
-      className="h-10 border-b border-outline transition-colors hover:bg-surface-muted/60 data-selected:bg-blue-50/70"
-    >
+  const rowProps = {
+    "data-selected": selected || undefined,
+    className: "h-10 border-b border-outline transition-colors hover:bg-surface-muted/60 data-selected:bg-blue-50/70 data-popup-open:bg-surface-muted",
+  }
+
+  const cells = (
+    <>
       {editable ? (
         <td className={cn(cellClass, "w-10")}>
           <Checkbox checked={selected} onCheckedChange={onSelect} aria-label={`Select ${row.code}`} />
@@ -354,7 +373,83 @@ function Row({
           </span>
         )}
       </td>
-    </tr>
+    </>
+  )
+
+  if (!editable) return <tr {...rowProps}>{cells}</tr>
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger render={<tr {...rowProps} />}>{cells}</ContextMenuTrigger>
+      <RowMenu row={row} selected={selected} onSelect={onSelect} onSave={onSave} />
+    </ContextMenu>
+  )
+}
+
+/** Right-click on a row: the quick edits, without aiming at a cell. */
+function RowMenu({
+  row,
+  selected,
+  onSelect,
+  onSave,
+}: {
+  row: TrackerRow
+  selected: boolean
+  onSelect: () => void
+  onSave: (patch: ProgressPatch) => void
+}) {
+  const { progress } = row
+  const planned = Boolean(progress.plannedStart || progress.plannedEnd)
+
+  return (
+    <ContextMenuContent className="dub w-56">
+      <ContextMenuGroup>
+        <ContextMenuLabel>
+          {row.code} · Status
+        </ContextMenuLabel>
+        <ContextMenuRadioGroup
+          value={progress.status}
+          onValueChange={(status: TopicStatus) => status !== progress.status && onSave({ status })}
+        >
+          {STATUSES.map((status) => (
+            <ContextMenuRadioItem key={status} value={status} closeOnClick>
+              <Badge variant={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Badge>
+            </ContextMenuRadioItem>
+          ))}
+        </ContextMenuRadioGroup>
+      </ContextMenuGroup>
+      <ContextMenuSub>
+        <ContextMenuSubTrigger>
+          <Star aria-hidden /> Knows it
+          <span className="ml-auto font-mono text-xs text-on-surface-muted tabular-nums">{progress.stars}/5</span>
+        </ContextMenuSubTrigger>
+        <ContextMenuSubContent className="dub min-w-36">
+          <ContextMenuRadioGroup
+            value={progress.stars}
+            onValueChange={(stars: number) => stars !== progress.stars && onSave({ stars })}
+          >
+            {[5, 4, 3, 2, 1, 0].map((stars) => (
+              <ContextMenuRadioItem key={stars} value={stars} closeOnClick>
+                {stars === 0 ? <span className="text-on-surface-muted">No stars</span> : <StarRating value={stars} />}
+              </ContextMenuRadioItem>
+            ))}
+          </ContextMenuRadioGroup>
+        </ContextMenuSubContent>
+      </ContextMenuSub>
+      <ContextMenuSeparator />
+      <ContextMenuItem onClick={onSelect}>
+        <SquareCheck aria-hidden /> {selected ? "Deselect" : "Select"}
+      </ContextMenuItem>
+      <ContextMenuItem
+        disabled={!planned}
+        onClick={() => onSave({ plannedStart: null, plannedEnd: null })}
+      >
+        <CalendarX aria-hidden /> Clear plan
+      </ContextMenuItem>
+      <ContextMenuItem disabled={!progress.notes} onClick={() => onSave({ notes: null })}>
+        <Eraser aria-hidden /> Clear note
+      </ContextMenuItem>
+    </ContextMenuContent>
   )
 }
 
