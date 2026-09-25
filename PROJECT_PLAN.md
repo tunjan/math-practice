@@ -185,6 +185,19 @@
   4. Student board: "Show N older" expands and collapses.
   5. Upload a too-large file, and import a CSV with a bad code: both errors show in the red alert box.
 
+### Phase 11 — Registry components as new features
+- **Status:** done (awaiting user verification)
+- **Notes:** Follow-up to Phase 10: additions, not replacements. `cmdk` and `recharts` added (the shadcn Command and Chart dependencies).
+  - **Command palette** (shadcn Command / cmdk). ⌘K or Ctrl+K anywhere in the tutor and student workspaces, or the new Search row at the top of the sidebar (and a search icon in the phone top bar). It lists the workspace pages; the tutor also gets every student and their 500 most recent tasks, the student their own tasks. The index comes from `loadCommandIndex` (`src/lib/search/actions.ts`) when the palette opens, so it costs nothing until used; RLS scopes it and the query also filters by role.
+  - **By topic chart** (shadcn Chart / Recharts) above the tracker, for tutor and student: each IB topic as a 100% stacked bar of seen / in progress / to see, with seen/total at the end. It reads the tracker's optimistic rows, so it moves as the tutor edits. One green, light to dark (the states are ordered), checked with the dataviz palette validator. On phones the axis shows topic numbers only.
+  - **Row context menu** (shadcn Context Menu, Base UI). Right-click a tracker row (tutor only) to set status or stars, select the row, clear its plan or clear its note.
+  - `/styleguide/components` has the palette with sample data.
+- **Verify by:**
+  1. Press ⌘K / Ctrl+K as the tutor: type a student's name and a task title, and each opens its page. As a student, only your own tasks appear.
+  2. The sidebar's Search row and the phone top bar's search icon open the palette.
+  3. On a tracker, the By topic chart matches the counts in the grid and updates when you change a status.
+  4. Right-click a tracker row: status and stars change, and the menu closes. Clear plan and Clear note work, and are disabled when there's nothing to clear. No menu appears for the student.
+
 ## 6. Working Agreement
 
 - Implementation proceeds **one phase at a time**. Each phase is announced before it starts (what will and won't change).

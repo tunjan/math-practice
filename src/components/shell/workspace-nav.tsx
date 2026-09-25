@@ -11,13 +11,16 @@ import {
   LayoutGrid,
   ListTodo,
   LogOut,
+  Search,
   Users,
   X,
   type LucideIcon,
 } from "lucide-react"
 
 import { Avatar, Wordmark } from "@/components/brand/primitives"
+import { CommandPalette, useIsMac } from "@/components/shell/command-palette"
 import { Button } from "@/components/ui/button"
+import { Kbd } from "@/components/ui/kbd"
 import {
   Sidebar,
   SidebarContent,
@@ -71,16 +74,19 @@ function AppSidebar({
   items,
   person,
   signOutId,
+  onSearch,
   className,
 }: {
   home: string
   items: NavItem[]
   person: Person
   signOutId: string
+  onSearch: () => void
   className?: string
 }) {
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
+  const isMac = useIsMac()
 
   return (
     <Sidebar collapsible="icon" className={cn("border-r border-sidebar-border bg-sidebar", className)}>
@@ -110,6 +116,21 @@ function AppSidebar({
         <SidebarGroup className="p-0">
           <SidebarGroupContent>
             <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
+              <SidebarMenuItem className="mb-2 group-data-[collapsible=icon]:mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+                <SidebarMenuButton
+                  tooltip="Search"
+                  aria-keyshortcuts="Meta+K Control+K"
+                  onClick={() => {
+                    if (isMobile) setOpenMobile(false)
+                    onSearch()
+                  }}
+                  className="border border-outline text-on-surface-muted hover:text-on-surface"
+                >
+                  <Search className="size-5 shrink-0" aria-hidden />
+                  <span className="flex-1 truncate group-data-[collapsible=icon]:hidden">Search</span>
+                  <Kbd className="h-5 min-w-5 px-1 group-data-[collapsible=icon]:hidden">{isMac ? "⌘K" : "Ctrl K"}</Kbd>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {items.map((item) => {
                 const Icon = ICONS[item.icon]
                 const active = isActive(pathname, item)
@@ -195,6 +216,11 @@ export function WorkspaceShell({
   children: React.ReactNode
 }) {
   const signOutId = React.useId()
+  const [searching, setSearching] = React.useState(false)
+  const pages = React.useMemo(
+    () => items.map((item) => ({ href: item.href, label: item.label, Icon: ICONS[item.icon] })),
+    [items]
+  )
 
   return (
     <SidebarProvider className={className}>
@@ -205,14 +231,21 @@ export function WorkspaceShell({
         items={items}
         person={person}
         signOutId={signOutId}
+        onSearch={() => setSearching(true)}
         className={className}
       />
+      <CommandPalette open={searching} onOpenChange={setSearching} pages={pages} scope={className} />
 
       <SidebarInset className="min-h-svh bg-canvas-neutral">
         {/* Mobile top bar */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-sidebar-border bg-sidebar px-4 md:hidden">
           <Wordmark href={home} />
-          <SidebarTrigger aria-label="Open menu" size="icon" />
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" aria-label="Search" onClick={() => setSearching(true)}>
+              <Search aria-hidden />
+            </Button>
+            <SidebarTrigger aria-label="Open menu" size="icon" />
+          </div>
         </header>
 
         <div className="flex flex-1 flex-col">
