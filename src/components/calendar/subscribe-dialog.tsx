@@ -96,7 +96,7 @@ export function SubscribeDialog({
 
   return (
     <Dialog>
-      <DialogTrigger render={<Button className="h-10 shrink-0 rounded-lg border-outline px-3" />}>
+      <DialogTrigger render={<Button size="sm" className="shrink-0" />}>
         <Rss aria-hidden />
         Subscribe
       </DialogTrigger>

@@ -18,21 +18,32 @@ function planLabel(plan: WeekPlan): string {
  * strand (and per student on the tutor's calendar), in the strand's tag
  * colour. Decorative: the day panel says the same in words.
  */
-export function WeekBars({ plans, showPerson }: { plans: WeekPlan[]; showPerson: boolean }) {
+export function WeekBars({
+  plans,
+  showPerson,
+  className,
+}: {
+  plans: WeekPlan[]
+  showPerson: boolean
+  className?: string
+}) {
   if (plans.length === 0) return null
   const overflow = plans.length > WEEK_BARS
   const visible = overflow ? plans.slice(0, WEEK_BARS - 1) : plans
   const hidden = plans.length - visible.length
 
   return (
-    <div aria-hidden className="flex flex-col gap-0.5 border-t border-dashed border-outline px-1 py-1 md:px-1.5">
+    <div
+      aria-hidden
+      className={cn("flex flex-col gap-0.5 border-t border-dashed border-border px-1 py-1 md:px-1.5", className)}
+    >
       {visible.map((plan) => (
         <span
           key={plan.id}
           title={`${TOPIC_NAME[plan.topic] ?? `Topic ${plan.topic}`}: ${plan.topics.map((t) => `${t.code} ${t.title}`).join(", ")}`}
           className={cn(
             badgeVariants({ variant: topicColor(plan.topic) }),
-            "w-full justify-start rounded-md"
+            "w-full justify-start rounded-sm"
           )}
         >
           <span className="truncate">
@@ -42,23 +53,33 @@ export function WeekBars({ plans, showPerson }: { plans: WeekPlan[]; showPerson:
           </span>
         </span>
       ))}
-      {hidden > 0 ? <span className="px-1.5 text-xs leading-5 text-on-surface-muted">{hidden} more planned</span> : null}
+      {hidden > 0 ? <span className="px-1.5 text-xs leading-5 text-muted-foreground">{hidden} more planned</span> : null}
     </div>
   )
 }
 
 /** One week bar as a row in the day panel, linking to the tracker it came from. */
-export function PlanRow({ plan, href, showPerson }: { plan: WeekPlan; href: string; showPerson: boolean }) {
+export function PlanRow({
+  plan,
+  href,
+  showPerson,
+  className,
+}: {
+  plan: WeekPlan
+  href: string
+  showPerson: boolean
+  className?: string
+}) {
   return (
-    <Link href={href} className="flex w-full gap-3 px-4 py-3 text-left transition-colors duration-75 hover:bg-surface-muted">
-      <span className="flex w-16 shrink-0 items-start gap-2">
+    <Link href={href} data-slot="day-panel-row" className={className}>
+      <span className="flex w-14 shrink-0 items-start gap-2">
         <span aria-hidden className={cn("mt-[7px] size-1.5 shrink-0 rounded-full", TAG_COLORS[topicColor(plan.topic)])} />
-        <span className="text-xs leading-5 text-on-surface-secondary">This week</span>
+        <span className="text-xs leading-5 text-muted-foreground">Week</span>
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-sm font-medium text-on-surface">{TOPIC_NAME[plan.topic] ?? `Topic ${plan.topic}`}</span>
-        <span className="truncate text-xs text-on-surface-muted">
-          {["Planned", showPerson ? plan.person : null].filter(Boolean).join(" · ")}
+        <span className="text-sm leading-5 font-medium">{TOPIC_NAME[plan.topic] ?? `Topic ${plan.topic}`}</span>
+        <span className="truncate text-xs text-muted-foreground">
+          {["Planned this week", showPerson ? plan.person : null].filter(Boolean).join(" · ")}
         </span>
         <TopicTags tags={plan.topics} max={6} inline />
       </span>

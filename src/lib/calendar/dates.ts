@@ -213,6 +213,22 @@ export function formatMonth(month: MonthKey): string {
   return monthTitle.format(toUtcDate(firstOfMonth(month)))
 }
 
+/** "28 Sep – 4 Oct 2026", for the week starting on `monday`. */
+export function formatWeek(monday: DayKey): string {
+  const sunday = addDays(monday, 6)
+  const [from, to] = [toUtcDate(monday), toUtcDate(sunday)]
+  const sameMonth = monthOf(monday) === monthOf(sunday)
+  const sameYear = monday.slice(0, 4) === sunday.slice(0, 4)
+  const start = new Intl.DateTimeFormat(LOCALE, {
+    day: "numeric",
+    month: sameMonth ? undefined : "short",
+    year: sameYear ? undefined : "numeric",
+    timeZone: "UTC",
+  }).format(from)
+  const end = new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(to)
+  return `${start} – ${end}`
+}
+
 /** "Friday 18 September" */
 export function formatDay(day: DayKey): string {
   return dayTitle.format(toUtcDate(day))

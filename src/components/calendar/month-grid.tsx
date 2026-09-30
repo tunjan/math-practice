@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { cva } from "class-variance-authority"
 import { cn } from "cn"
 
 import { TONE_DOT } from "@/components/assignments/status-dot"
@@ -23,12 +24,13 @@ import { WeekBars } from "./week-plans"
 const CELL_LINES = 3
 /** A chip line with its gap, and the cell's padding, date disc and gap. */
 const LINE_PX = 22
-const CELL_CHROME_PX = 44
+const CELL_CHROME_PX = 40
 
 /**
- * The month as one bordered card (DESIGN.md › Card list): Monday first,
- * hairlines between days, no fills except state. Today's number sits in the
- * blue "you are here" disc; the selected day takes the active-item tint.
+ * The month as one ring-edged card: Monday first, hairlines between days, no
+ * fills except state. Today's number sits in the blue "you are here" chip;
+ * the selected day takes the active-item tint. State is styled from the
+ * cell's attributes (`aria-selected`, `data-today`, `data-outside`).
  *
  * Keyboard follows the ARIA date grid: one cell is in the tab order, arrows
  * move by day and week, Home and End to the ends of the week, Page Up and
@@ -114,15 +116,16 @@ export function MonthGrid({
       ref={gridRef}
       role="grid"
       aria-labelledby={labelledBy}
-      className="flex flex-col overflow-hidden rounded-xl border border-outline bg-surface xl:h-full"
+      data-slot="month-grid"
+      className="flex flex-col overflow-hidden rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10 xl:h-full"
     >
-      <div role="row" className="grid shrink-0 grid-cols-7 border-b border-outline">
+      <div role="row" data-slot="month-grid-weekdays" className="grid shrink-0 grid-cols-7 border-b border-border">
         {WEEKDAYS.map((weekday) => (
           <div
             key={weekday.short}
             role="columnheader"
             aria-label={weekday.long}
-            className="px-2 py-2 text-center text-xs font-medium text-on-surface-muted md:px-3 md:text-left"
+            className="px-2 py-2 text-center text-xs text-muted-foreground select-none md:px-3 md:text-left"
           >
             <span aria-hidden className="sm:hidden">
               {weekday.short.charAt(0)}
@@ -138,7 +141,8 @@ export function MonthGrid({
         <div
           key={week[0]}
           role="presentation"
-          className="flex flex-col border-b border-outline last:border-b-0 xl:min-h-0 xl:flex-1"
+          data-slot="month-grid-week"
+          className="flex flex-col border-b border-border last:border-b-0 xl:min-h-0 xl:flex-1"
         >
           <div role="row" data-week className="grid grid-cols-7 xl:min-h-0 xl:flex-1">
             {week.map((day) => (
@@ -169,7 +173,7 @@ function sameDayInMonth(day: DayKey, delta: number): DayKey {
   return `${target}-${String(dayOfMonth).padStart(2, "0")}`
 }
 
-function describe(placements: DayPlacement[]): string {
+export function describe(placements: DayPlacement[]): string {
   if (placements.length === 0) return "Nothing scheduled"
   return placements.map(({ item }) => item.title).join(", ")
 }
@@ -200,7 +204,10 @@ const DayCell = React.memo(function DayCell({
   return (
     <div
       role="gridcell"
+      data-slot="month-grid-day"
       data-day={day}
+      data-today={isToday || undefined}
+      data-outside={outside || undefined}
       tabIndex={isSelected ? 0 : -1}
       aria-selected={isSelected}
       aria-current={isToday ? "date" : undefined}
@@ -208,22 +215,17 @@ const DayCell = React.memo(function DayCell({
       onClick={() => onSelect(day, { focus: false })}
       onKeyDown={(event) => onKeyDown(event, day)}
       className={cn(
-        "relative flex min-h-14 min-w-0 cursor-pointer flex-col gap-1 overflow-hidden border-l border-outline p-1 outline-none first:border-l-0 md:min-h-28 md:p-1.5 lg:min-h-32 xl:min-h-0",
-        "transition-colors duration-75 focus-visible:z-10",
-        isSelected ? "bg-blue-100/50" : "hover:bg-surface-muted"
+        "group/day relative flex min-h-14 min-w-0 cursor-pointer flex-col gap-1 overflow-hidden border-l border-border p-1 outline-none first:border-l-0 md:min-h-28 md:p-1.5 lg:min-h-32 xl:min-h-0",
+        "transition-colors not-aria-selected:hover:bg-muted/60 focus-visible:z-10 aria-selected:bg-info-container/50"
       )}
     >
       <span
         aria-hidden
         className={cn(
-          "mx-auto flex size-6 items-center justify-center rounded-full text-xs tabular-nums md:mx-0 lg:size-7 lg:text-sm",
-          isToday
-            ? "bg-blue-600 font-semibold text-white"
-            : isSelected
-              ? "font-semibold text-blue-600"
-              : outside
-                ? "text-on-surface-muted/60"
-                : "font-medium text-on-surface-secondary"
+          "mx-auto flex size-6 items-center justify-center rounded-md text-xs tabular-nums md:mx-0",
+          "group-data-outside/day:text-muted-foreground/70",
+          "group-aria-selected/day:font-medium group-aria-selected/day:text-info",
+          "group-data-today/day:bg-info group-data-today/day:font-medium group-data-today/day:text-primary-foreground"
         )}
       >
         {Number(day.slice(8))}
@@ -238,12 +240,15 @@ const DayCell = React.memo(function DayCell({
             ))}
           </span>
 
-          <ul aria-hidden className={cn("hidden min-w-0 flex-col gap-0.5 md:flex", outside && "opacity-50")}>
+          <ul
+            aria-hidden
+            className="hidden min-w-0 flex-col gap-0.5 group-data-outside/day:opacity-50 md:flex"
+          >
             {visible.map((placement) => (
               <Chip key={key(placement)} placement={placement} />
             ))}
             {hidden > 0 ? (
-              <li className="px-1.5 text-xs leading-5 text-on-surface-muted">{hidden} more</li>
+              <li className="px-1.5 text-xs leading-5 text-muted-foreground">{hidden} more</li>
             ) : null}
           </ul>
         </>
@@ -262,12 +267,13 @@ export function Dot({ placement, className }: { placement: DayPlacement; classNa
   return (
     <span
       aria-hidden
+      data-slot="calendar-dot"
       className={cn(
         "size-1.5 shrink-0 rounded-full",
         item.type === "event"
-          ? "bg-neutral-400"
+          ? "bg-muted-foreground/60"
           : item.type === "exam"
-            ? "bg-on-surface"
+            ? "bg-foreground"
             : TONE_DOT[item.status.tone],
         className
       )}
@@ -275,32 +281,37 @@ export function Dot({ placement, className }: { placement: DayPlacement; classNa
   )
 }
 
-function Chip({ placement }: { placement: DayPlacement }) {
+/**
+ * One line in a day cell. Exams are the one thing on the month that must not
+ * be missed; all-day items read as a bar, as in every calendar people already
+ * use; timed items are a dot and a title.
+ */
+const chipVariants = cva("flex min-w-0 items-center gap-1.5 rounded-sm px-1.5 text-xs leading-5", {
+  variants: {
+    variant: {
+      exam: "bg-primary font-medium text-primary-foreground",
+      "all-day": "bg-muted text-foreground",
+      timed: "text-foreground",
+    },
+  },
+  defaultVariants: { variant: "timed" },
+})
+
+export function Chip({ placement }: { placement: DayPlacement }) {
   const { item } = placement
-
-  // Exams are the one thing on the month that must not be missed.
-  if (item.type === "exam") {
-    return (
-      <li className="flex min-w-0 items-center gap-1.5 rounded-md bg-surface-inverse px-1.5 text-xs leading-5 text-on-surface-inverse">
-        <span className="truncate">{item.title}</span>
-      </li>
-    )
-  }
-
-  // All-day items read as a bar, as in every calendar people already use.
-  if (placement.allDay) {
-    return (
-      <li className="flex min-w-0 items-center gap-1.5 rounded-md bg-surface-sunken px-1.5 text-xs leading-5 text-on-surface-secondary">
-        <span className="truncate">{item.title}</span>
-      </li>
-    )
-  }
+  const variant = item.type === "exam" ? "exam" : placement.allDay ? "all-day" : "timed"
 
   return (
-    <li className="flex min-w-0 items-center gap-1.5 rounded-md px-1.5 text-xs leading-5 text-on-surface-secondary">
-      <Dot placement={placement} />
-      {placement.time ? (
-        <span className="hidden shrink-0 font-mono text-on-surface-muted tabular-nums 2xl:inline">{placement.time}</span>
+    <li data-slot="month-grid-chip" data-variant={variant} className={chipVariants({ variant })}>
+      {variant === "timed" ? (
+        <>
+          <Dot placement={placement} />
+          {placement.time ? (
+            <span className="hidden shrink-0 font-mono text-muted-foreground tabular-nums 2xl:inline">
+              {placement.time}
+            </span>
+          ) : null}
+        </>
       ) : null}
       <span className="min-w-0 truncate">{item.title}</span>
     </li>

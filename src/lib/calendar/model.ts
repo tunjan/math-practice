@@ -278,3 +278,77 @@ export function plansByWeek(plans: WeekPlan[]): Map<DayKey, WeekPlan[]> {
   }
   return byWeek
 }
+
+// ── Week view ───────────────────────────────────────────────────────────────
+
+export type CalendarMode = "month" | "week"
+
+export function isCalendarMode(value: unknown): value is CalendarMode {
+  return value === "month" || value === "week"
+}
+
+/** A deadline is a moment; it is drawn this long so it can be read. */
+const DEADLINE_MINUTES = 30
+const DAY_MINUTES = 24 * 60
+
+/** A timed item on one day's hour grid, with its lane among overlapping items. */
+export type TimedBlock = {
+  placement: DayPlacement
+  /** Minutes since midnight on this day. */
+  start: number
+  end: number
+  lane: number
+  lanes: number
+}
+
+/**
+ * Splits a day into what sits on the hour grid and what sits above it.
+ * All-day items and events that run through the whole day stay above; an
+ * event that started earlier or ends later is clipped to this day's edges.
+ * Overlapping blocks share the column side by side.
+ */
+export function layoutDay(placements: DayPlacement[]): { allDay: DayPlacement[]; timed: TimedBlock[] } {
+  const allDay: DayPlacement[] = []
+  const spans: { placement: DayPlacement; start: number; end: number }[] = []
+
+  for (const placement of placements) {
+    if (placement.allDay) {
+      allDay.push(placement)
+      continue
+    }
+    if (placement.item.type === "deadline") {
+      const at = Math.min(minutes(placement.time!), DAY_MINUTES - DEADLINE_MINUTES)
+      spans.push({ placement, start: at, end: at + DEADLINE_MINUTES })
+      continue
+    }
+    const start = placement.time ? minutes(placement.time) : 0
+    const until = placement.until ? minutes(placement.until) : DAY_MINUTES
+    // An end at or before the start is an end on a later day (or at midnight).
+    const end = until > start ? until : DAY_MINUTES
+    spans.push({ placement, start, end: Math.max(end, Math.min(start + 15, DAY_MINUTES)) })
+  }
+
+  spans.sort((a, b) => a.start - b.start || b.end - a.end)
+
+  const timed: TimedBlock[] = []
+  let cluster: TimedBlock[] = []
+  let laneEnds: number[] = []
+  let clusterEnd = -1
+  const flush = () => {
+    for (const block of cluster) block.lanes = laneEnds.length
+    timed.push(...cluster)
+    cluster = []
+    laneEnds = []
+  }
+  for (const span of spans) {
+    if (cluster.length > 0 && span.start >= clusterEnd) flush()
+    let lane = laneEnds.findIndex((end) => end <= span.start)
+    if (lane === -1) lane = laneEnds.length
+    laneEnds[lane] = span.end
+    clusterEnd = Math.max(clusterEnd, span.end)
+    cluster.push({ ...span, lane, lanes: 1 })
+  }
+  flush()
+
+  return { allDay, timed }
+}

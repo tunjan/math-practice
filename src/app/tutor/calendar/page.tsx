@@ -37,6 +37,7 @@ export default async function TutorCalendarPage({ searchParams }: PageProps<"/tu
       role="tutor"
       basePath="/tutor/calendar"
       month={query.month}
+      view={query.view}
       selected={query.selected}
       today={query.today}
       timeZone={profile.timezone}
