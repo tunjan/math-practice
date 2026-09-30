@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { CalendarClock, CircleCheck, UserPlus } from "lucide-react"
+import { CalendarClock, CircleCheck, ClipboardList, UserPlus } from "lucide-react"
 
 import { EmptyState, Page, PageHeader } from "@/components/brand/primitives"
 import {
@@ -93,6 +93,20 @@ export default async function TutorOverviewPage() {
 
   const firstName = profile.fullName.split(" ")[0]
 
+  // Nobody enrolled, nobody invited, nothing set: a tutor's first visit. Four
+  // zeros and two empty lists say nothing, so show the way in instead.
+  if (taskOptions.recipients.length === 0 && rows.length === 0) {
+    return (
+      <Page>
+        <PageHeader
+          title={firstName ? `Welcome, ${firstName}` : "Welcome"}
+          description="Your workspace is ready. It fills up once you have a student."
+        />
+        <GetStarted />
+      </Page>
+    )
+  }
+
   return (
     <Page>
       <PageHeader
@@ -132,11 +146,20 @@ export default async function TutorOverviewPage() {
             }
           />
           {attention.length === 0 ? (
-            <EmptyState
-              icon={<CircleCheck />}
-              title="All caught up"
-              description="Hand-ins and overdue work will show up here."
-            />
+            rows.length === 0 ? (
+              <EmptyState
+                icon={<ClipboardList />}
+                title="No tasks yet"
+                description="Set a problem set or some reading, pick a deadline, and it lands in the student's list."
+                action={<NewTaskDialog {...taskOptions} />}
+              />
+            ) : (
+              <EmptyState
+                icon={<CircleCheck />}
+                title="All caught up"
+                description="Hand-ins and overdue work will show up here."
+              />
+            )
           ) : (
             <Table>
               <TableHeader>
@@ -216,6 +239,48 @@ export default async function TutorOverviewPage() {
         </Card>
       </div>
     </Page>
+  )
+}
+
+const FIRST_STEPS = [
+  {
+    title: "Invite a student",
+    description: "Create a link and send it to them. They choose their own email and password.",
+  },
+  {
+    title: "Set a task",
+    description: "A problem set or some reading, with a deadline. You can do this before they've joined.",
+  },
+  {
+    title: "Review the hand-in",
+    description: "Their work comes back here. Approve it, or return it with feedback.",
+  },
+] as const
+
+function GetStarted() {
+  return (
+    <Card className="max-w-2xl">
+      <CardHeader title="Get started" description="Three steps from an empty workspace to a marked task." />
+      <ol role="list">
+        {FIRST_STEPS.map((step, index) => (
+          <li key={step.title} className="flex gap-4 border-t border-outline px-6 py-4">
+            <span className="mono-data-sm pt-0.5 text-on-surface-muted" aria-hidden>
+              {index + 1}
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <p className="title-md text-on-surface">{step.title}</p>
+              <p className="body-sm text-on-surface-muted">{step.description}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div className="border-t border-outline px-6 py-4">
+        <ButtonLink href="/tutor/students" variant="primary">
+          <UserPlus aria-hidden />
+          Invite your first student
+        </ButtonLink>
+      </div>
+    </Card>
   )
 }
 

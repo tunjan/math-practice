@@ -10,6 +10,7 @@ export function homePathForRole(role: UserRole): string {
 /** Routes reachable without a session. Everything else requires one. */
 export const PUBLIC_PREFIXES = [
   "/login",
+  "/signup",
   "/forgot-password",
   "/reset-password",
   "/invite",

@@ -80,7 +80,7 @@ export async function saveEvent(
     if (share && !UUID.test(share)) return { error: "Choose who can see this." }
     sharedWith = share || null
   } else if (share === "tutor") {
-    sharedWith = await findTutorId()
+    sharedWith = profile.tutorId
     if (!sharedWith) return { error: "There's no tutor to share this with yet." }
   }
 
@@ -167,23 +167,6 @@ export async function resetCalendarLink(): Promise<ResetLinkState> {
   const origin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000"
   revalidateCalendar(profile.role)
   return { feedUrl: `${origin}/api/calendar/${data.calendar_token}.ics` }
-}
-
-/**
- * The tutor's id, for a student sharing an event. Students cannot read the
- * tutor's profile, so this is looked up with the service role; it reveals an
- * id and nothing else, and only to a signed-in student.
- */
-async function findTutorId(): Promise<string | null> {
-  const admin = createAdminClient()
-  const { data } = await admin
-    .from("profiles")
-    .select("id")
-    .eq("role", "tutor")
-    .order("created_at")
-    .limit(1)
-    .maybeSingle()
-  return data?.id ?? null
 }
 
 function friendly(message: string): string {

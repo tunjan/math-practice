@@ -60,12 +60,19 @@ export async function GET(
   const isTutor = profile.role === "tutor"
   const since = new Date(Date.now() - HISTORY_DAYS * 86_400_000).toISOString()
 
+  let studentIds = [profile.id]
+  if (isTutor) {
+    const { data: students } = await admin.from("profiles").select("id").eq("tutor_id", profile.id)
+    studentIds = (students ?? []).map((s) => s.id)
+  }
+
   let planned = admin
     .from("topic_progress")
     .select(PLANNED_TOPICS_SELECT)
     .or(`planned_end.gte.${since.slice(0, 10)},and(planned_end.is.null,planned_start.gte.${since.slice(0, 10)})`)
-  // The tutor plans for every student; a student sees only their own plan.
-  if (!isTutor) planned = planned.eq("student_id", profile.id)
+  // A tutor's feed carries their own students' plans and exams; a student's,
+  // only their own. RLS would say the same, but it is not in play here.
+  planned = planned.in("student_id", studentIds)
 
   let examQuery = admin
     .from("exams")
@@ -76,7 +83,7 @@ export async function GET(
     )
     .gte("exam_date", since.slice(0, 10))
     .order("exam_date", { ascending: true })
-  if (!isTutor) examQuery = examQuery.eq("student_id", profile.id)
+  examQuery = examQuery.in("student_id", studentIds)
 
   const [{ data: assignments }, { data: calendarEvents }, { data: plannedRows }, { data: examRows }] = await Promise.all([
     admin

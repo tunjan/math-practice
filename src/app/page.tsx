@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 
 import { Wordmark } from "@/components/brand/primitives"
 import { ButtonLink } from "@/components/ui/button"
@@ -49,7 +50,12 @@ export default function Home() {
           <ButtonLink href="/login" variant="primary" className="px-6">
             Sign in
           </ButtonLink>
-          <p className="text-sm text-on-surface-muted">Students join by invite from their tutor.</p>
+          <p className="text-sm text-on-surface-muted">
+            Students join by invite from their tutor. Tutor?{" "}
+            <Link href="/signup" className="font-medium text-on-surface underline-offset-4 hover:underline">
+              Create an account
+            </Link>
+          </p>
         </Reveal>
       </main>
 

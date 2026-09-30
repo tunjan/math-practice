@@ -20,6 +20,9 @@ export type RateLimitRule = {
 export const LOGIN_PER_EMAIL: RateLimitRule = { limit: 8, windowSecs: 900 }
 export const LOGIN_PER_IP: RateLimitRule = { limit: 30, windowSecs: 900 }
 export const PASSWORD_RESET_PER_EMAIL: RateLimitRule = { limit: 4, windowSecs: 3600 }
+export const SIGNUP_PER_IP: RateLimitRule = { limit: 5, windowSecs: 3600 }
+/** Also caps confirmation emails to one address, whoever asks for them. */
+export const CONFIRMATION_PER_EMAIL: RateLimitRule = { limit: 3, windowSecs: 3600 }
 export const INVITE_REDEEM_PER_IP: RateLimitRule = { limit: 10, windowSecs: 3600 }
 
 export type RateLimitResult = {
