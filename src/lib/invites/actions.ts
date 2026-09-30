@@ -1,12 +1,16 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { after } from "next/server"
 
+import { sendEmail } from "@/lib/email/send"
+import { welcomeEmail } from "@/lib/email/templates"
+import { requestOrigin } from "@/lib/request-origin"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { createClient } from "@/lib/supabase/server"
 import { requireRole } from "@/lib/auth/session"
+import { validTimeZone } from "@/lib/timezone"
 import {
   clientAddress,
   consume,
@@ -24,15 +28,6 @@ export type InviteActionState = {
   /** Present exactly once, immediately after creation — never stored. */
   link?: string
   notice?: string
-}
-
-/** The origin this request actually arrived on, so links work behind any host. */
-async function requestOrigin(): Promise<string> {
-  const h = await headers()
-  const host = h.get("x-forwarded-host") ?? h.get("host")
-  const proto = h.get("x-forwarded-proto") ?? "http"
-  if (host) return `${proto}://${host}`
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 }
 
 export async function createInvite(
@@ -159,7 +154,12 @@ export async function redeemInvite(
     p_user_id: created.user.id,
   })
 
-  const outcome = result as { ok?: boolean; reason?: string } | null
+  const outcome = result as {
+    ok?: boolean
+    reason?: string
+    full_name?: string
+    adopted?: number
+  } | null
 
   if (redeemError || !outcome?.ok) {
     // Lost a race for the same link, or the invite changed under us. Remove the
@@ -173,6 +173,25 @@ export async function redeemInvite(
           : "This invite is no longer valid. Ask your tutor for a new link.",
     }
   }
+
+  // Deadlines are shown on the student's own calendar day; without this they
+  // would all be read in the default zone.
+  const timezone = validTimeZone(formData.get("timezone"))
+  if (timezone) {
+    await admin.from("profiles").update({ timezone }).eq("id", created.user.id)
+  }
+
+  const origin = await requestOrigin()
+  after(() =>
+    sendEmail(
+      email,
+      welcomeEmail({
+        fullName: outcome.full_name ?? "",
+        waitingTasks: outcome.adopted ?? 0,
+        url: `${origin}/student`,
+      })
+    )
+  )
 
   // Sign them in on the normal cookie-based client so they land in their
   // workspace rather than back at the login form.

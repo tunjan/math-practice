@@ -43,6 +43,7 @@ export async function middleware(request: NextRequest) {
   const needsRole =
     pathname === "/" ||
     pathname === "/login" ||
+    pathname === "/signup" ||
     pathname.startsWith("/tutor") ||
     pathname.startsWith("/student")
 
@@ -57,8 +58,8 @@ export async function middleware(request: NextRequest) {
   const role: UserRole = profile?.role ?? "student"
   const home = homePathForRole(role)
 
-  // Landing and login are pointless once you are signed in.
-  if (pathname === "/" || pathname === "/login") return redirectTo(home)
+  // Landing, login and sign-up are pointless once you are signed in.
+  if (pathname === "/" || pathname === "/login" || pathname === "/signup") return redirectTo(home)
 
   const inWrongWorkspace =
     (pathname.startsWith("/tutor") && role !== "tutor") ||

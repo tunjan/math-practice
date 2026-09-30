@@ -2,9 +2,12 @@
 
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { after } from "next/server"
 
 import { requireRole } from "@/lib/auth/session"
 import { asDifficulty } from "@/lib/assignments/difficulty"
+import { notifyFeedback, notifyNewTask } from "@/lib/email/notify"
+import { requestOrigin } from "@/lib/request-origin"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/lib/supabase/database.types"
 import {
@@ -194,6 +197,10 @@ export async function createAssignment(
         .insert(topicIds.map((topicId) => ({ assignment_id: assignmentId, topic_id: topicId })))
       if (topicsError) return { error: topicsError.message }
     }
+
+    // After the response, so a slow mail provider never holds up the dialog.
+    const origin = await requestOrigin()
+    after(() => notifyNewTask(supabase, assignmentId, origin))
   } else {
     // Queued against an invite. The row carries the id the real assignment will
     // take, so the materials already uploaded stay exactly where they are when
@@ -280,6 +287,9 @@ export async function setVerdict(
     .eq("id", assignmentId)
 
   if (error) return { error: error.message }
+
+  const origin = await requestOrigin()
+  after(() => notifyFeedback(supabase, assignmentId, origin))
 
   revalidatePath("/student")
   revalidatePath("/tutor")

@@ -24,6 +24,7 @@ export default async function StudentCalendarPage({ searchParams }: PageProps<"/
       role="student"
       basePath="/student/calendar"
       month={query.month}
+      view={query.view}
       selected={query.selected}
       today={query.today}
       timeZone={profile.timezone}

@@ -10,6 +10,8 @@ export type SessionProfile = {
   email: string | null
   fullName: string
   role: UserRole
+  /** A student's tutor; null for tutors, and for a student whose tutor has left. */
+  tutorId: string | null
   timezone: string
   calendarToken: string
   /** The IB course a student is on; null for the tutor and for students without one. */
@@ -34,7 +36,7 @@ export const requireProfile = cache(async function requireProfile(): Promise<Ses
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, email, full_name, role, timezone, calendar_token, programme, course, level")
+    .select("id, email, full_name, role, tutor_id, timezone, calendar_token, programme, course, level")
     .eq("id", user.id)
     .single()
 
@@ -45,6 +47,7 @@ export const requireProfile = cache(async function requireProfile(): Promise<Ses
     email: profile.email,
     fullName: profile.full_name,
     role: profile.role,
+    tutorId: profile.tutor_id,
     timezone: profile.timezone,
     calendarToken: profile.calendar_token,
     course: studentCourse(profile),

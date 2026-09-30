@@ -17,7 +17,7 @@ import {
   type DayKey,
   type MonthKey,
 } from "./dates"
-import { weekPlans, type CalendarItem, type Person, type PlannedTopic, type WeekPlan } from "./model"
+import { isCalendarMode, weekPlans, type CalendarItem, type CalendarMode, type Person, type PlannedTopic, type WeekPlan } from "./model"
 
 type Supabase = Awaited<ReturnType<typeof createClient>>
 
@@ -25,6 +25,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export type CalendarQuery = {
   month: MonthKey
+  /** Month grid or one week by the hour. Both read the same month of data. */
+  view: CalendarMode
   /** The day the panel opens on. */
   selected: DayKey
   today: DayKey
@@ -33,7 +35,7 @@ export type CalendarQuery = {
 }
 
 /**
- * Reads `?month=2026-09&day=2026-09-18&student=<id>` into a query, falling
+ * Reads `?month=2026-09&day=2026-09-18&view=week&student=<id>` into a query, falling
  * back to today. A bad value is ignored rather than rejected, so an old or
  * hand-edited link still opens the calendar.
  */
@@ -60,8 +62,11 @@ export function parseCalendarQuery(
         ? today
         : firstOfMonth(month)
 
+  const view = one("view")
+
   return {
     month,
+    view: isCalendarMode(view) ? view : "month",
     selected,
     today,
     studentId: student && UUID.test(student) ? student : null,

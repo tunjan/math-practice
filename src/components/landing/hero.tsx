@@ -20,9 +20,14 @@ export function Hero() {
         <p className="max-w-sm text-base leading-6 text-on-surface-muted">
           Tasks, hand-ins and feedback between a tutor and their students.
         </p>
-        <ButtonLink href="/login" variant="primary" className="px-6">
-          Sign in
-        </ButtonLink>
+        <div className="flex flex-wrap items-center gap-3">
+          <ButtonLink href="/signup" variant="primary" className="px-6">
+            Start tutoring
+          </ButtonLink>
+          <ButtonLink href="/login" variant="secondary" className="px-6">
+            Sign in
+          </ButtonLink>
+        </div>
       </div>
 
       <div className="relative animate-slide-up-fade [animation-delay:150ms] motion-reduce:animate-none">

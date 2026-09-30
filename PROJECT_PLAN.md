@@ -198,6 +198,49 @@
   3. On a tracker, the By topic chart matches the counts in the grid and updates when you change a status.
   4. Right-click a tracker row: status and stars change, and the menu closes. Clear plan and Clear note work, and are disabled when there's nothing to clear. No menu appears for the student.
 
+### Phase 12 — One tutor per student (tenancy)
+- **Status:** done (awaiting user verification)
+- **Decisions:** open self-serve tutor sign-up; one tutor per student.
+- **Notes:** Migration `0023_multi_tutor.sql`. `profiles.tutor_id` links a student to their tutor: backfilled from the invite each student redeemed, otherwise to the first tutor; set by `redeem_invite()` from then on. Every role-wide `is_tutor()` policy now asks about ownership instead (`is_my_student`, `tutors_assignment`, `owns_material_folder`, `my_tutor_id`): profiles, categories, assignments and their files/topics, submissions, queued tasks, topic progress, exams, calendar sharing and all three storage buckets. Categories are per tutor (unique on tutor + name). The profile guard no longer waves tutors through: role, id, tutor and calendar token are frozen for everyone signed in, and only a student's own tutor sets their course. App code: the calendar feed (service role) filters a tutor's plans and exams to their students; a student's "share with tutor" uses their own `tutor_id`. Roster, search and task pickers needed no change, RLS now scopes them. `database.types.ts` edited by hand for the new column.
+- **Tested:** all migrations applied to a local Postgres with Supabase stubs, then two tutors and three students: each tutor sees only their own students, tasks, topics, exams and invites; cross-tutor inserts, updates, file uploads and event shares are refused; students cannot move tutor or change role; the existing tutor sees what they saw before.
+- **Does not change:** how anyone signs up. The first-account-is-tutor rule is still in place until Phase 13.
+- **Verify by:**
+  1. Apply `0023_multi_tutor.sql`, then sign in as the tutor: the roster, tasks, tracker, exams, calendar and ⌘K search all look exactly as before.
+  2. Invite a student, redeem the link, and they appear in the roster; any queued task arrives with its attachment.
+  3. As a student: tasks, topic names, tracker and calendar are unchanged; sharing an event with the tutor still works.
+  4. The calendar subscription link (tutor and student) still returns the same events.
+
+### Phase 13 — Tutor sign-up
+- **Status:** done (awaiting user verification). Migrations 0023 and 0024 are applied to the hosted project.
+- **Notes:**
+  - Migration `0024_tutor_signup.sql`: `handle_new_user()` makes every new account a student with no tutor. The first-account-is-tutor rule is gone.
+  - `/signup` (name, email, password) calls `signUpTutor` (`src/lib/auth/actions.ts`): the service role creates an unconfirmed account and promotes its profile to tutor; 5 sign-ups per hour per address. It gives the same reply for a taken address, so it can't be used to find accounts. Signing up again with an unconfirmed address replaces its password and re-sends the link.
+  - `src/lib/auth/confirmation.ts` builds the link on `NEXT_PUBLIC_SITE_URL` and sends it through Resend (`confirmEmail` template, previewable at `/styleguide/emails/confirm`); 3 emails per hour per address. Without `RESEND_API_KEY` in development the link is printed in the server log.
+  - `/auth/confirm` shows a button; the token is only spent on click, so mail scanners can't burn it. Confirming signs the tutor in and lands them in `/tutor`.
+  - Sign-in refuses an unconfirmed account and sends a fresh link.
+  - Login page footer, landing hero ("Start tutoring") and closing section link to `/signup`.
+- **Needs in production:** `NEXT_PUBLIC_SITE_URL`, `RESEND_API_KEY` and `RESEND_FROM_EMAIL` set, or nobody receives the link. Public sign-ups can be switched off in Supabase Auth settings; this flow doesn't use them.
+- **Checked:** 0024 on the local Postgres harness; `/signup`, `/login` and `/auth/confirm` render; a bad token shows the expired-link error. Not run end to end: no account was created and no email sent.
+- **Verify by:**
+  1. `/signup` with your email: the form gives way to "We've sent a confirmation link".
+  2. Signing in before confirming is refused and a new link arrives.
+  3. The emailed link opens "Confirm your email"; the button lands you in an empty tutor workspace.
+  4. Sign up a second tutor with another address: they see none of the first tutor's students, tasks or topics.
+  5. Invite a student from each tutor; each student appears only in their own tutor's roster.
+
+### Phase 14 — First-run for a new tutor
+- **Status:** done (awaiting user verification)
+- **Notes:**
+  - Tutor overview (`src/app/tutor/page.tsx`): with no students, no open invites and no tasks it shows a "Get started" card (invite a student, set a task, review the hand-in) with one action, instead of four zeros and two empty lists. Once someone is invited but nothing is set, "Needs your attention" says "No tasks yet" with a New task button.
+  - Time zone: the sign-up form posts the browser's zone (`TimeZoneField`), checked by `validTimeZone` (`src/lib/timezone.ts`) and stored on the profile; otherwise the default Europe/London stays. Addendum to the stated scope: the invite form does the same for students, since they had the same problem and no way to change it.
+  - README has an Accounts section for multi-tutor, sign-up and the variables the confirmation email needs.
+- **Checked:** type-check and lint; `/signup` posts the browser's zone. The first-run overview was not seen in a browser, as that needs a confirmed tutor account.
+- **Verify by:**
+  1. Confirm a new tutor account: the overview shows "Get started", and its button goes to Students.
+  2. Create an invite, go back to the overview: the normal overview is there, with "No tasks yet" and a New task button.
+  3. Set a task with a deadline: the time shown matches your own clock, not London's (if you are elsewhere).
+  4. Redeem the invite as the student: their deadlines also read in their own zone.
+
 ## 6. Working Agreement
 
 - Implementation proceeds **one phase at a time**. Each phase is announced before it starts (what will and won't change).

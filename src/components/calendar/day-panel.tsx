@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { CalendarDays } from "lucide-react"
 import { cn } from "cn"
 
 import { TopicTags } from "@/components/syllabus/topic-tags"
@@ -22,9 +23,9 @@ import { PlanRow } from "./week-plans"
 const MONTH_DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", timeZone: "UTC" })
 
 /**
- * The selected day as a card list (DESIGN.md › Card list): one bordered block,
- * rows split by hairlines, time on the left. Deadlines link to their
- * page; your own events open for editing; shared events are read-only.
+ * The selected day as a card: title row, then inset rows that light up on
+ * hover, time on the left. Deadlines link to their page; your own events open
+ * for editing; shared events are read-only.
  */
 export function DayPanel({
   day,
@@ -54,27 +55,45 @@ export function DayPanel({
 
   return (
     <section
+      data-slot="day-panel"
       aria-labelledby="day-panel-title"
-      className={cn("flex flex-col overflow-hidden rounded-xl border border-outline bg-surface", className)}
+      className={cn(
+        "flex flex-col gap-2 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10",
+        className
+      )}
     >
-      <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-outline px-4">
-        <h2 id="day-panel-title" className="truncate text-sm font-semibold text-on-surface">
+      <header data-slot="day-panel-header" className="flex shrink-0 items-center justify-between gap-3 px-4">
+        <h2 id="day-panel-title" className="truncate text-base leading-snug font-medium">
           {weekday} {date}
         </h2>
         {relative === "Today" ? (
           <Badge variant="blue">Today</Badge>
         ) : (
-          <span className="shrink-0 text-xs text-on-surface-muted">{relative}</span>
+          <span className="shrink-0 text-xs text-muted-foreground">{relative}</span>
         )}
       </header>
 
       {placements.length === 0 && plans.length === 0 ? (
-        <p className="px-4 py-10 text-center text-sm text-on-surface-muted">Nothing scheduled</p>
+        <div data-slot="day-panel-empty" className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+          <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <CalendarDays aria-hidden className="size-4" />
+          </span>
+          <p className="text-sm text-muted-foreground">Nothing scheduled</p>
+        </div>
       ) : (
-        <ul role="list" className="divide-y divide-outline xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
+        <ul
+          role="list"
+          data-slot="day-panel-list"
+          className="-my-1 flex flex-col gap-0.5 px-2 py-1 xl:min-h-0 xl:flex-1 xl:overflow-y-auto"
+        >
           {plans.map((plan) => (
             <li key={plan.id}>
-              <PlanRow plan={plan} href={planHref(plan)} showPerson={showPerson} />
+              <PlanRow
+                plan={plan}
+                href={planHref(plan)}
+                showPerson={showPerson}
+                className={cn(rowClass, hoverClass)}
+              />
             </li>
           ))}
           {placements.map((placement) => (
@@ -88,8 +107,8 @@ export function DayPanel({
   )
 }
 
-const rowClass = "flex w-full gap-3 px-4 py-3 text-left"
-const hoverClass = "transition-colors duration-75 hover:bg-surface-muted"
+const rowClass = "flex w-full gap-2.5 rounded-md px-2 py-2 text-left outline-none"
+const hoverClass = "transition-colors hover:bg-muted"
 
 function Row({
   placement,
@@ -113,12 +132,12 @@ function Row({
     <>
       <Time placement={placement} />
       <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="line-clamp-2 text-sm font-medium text-pretty text-on-surface">
+        <span className="line-clamp-2 text-sm leading-5 font-medium text-pretty">
           {item.type === "event" && item.mine ? <span className="sr-only">Edit </span> : null}
           {item.title}
         </span>
         <span className="flex items-center justify-between gap-3">
-          <span className="truncate text-xs text-on-surface-muted">{meta.filter(Boolean).join(" · ")}</span>
+          <span className="truncate text-xs text-muted-foreground">{meta.filter(Boolean).join(" · ")}</span>
           {item.type === "deadline" ? (
             <Badge variant={item.status.tone}>{item.status.label}</Badge>
           ) : item.type === "exam" ? (
@@ -129,7 +148,7 @@ function Row({
         {item.type === "event" && item.notes ? (
           <span
             className={cn(
-              "text-xs leading-5 whitespace-pre-line text-on-surface-secondary",
+              "text-xs leading-5 whitespace-pre-line text-muted-foreground",
               item.mine && "line-clamp-2"
             )}
           >
@@ -144,6 +163,7 @@ function Row({
     return (
       // A student's deadline opens as a dialog over the calendar, so stay put.
       <Link
+        data-slot="day-panel-row"
         href={item.href}
         scroll={!(item.type === "deadline" && role === "student")}
         className={cn(rowClass, hoverClass)}
@@ -153,11 +173,12 @@ function Row({
     )
   }
 
-  if (!item.mine) return <div className={rowClass}>{body}</div>
+  if (!item.mine) return <div data-slot="day-panel-row" className={rowClass}>{body}</div>
 
   return (
     <button
       type="button"
+      data-slot="day-panel-row"
       onClick={() => onEdit(item)}
       className={cn(rowClass, hoverClass, "cursor-pointer")}
     >
@@ -170,14 +191,14 @@ function Row({
 function Time({ placement }: { placement: DayPlacement }) {
   const label = placement.time ?? (placement.allDay ? "All day" : "Until")
   return (
-    <span className="flex w-16 shrink-0 items-start gap-2">
+    <span className="flex w-14 shrink-0 items-start gap-2">
       <Dot placement={placement} className="mt-[7px]" />
       <span className="flex flex-col text-xs leading-5 tabular-nums">
-        <span className={cn(placement.time ? "font-mono text-on-surface" : "text-on-surface-secondary")}>
+        <span className={cn(placement.time ? "font-mono text-foreground" : "text-muted-foreground")}>
           {label}
         </span>
         {placement.until && (placement.time || placement.continues) ? (
-          <span className="font-mono text-on-surface-muted">{placement.until}</span>
+          <span className="font-mono text-muted-foreground">{placement.until}</span>
         ) : null}
       </span>
     </span>
@@ -188,5 +209,5 @@ function Time({ placement }: { placement: DayPlacement }) {
 function ExamResult({ percent, ibGrade }: { percent: number | null; ibGrade: number | null }) {
   const parts = [percent === null ? null : formatPercent(percent), ibGrade === null ? null : `Grade ${ibGrade}`]
   const text = parts.filter(Boolean).join(" · ")
-  return text ? <span className="shrink-0 font-mono text-xs text-on-surface-secondary tabular-nums">{text}</span> : null
+  return text ? <span className="shrink-0 font-mono text-xs text-muted-foreground tabular-nums">{text}</span> : null
 }

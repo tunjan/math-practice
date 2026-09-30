@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Field } from "@/components/ui/label"
 import { FormMessage } from "@/components/auth/form-message"
 import { PasswordInput } from "@/components/auth/password-input"
+import { TimeZoneField } from "@/components/auth/time-zone-field"
 import { redeemInvite, type RedeemState } from "@/lib/invites/actions"
 
 export function RedeemForm({ token }: { token: string }) {
@@ -21,6 +22,7 @@ export function RedeemForm({ token }: { token: string }) {
   return (
     <form action={action} className="flex flex-col gap-5">
       <input type="hidden" name="token" value={token} />
+      <TimeZoneField />
       <FormMessage error={state.error} />
 
       <Field

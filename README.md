@@ -1,6 +1,6 @@
 # Maths Tasks
 
-A private tutoring and homework management platform for a mathematics tutor and
+A private tutoring and homework management platform for mathematics tutors and
 their students.
 
 - **Tutors** assign problem sets and reading notes, attach materials, track the
@@ -10,6 +10,22 @@ their students.
 - Both sides share a real-time discussion thread on every assignment, an in-app
   notification centre, and a topic-organised resource library.
 
+## Accounts
+
+Any number of tutors, each with their own students, tasks and topic list; no
+tutor can see another's.
+
+- **Tutors** sign up at `/signup` and confirm their email from a link before
+  they can sign in.
+- **Students** join from an invite link their tutor creates, which attaches
+  them to that tutor. A student has exactly one tutor.
+
+Isolation is enforced by row-level security (`profiles.tutor_id`, migration
+`0023`), not by the app. Roles are only ever set by server code with the
+service role. The confirmation email needs `NEXT_PUBLIC_SITE_URL`,
+`RESEND_API_KEY` and `RESEND_FROM_EMAIL`; without the Resend key in development
+the link is printed in the server log.
+
 ## Stack
 
 | | |
@@ -18,7 +34,7 @@ their students.
 | Styling | Tailwind CSS v4, CSS-first tokens |
 | Components | shadcn/ui on Base UI primitives |
 | Backend | Supabase — Postgres + RLS, Auth, Storage, Realtime, Edge Functions |
-| Email | Resend, via a Supabase Edge Function |
+| Email | Resend, sent from server actions (`src/lib/email`) |
 
 ## Design
 

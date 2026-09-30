@@ -509,6 +509,7 @@ export type Database = {
           programme: Database["public"]["Enums"]["ib_programme"] | null
           role: Database["public"]["Enums"]["user_role"]
           timezone: string
+          tutor_id: string | null
           updated_at: string
         }
         Insert: {
@@ -522,6 +523,7 @@ export type Database = {
           programme?: Database["public"]["Enums"]["ib_programme"] | null
           role?: Database["public"]["Enums"]["user_role"]
           timezone?: string
+          tutor_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -535,9 +537,18 @@ export type Database = {
           programme?: Database["public"]["Enums"]["ib_programme"] | null
           role?: Database["public"]["Enums"]["user_role"]
           timezone?: string
+          tutor_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rate_limits: {
         Row: {
