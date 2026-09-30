@@ -14,10 +14,8 @@ import {
   DEFAULT_DIFFICULTY,
   DIFFICULTIES,
   DIFFICULTY_LABEL,
-  DIFFICULTY_POINTS,
-  formatPoints,
   type Difficulty,
-} from "@/lib/aviary/difficulty"
+} from "@/lib/assignments/difficulty"
 
 import { MathProse } from "./math-prose"
 
@@ -71,23 +69,18 @@ const TYPES = [
 
 const DIFFICULTY_OPTIONS = DIFFICULTIES.map((value) => ({ value, label: DIFFICULTY_LABEL[value] }))
 
-/** Easy to ultra; the caption says what the student earns when it is approved. */
+/** Easy to ultra. */
 export function DifficultyChoice({ defaultValue = DEFAULT_DIFFICULTY }: { defaultValue?: Difficulty }) {
   const [value, setValue] = React.useState<Difficulty>(defaultValue)
 
   return (
-    <div className="flex flex-col gap-2">
-      <SegmentedControl
-        legend="Difficulty"
-        name="difficulty"
-        value={value}
-        onValueChange={setValue}
-        options={DIFFICULTY_OPTIONS}
-      />
-      <p className="body-sm text-on-surface-muted">
-        Approving it earns the student {formatPoints(DIFFICULTY_POINTS[value])}.
-      </p>
-    </div>
+    <SegmentedControl
+      legend="Difficulty"
+      name="difficulty"
+      value={value}
+      onValueChange={setValue}
+      options={DIFFICULTY_OPTIONS}
+    />
   )
 }
 

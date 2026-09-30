@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { cn } from "cn"
 
-import { DifficultyMeter } from "@/components/aviary/difficulty-meter"
+import { DifficultyMeter } from "@/components/assignments/difficulty-meter"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
@@ -40,10 +40,8 @@ import type { Recipient, Topic } from "@/lib/assignments/task-options"
 import {
   DIFFICULTIES,
   DIFFICULTY_LABEL,
-  DIFFICULTY_POINTS,
-  formatPoints,
   type Difficulty,
-} from "@/lib/aviary/difficulty"
+} from "@/lib/assignments/difficulty"
 
 import type { UploadItem } from "./material-uploader"
 
@@ -256,7 +254,7 @@ export function TypeChip({
 
 // ── Difficulty ──────────────────────────────────────────────────────────────
 
-/** How hard the task is, which sets the points the student earns on approval. */
+/** How hard the task is. */
 export function DifficultyChip({
   value,
   onValueChange,
@@ -267,7 +265,7 @@ export function DifficultyChip({
   return (
     <Select value={value} onValueChange={(next) => next && onValueChange(next as Difficulty)}>
       <SelectTrigger
-        aria-label={`Difficulty: ${DIFFICULTY_LABEL[value]}, ${formatPoints(DIFFICULTY_POINTS[value])}`}
+        aria-label={`Difficulty: ${DIFFICULTY_LABEL[value]}`}
         className={chipClass}
       >
         <DifficultyMeter difficulty={value} className="text-on-surface-muted" />
@@ -278,7 +276,6 @@ export function DifficultyChip({
           <SelectItem key={difficulty} value={difficulty}>
             <DifficultyMeter difficulty={difficulty} className="text-on-surface-muted" />
             <span className="flex-1">{DIFFICULTY_LABEL[difficulty]}</span>
-            <span className="mono-data-sm text-on-surface-muted">+{DIFFICULTY_POINTS[difficulty]}</span>
           </SelectItem>
         ))}
       </SelectContent>

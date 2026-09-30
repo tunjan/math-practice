@@ -13,21 +13,22 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core"
-import { Paperclip } from "lucide-react"
+import { Flag } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "cn"
 
-import { DifficultyMeter } from "@/components/aviary/difficulty-meter"
+import { DifficultyMeter } from "@/components/assignments/difficulty-meter"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Progress } from "@/components/ui/progress"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
-import { formatDue, formatShortDate, isOverdue, relativeLate, relativeToNow } from "@/lib/assignments/dates"
-import { TYPE_LABEL, type AssignmentType, type BoardColumn } from "@/lib/assignments/model"
-import { DIFFICULTY_LABEL, DIFFICULTY_POINTS, type Difficulty } from "@/lib/aviary/difficulty"
+import { dueSoon, formatDue, formatShortDate, isOverdue, relativeLate, relativeToNow, timeLeft } from "@/lib/assignments/dates"
+import { type AssignmentType, type BoardColumn } from "@/lib/assignments/model"
+import { DIFFICULTY_LABEL, type Difficulty } from "@/lib/assignments/difficulty"
 import { startTask } from "@/lib/student/actions"
-import { TopicTags } from "@/components/syllabus/topic-tags"
-import type { TopicTag } from "@/lib/syllabus/model"
+import { topicColor, type TopicTag } from "@/lib/syllabus/model"
 
 export type BoardTask = {
   id: string
@@ -76,17 +77,16 @@ const LANES: Lane[] = [
 
 /**
  * The only colour on the board, from DESIGN.md: a dot by each lane's name in
- * its hue's 600, and a badge count (100 fill, 300 border, 700 text for AA)
- * once something is in it. Empty lanes stay neutral. Blue is new work,
- * purple is underway, orange (attention) needs acting on, yellow (pending)
- * waits on the tutor, green (success) is done.
+ * its hue's 600. The count badge stays neutral regardless of lane colour.
+ * Blue is new work, purple is underway, orange (attention) needs acting on,
+ * yellow (pending) waits on the tutor, green (success) is done.
  */
-const LANE_COLOUR: Record<BoardColumn, { dot: string; count: string }> = {
-  assigned: { dot: "bg-blue-600", count: "border-blue-300 bg-blue-100 text-blue-700" },
-  in_progress: { dot: "bg-purple-600", count: "border-purple-300 bg-purple-100 text-purple-700" },
-  revise: { dot: "bg-orange-600", count: "border-orange-300 bg-orange-100 text-orange-700" },
-  submitted: { dot: "bg-yellow-600", count: "border-yellow-300 bg-yellow-100 text-yellow-800" },
-  finished: { dot: "bg-green-600", count: "border-green-300 bg-green-100 text-green-700" },
+const LANE_COLOUR: Record<BoardColumn, { dot: string }> = {
+  assigned: { dot: "bg-blue-600" },
+  in_progress: { dot: "bg-purple-600" },
+  revise: { dot: "bg-orange-600" },
+  submitted: { dot: "bg-yellow-600" },
+  finished: { dot: "bg-green-600" },
 }
 
 /**
@@ -124,8 +124,9 @@ export function groupTasks(tasks: BoardTask[]) {
 /**
  * The student's tasks as a board, one lane per stage. Lanes are trays of
  * tone, not boxes; a bracket above them says whose turn each one is. A card
- * the student hasn't handed in can be dragged forward (see MOVES); otherwise
- * cards move by what happens in the task. Nothing here navigates: a task
+ * the student hasn't handed in can be dragged forward (see MOVES), and one not
+ * yet started carries a Start button that does the same without a drag;
+ * otherwise cards move by what happens in the task. Nothing here navigates: a task
  * opens in place through `onOpen`. Below `xl` the lanes scroll sideways and
  * snap. Touch needs a short press before a card lifts, so lanes still scroll.
  */
@@ -160,6 +161,17 @@ export function TaskList({
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } })
   )
 
+  const start = React.useCallback(
+    (id: string) => {
+      React.startTransition(async () => {
+        move({ id, column: "in_progress" })
+        const result = await startTask(id)
+        if (result.error) toast.error(result.error)
+      })
+    },
+    [move]
+  )
+
   const drop = ({ active, over }: DragEndEvent) => {
     setDragging(null)
     draggedAt.current = Date.now()
@@ -171,11 +183,7 @@ export function TaskList({
       onOpen?.(task.id)
       return
     }
-    React.startTransition(async () => {
-      move({ id: task.id, column: to })
-      const result = await startTask(task.id)
-      if (result.error) toast.error(result.error)
-    })
+    start(task.id)
   }
 
   const allowed = dragging ? (MOVES[dragging.column] ?? []) : []
@@ -209,6 +217,7 @@ export function TaskList({
               tasks={tasks}
               timeZone={timeZone}
               onOpen={open}
+              onStart={start}
               dropState={dropStateOf(lane.key)}
               draggingId={dragging?.id ?? null}
             />
@@ -225,7 +234,7 @@ export function TaskList({
               dropAnimation={{ duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}
             >
               {dragging ? (
-                <div className="cursor-grabbing rounded-lg shadow-overlay">
+                <div className="cursor-grabbing rounded-md shadow-overlay">
                   <Card task={dragging} timeZone={timeZone} />
                 </div>
               ) : null}
@@ -252,6 +261,7 @@ function LaneColumn({
   tasks,
   timeZone,
   onOpen,
+  onStart,
   dropState,
   draggingId,
 }: {
@@ -259,6 +269,7 @@ function LaneColumn({
   tasks: BoardTask[]
   timeZone: string
   onOpen?: (id: string) => void
+  onStart?: (id: string) => void
   dropState: DropState
   draggingId: string | null
 }) {
@@ -288,7 +299,9 @@ function LaneColumn({
         <span
           className={cn(
             "rounded-full border px-1.5 py-px font-mono text-xs font-medium",
-            tasks.length > 0 ? LANE_COLOUR[lane.key].count : "border-transparent text-on-surface-muted"
+            tasks.length > 0
+              ? "border-outline bg-surface-sunken text-on-surface-muted"
+              : "border-transparent text-on-surface-muted"
           )}
         >
           {tasks.length}
@@ -302,7 +315,7 @@ function LaneColumn({
         <ul role="list" className="flex flex-col gap-2">
           {shown.map((task) => (
             <li key={task.id}>
-              <DraggableCard task={task} timeZone={timeZone} onOpen={onOpen} lifted={task.id === draggingId} />
+              <DraggableCard task={task} timeZone={timeZone} onOpen={onOpen} onStart={onStart} lifted={task.id === draggingId} />
             </li>
           ))}
         </ul>
@@ -310,14 +323,14 @@ function LaneColumn({
 
       {older.length > 0 ? (
         <Collapsible className="group/more">
-          <CollapsibleTrigger className="flex h-8 w-full items-center justify-center rounded-lg text-sm font-medium text-on-surface-muted transition-colors duration-150 outline-none hover:bg-surface-hover hover:text-on-surface focus-visible:ring-2 focus-visible:ring-on-surface/25">
+          <CollapsibleTrigger className="flex h-10 w-full items-center justify-center rounded-md text-sm font-medium text-on-surface-muted transition-colors duration-150 outline-none hover:bg-surface-hover hover:text-on-surface focus-visible:ring-2 focus-visible:ring-on-surface/25">
             <span className="group-data-open/more:hidden">Show {older.length} older</span>
             <span className="hidden group-data-open/more:inline">Show fewer</span>
           </CollapsibleTrigger>
           <CollapsibleContent render={<ul role="list" />} className="mt-2 flex flex-col gap-2">
             {older.map((task) => (
               <li key={task.id}>
-                <DraggableCard task={task} timeZone={timeZone} onOpen={onOpen} lifted={task.id === draggingId} />
+                <DraggableCard task={task} timeZone={timeZone} onOpen={onOpen} onStart={onStart} lifted={task.id === draggingId} />
               </li>
             ))}
           </CollapsibleContent>
@@ -329,35 +342,47 @@ function LaneColumn({
 
 /* ── One task ─────────────────────────────────────────────────────────────── */
 
-/** A state worth naming above the title. The lane says the rest; overdue is carried by the date. */
+/** A state worth naming beside the title. The lane says the rest; overdue is carried by the date. */
 function stateOf(task: BoardTask): React.ReactNode {
   if (task.column === "assigned" && task.openedAt === null) return (
-      <Badge variant="purple">New</Badge>
+      <span className="inline-flex h-5 shrink-0 items-center gap-1.5 text-xs font-medium text-blue-700">
+        <span aria-hidden className="size-1.5 rounded-full bg-blue-600" />
+        New
+      </span>
     )
   return null
 }
 
-/** The one date that matters for a task where it sits, always labelled. */
-function momentOf(task: BoardTask, timeZone: string): { text: string; iso: string; late: boolean } {
+type Urgency = "none" | "soon" | "late"
+
+/**
+ * The one date that matters for a task where it sits, always labelled. Work
+ * not yet handed in warns in amber the day before and the day it's due, so
+ * red is never the first the student hears of a deadline.
+ */
+function momentOf(task: BoardTask, timeZone: string): { text: string; iso: string; urgency: Urgency } {
   switch (task.column) {
     case "submitted": {
       const iso = task.submittedAt ?? task.dueAt
-      return { text: `Handed in ${relativeToNow(iso)}`, iso, late: false }
+      return { text: `Handed in ${relativeToNow(iso)}`, iso, urgency: "none" }
     }
     case "revise": {
       const iso = task.reviewedAt ?? task.dueAt
-      return { text: `Reviewed ${relativeToNow(iso)}`, iso, late: false }
+      return { text: `Reviewed ${relativeToNow(iso)}`, iso, urgency: "none" }
     }
     case "finished": {
       const iso = task.reviewedAt ?? task.dueAt
-      return { text: `Approved ${formatShortDate(iso, timeZone)}`, iso, late: false }
+      return { text: `Approved ${formatShortDate(iso, timeZone)}`, iso, urgency: "none" }
     }
     default: {
-      const late = isOverdue(task.dueAt)
+      if (isOverdue(task.dueAt)) {
+        return { text: capitalise(relativeLate(task.dueAt)), iso: task.dueAt, urgency: "late" }
+      }
+      const soon = dueSoon(task.dueAt, timeZone)
       return {
-        text: late ? capitalise(relativeLate(task.dueAt)) : `Due ${relativeToNow(task.dueAt)}`,
+        text: soon ? `Due ${soon}` : timeLeft(task.dueAt, timeZone),
         iso: task.dueAt,
-        late,
+        urgency: soon ? "soon" : "none",
       }
     }
   }
@@ -370,48 +395,76 @@ function capitalise(text: string): string {
 function Moment({ task, timeZone, className }: { task: BoardTask; timeZone: string; className?: string }) {
   const moment = momentOf(task, timeZone)
   return (
-    <time
-      suppressHydrationWarning
-      dateTime={moment.iso}
-      title={formatDue(moment.iso, timeZone)}
-      className={cn("text-xs whitespace-nowrap", moment.late ? "font-medium text-error" : "text-on-surface-muted", className)}
-    >
-      {moment.text}
-    </time>
+    <Hint label={formatDue(moment.iso, timeZone)}>
+      <time
+        suppressHydrationWarning
+        dateTime={moment.iso}
+        className={cn(
+          "flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap",
+          moment.urgency === "late" && "font-medium text-error",
+          moment.urgency === "soon" && "font-medium text-amber-700",
+          moment.urgency === "none" && "text-on-surface-muted",
+          className
+        )}
+      >
+        <Flag className="size-3.5 shrink-0" aria-hidden />
+        <span className="truncate">{moment.text}</span>
+      </time>
+    </Hint>
   )
 }
 
-function Files({ count }: { count: number }) {
-  if (count === 0) return null
+/** How hard the task is, shown as bars only — no point value. */
+function DifficultyIndicator({ task }: { task: BoardTask }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 text-on-surface-muted">
-      <Paperclip className="size-3.5" aria-hidden />
-      <span className="font-mono text-xs">{count}</span>
-      <span className="sr-only">{count === 1 ? "file" : "files"}</span>
-    </span>
-  )
-}
-
-/** What the task is worth: earned once it is finished, on offer until then. */
-function Points({ task }: { task: BoardTask }) {
-  const points = DIFFICULTY_POINTS[task.difficulty]
-  const earned = task.column === "finished"
-  return (
-    <span
-      title={`${DIFFICULTY_LABEL[task.difficulty]}: ${points} points ${earned ? "earned" : "when approved"}`}
-      className="inline-flex shrink-0 items-center gap-1.5 text-on-surface-muted"
-    >
-      <DifficultyMeter difficulty={task.difficulty} />
-      <span className={cn("font-mono text-xs tabular-nums", earned && "text-on-surface")}>+{points}</span>
-      <span className="sr-only">
-        {DIFFICULTY_LABEL[task.difficulty]}, {points} points {earned ? "earned" : "when approved"}
+    <Hint label={DIFFICULTY_LABEL[task.difficulty]}>
+      <span className="inline-flex shrink-0 items-center text-on-surface-muted">
+        <DifficultyMeter difficulty={task.difficulty} />
+        <span className="sr-only">{DIFFICULTY_LABEL[task.difficulty]}</span>
       </span>
-    </span>
+    </Hint>
   )
 }
 
-function metaOf(task: BoardTask): string {
-  return [TYPE_LABEL[task.type], task.topic].filter(Boolean).join(" · ")
+/**
+ * What the task covers, as one small tag: the first subtopic's code in its
+ * strand's colour, with the full names on hover. Tasks without syllabus tags
+ * fall back to the tutor's category, if any.
+ */
+function CoverageTag({ task }: { task: BoardTask }) {
+  const [first, ...rest] = task.topics
+  if (!first) {
+    return task.topic ? (
+      <Badge render={<span />} variant="neutral" className="min-w-0 shrink">
+        <span className="truncate">{task.topic}</span>
+      </Badge>
+    ) : null
+  }
+  return (
+    <Hint label={task.topics.map((t) => `${t.code} ${t.title}`).join("\n")}>
+      <span className="inline-flex w-fit max-w-full">
+        <Badge render={<span />} variant={topicColor(first.topic)} className="tabular-nums">
+          {first.code}
+          {rest.length > 0 ? <span className="opacity-60">+{rest.length}</span> : null}
+        </Badge>
+      </span>
+    </Hint>
+  )
+}
+
+/**
+ * A hover hint on part of a card. The trigger is the child itself, kept a
+ * plain element: the card around it is already the button.
+ */
+function Hint({ label, children }: { label: string; children: React.ReactElement }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger render={children} />
+      <TooltipContent className="dub">
+        <span className="whitespace-pre-line">{label}</span>
+      </TooltipContent>
+    </Tooltip>
+  )
 }
 
 function notHandedIn(task: BoardTask): boolean {
@@ -423,53 +476,97 @@ function DraggableCard({
   task,
   timeZone,
   onOpen,
+  onStart,
   lifted,
 }: {
   task: BoardTask
   timeZone: string
   onOpen?: (id: string) => void
+  onStart?: (id: string) => void
   lifted: boolean
 }) {
-  const { setNodeRef, listeners } = useDraggable({ id: task.id, disabled: !MOVES[task.column] })
+  const movable = Boolean(MOVES[task.column])
+  const { setNodeRef, listeners } = useDraggable({ id: task.id, disabled: !movable })
   return (
-    <div ref={setNodeRef} {...listeners} className={cn("touch-manipulation transition-opacity duration-150", lifted && "opacity-40")}>
-      <Card task={task} timeZone={timeZone} onOpen={onOpen} />
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      className={cn(
+        "touch-manipulation transition-opacity duration-150",
+        movable && "[&_[data-task-card]]:cursor-grab",
+        lifted && "opacity-40"
+      )}
+    >
+      <Card task={task} timeZone={timeZone} onOpen={onOpen} onStart={onStart} />
     </div>
   )
 }
 
-/** One task on the board. The whole card opens it. */
-function Card({ task, timeZone, onOpen }: { task: BoardTask; timeZone: string; onOpen?: (id: string) => void }) {
+/** Keeps a press on a control inside a card from lifting the card. */
+const stopPress = (event: React.SyntheticEvent) => event.stopPropagation()
+
+/**
+ * One task on the board. The whole card opens it; a task not yet started also
+ * has Start in its footer. Start sits over the card rather than inside it (a
+ * button can't hold a button), in room the footer keeps free for it.
+ */
+function Card({
+  task,
+  timeZone,
+  onOpen,
+  onStart,
+}: {
+  task: BoardTask
+  timeZone: string
+  onOpen?: (id: string) => void
+  onStart?: (id: string) => void
+}) {
   const state = stateOf(task)
   const late = notHandedIn(task) && isOverdue(task.dueAt)
+  const startable = task.column === "assigned"
   return (
-    <button
-      type="button"
-      onClick={() => onOpen?.(task.id)}
-      aria-haspopup="dialog"
-      className={cn(
-        "flex w-full flex-col gap-3 rounded-lg border bg-surface p-3 text-left",
-        "transition-[border-color,filter] duration-150 hover:border-outline-strong hover:drop-shadow-[0_2px_4px_#222A350D]",
-        late ? "border-error/40" : "border-outline"
-      )}
-    >
-      <span className="flex flex-col gap-1">
-        {state ? <span className="flex">{state}</span> : null}
-        <span className="line-clamp-3 text-sm leading-5 font-medium text-pretty text-on-surface">{task.title}</span>
-        <span className="truncate text-xs text-on-surface-muted">{metaOf(task)}</span>
-        <TopicTags tags={task.topics} max={3} inline className="mt-1" />
-      </span>
-
-      {task.column === "in_progress" ? <Progress value={task.completionPct} label="Done" hideLabel /> : null}
-
-      <span className="flex items-center justify-between gap-2">
-        <Moment task={task} timeZone={timeZone} className="truncate" />
-        <span className="flex shrink-0 items-center gap-3">
-          <Files count={task.materialCount} />
-          <Points task={task} />
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => onOpen?.(task.id)}
+        aria-haspopup="dialog"
+        data-task-card={task.id}
+        className={cn(
+          "flex w-full cursor-pointer flex-col gap-3 rounded-md border bg-surface p-3 text-left",
+          "transition-[border-color,filter] duration-150 hover:drop-shadow-[0_2px_4px_#222A350D]",
+          late ? "border-error/40 hover:border-error/60" : "border-outline hover:border-outline-strong"
+        )}
+      >
+        <span className="flex items-start justify-between gap-2">
+          <span className="line-clamp-3 text-sm leading-5 font-medium text-pretty text-on-surface">{task.title}</span>
+          {state}
         </span>
-      </span>
-    </button>
+
+        {task.column === "in_progress" ? <Progress value={task.completionPct} label="Done" hideLabel /> : null}
+
+        <CoverageTag task={task} />
+
+        <span className="-mx-3 flex items-center justify-between gap-2 border-t border-outline px-3 pt-3">
+          <Moment task={task} timeZone={timeZone} />
+          <span className="flex shrink-0 items-center gap-2">
+            <DifficultyIndicator task={task} />
+            {startable ? <span aria-hidden className="w-10.5" /> : null}
+          </span>
+        </span>
+      </button>
+      {startable ? (
+        <Button
+          size="sm"
+          aria-label={`Start ${task.title}`}
+          onClick={() => onStart?.(task.id)}
+          onMouseDown={stopPress}
+          onTouchStart={stopPress}
+          className="absolute right-1.5 bottom-1.5 h-7 w-12 rounded-xs px-0 text-xs after:absolute after:-inset-1.5"
+        >
+          Start
+        </Button>
+      ) : null}
+    </div>
   )
 }
 
@@ -485,15 +582,16 @@ export function TaskPageSkeleton() {
     <div className="dub flex flex-1 flex-col bg-surface">
       <div aria-busy="true" className="mx-auto flex w-full max-w-screen-xl flex-col gap-10 overflow-hidden px-4 pt-10 pb-20 sm:px-8 sm:pt-14">
         <div className="flex flex-col gap-3">
-          <Bar className="h-9 w-64" />
-          <Bar className="h-5 w-80 max-w-full" />
+          <Bar className="h-9 w-64 sm:h-[41px]" />
+          <Bar className="h-6 w-80 max-w-full sm:h-7" />
         </div>
         <div className="grid min-w-[68rem] grid-cols-5 gap-3 xl:min-w-0">
+          <Bar className="col-span-5 mx-1 h-4 w-24" />
           {[2, 1, 1, 1, 2].map((cards, lane) => (
             <div key={lane} className="flex min-h-72 flex-col gap-2 rounded-xl bg-surface-sunken p-2">
               <Bar className="mx-2 my-2.5 h-3 w-20 bg-outline" />
               {Array.from({ length: cards }, (_, index) => (
-                <div key={index} className="flex flex-col gap-2 rounded-lg border border-outline bg-surface p-3">
+                <div key={index} className="flex flex-col gap-2 rounded-md border border-outline bg-surface p-3">
                   <Bar className="h-4 w-full" />
                   <Bar className="h-3 w-24" />
                   <Bar className="mt-2 h-3 w-20" />

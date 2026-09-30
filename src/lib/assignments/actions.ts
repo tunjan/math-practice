@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 import { requireRole } from "@/lib/auth/session"
-import { asDifficulty } from "@/lib/aviary/difficulty"
+import { asDifficulty } from "@/lib/assignments/difficulty"
 import { createClient } from "@/lib/supabase/server"
 import type { Database } from "@/lib/supabase/database.types"
 import {

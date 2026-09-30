@@ -1,24 +1,17 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
-import { ArrowRight } from "lucide-react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
-import { BirdFigure } from "@/components/aviary/bird-figure"
 import { TaskList, type BoardTask } from "@/components/student/task-board"
 import { TaskDialogBody, TaskUnavailable } from "@/components/student/task-dialog"
-import { TaskDialogShell } from "@/components/student/task-dialog-frame"
+import { TaskDialogShell, centreOf, type DialogOrigin } from "@/components/student/task-dialog-frame"
 import { isOverdue } from "@/lib/assignments/dates"
-import type { BirdArt, Outfit } from "@/lib/aviary/catalog"
 import { recordOpen } from "@/lib/student/actions"
 import type { StudentTask } from "@/lib/student/load-task"
 
 /** Signed file URLs last an hour; refresh them quietly before they rot. */
 const STALE_AFTER_MS = 50 * 60_000
-
-/** The student's bird and points, for the link to their aviary. */
-export type CompanionGlance = { bird: BirdArt; outfit: Outfit; balance: number }
 
 /**
  * The student's task page. The list and every task's detail arrive together,
@@ -29,12 +22,10 @@ export type CompanionGlance = { bird: BirdArt; outfit: Outfit; balance: number }
 export function StudentTasks({
   firstName,
   tasks,
-  companion = null,
   timeZone,
 }: {
   firstName: string
   tasks: StudentTask[]
-  companion?: CompanionGlance | null
   timeZone: string
 }) {
   const router = useRouter()
@@ -45,6 +36,9 @@ export function StudentTasks({
   // Keep showing the last task while the dialog animates out.
   const [shownId, setShownId] = React.useState(openId)
   if (openId !== null && openId !== shownId) setShownId(openId)
+
+  // Where the opened card sat, so the dialog can grow out of it.
+  const [origin, setOrigin] = React.useState<DialogOrigin | null>(null)
 
   // Whether we pushed the entry for the open task, so closing can pop it.
   const pushed = React.useRef(false)
@@ -59,6 +53,8 @@ export function StudentTasks({
   const boardTasks = React.useMemo(() => tasks.map(toBoardTask), [tasks])
 
   const open = (id: string) => {
+    const card = document.querySelector(`[data-task-card="${CSS.escape(id)}"]`)
+    setOrigin(card ? centreOf(card.getBoundingClientRect()) : null)
     pushed.current = true
     window.history.pushState(null, "", `${pathname}?task=${encodeURIComponent(id)}`)
     if (Date.now() - loadedAt.current > STALE_AFTER_MS) router.refresh()
@@ -98,13 +94,10 @@ export function StudentTasks({
               {summarise(tasks)}
             </p>
           </header>
-          {companion ? <CompanionLink companion={companion} /> : null}
         </div>
 
         {tasks.length > 0 ? (
-          <div className="animate-slide-up-fade" style={{ animationDelay: "160ms" }}>
-            <TaskList tasks={boardTasks} timeZone={timeZone} onOpen={open} />
-          </div>
+          <TaskList tasks={boardTasks} timeZone={timeZone} onOpen={open} />
         ) : null}
       </div>
 
@@ -113,6 +106,7 @@ export function StudentTasks({
         onOpenChange={(next) => {
           if (!next) close()
         }}
+        origin={origin}
         onClosed={() => setShownId(null)}
       >
         {shown ? (
@@ -122,34 +116,6 @@ export function StudentTasks({
         ) : null}
       </TaskDialogShell>
     </div>
-  )
-}
-
-/** The student's bird, dressed, with their points: the way into the aviary. */
-function CompanionLink({ companion }: { companion: CompanionGlance }) {
-  const { bird, outfit, balance } = companion
-  return (
-    <Link
-      href="/student/aviary"
-      aria-label={`Aviary: ${bird.name}, ${balance} points to spend`}
-      style={{ animationDelay: "120ms" }}
-      className="group/bird hidden shrink-0 animate-slide-up-fade items-end gap-2 rounded-xl py-1 pr-3 pl-1 transition-colors hover:bg-surface-sunken sm:flex"
-    >
-      <BirdFigure
-        bird={bird}
-        outfit={outfit}
-        className="w-[80px] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/bird:-translate-y-0.5"
-      />
-      <span className="flex flex-col pb-2">
-        <span className="font-display text-2xl leading-none font-medium text-on-surface tabular-nums">
-          {balance.toLocaleString("en-GB")}
-        </span>
-        <span className="mt-1 flex items-center gap-1 text-xs text-on-surface-muted">
-          points
-          <ArrowRight aria-hidden className="size-3 transition-transform group-hover/bird:translate-x-0.5" />
-        </span>
-      </span>
-    </Link>
   )
 }
 

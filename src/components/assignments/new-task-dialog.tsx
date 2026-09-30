@@ -25,7 +25,7 @@ import { MATERIAL_ACCEPT } from "@/lib/assignments/files"
 import type { Recipient, Topic } from "@/lib/assignments/task-options"
 import { TopicPicker } from "@/components/syllabus/topic-picker"
 import { topicsForCourse, type SyllabusTopic } from "@/lib/syllabus/model"
-import { DEFAULT_DIFFICULTY, type Difficulty } from "@/lib/aviary/difficulty"
+import { DEFAULT_DIFFICULTY, type Difficulty } from "@/lib/assignments/difficulty"
 
 import { useMaterialUploads } from "./material-uploader"
 import { MathProse } from "./math-prose"

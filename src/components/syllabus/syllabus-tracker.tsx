@@ -7,7 +7,6 @@ import { cn } from "cn"
 
 import { TopicTags } from "@/components/syllabus/topic-tags"
 import { StarRating } from "@/components/syllabus/star-rating"
-import { TopicProgressChart } from "@/components/syllabus/topic-progress-chart"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -146,8 +145,6 @@ export function SyllabusTracker({
           />
         </div>
       </div>
-
-      <TopicProgressChart rows={optimistic} />
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">

@@ -21,7 +21,7 @@ const buttonVariants = cva(
     "rounded-md border text-sm leading-5 font-medium outline-none",
     // Colour settles quickly; the halo and the press spring on Dub's curve.
     "transition-[color,background-color,border-color,text-decoration-color,box-shadow,scale] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
-    "active:scale-[0.97] active:duration-75",
+    "active:scale-[0.96] active:duration-75",
     "focus-visible:ring-4 focus-visible:ring-on-surface/15",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     // Disabled and loading share the quiet `bg-subtle` look and stay put.

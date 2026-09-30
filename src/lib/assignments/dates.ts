@@ -205,6 +205,36 @@ export function isOverdue(iso: string, now: Date = new Date()): boolean {
 }
 
 /**
+ * Whether a deadline still ahead lands on today or tomorrow on the viewer's
+ * calendar. Calendar days rather than hours: at 23:00, something due at 09:00
+ * is "tomorrow", not "in 10 hours".
+ */
+export function dueSoon(
+  iso: string,
+  timeZone?: string,
+  now: Date = new Date()
+): "today" | "tomorrow" | null {
+  const due = new Date(iso)
+  if (due.getTime() < now.getTime()) return null
+
+  const dayOf = (date: Date) => {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      timeZone,
+    }).formatToParts(date)
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+      Number(parts.find((p) => p.type === type)?.value)
+    // The calendar date as a day count, so DST never stretches "tomorrow".
+    return Date.UTC(part("year"), part("month") - 1, part("day")) / 86_400_000
+  }
+
+  const days = dayOf(due) - dayOf(now)
+  return days === 0 ? "today" : days === 1 ? "tomorrow" : null
+}
+
+/**
  * "3 days late", "20 minutes late": how far past a deadline a hand-in lands.
  * Same coarse units as `relativeToNow`, so the rail can say how late without
  * turning into a countdown. The first minute already counts as late.
@@ -222,4 +252,27 @@ export function relativeLate(iso: string, now: Date = new Date()): string {
   if (diffMs < day) return late(Math.max(1, Math.round(diffMs / hour)), "hour")
   if (diffMs < 7 * day) return late(Math.max(1, Math.round(diffMs / day)), "day")
   return late(Math.max(1, Math.round(diffMs / (7 * day))), "week")
+}
+
+/**
+ * "5 days", "4 hours", or "15 March" once it's a week or more away: how long
+ * is left before a deadline, for places where a flag already says "due".
+ */
+export function timeLeft(
+  iso: string,
+  timeZone?: string,
+  now: Date = new Date()
+): string {
+  const diffMs = Math.max(new Date(iso).getTime() - now.getTime(), 0)
+  const minute = 60_000
+  const hour = 60 * minute
+  const day = 24 * hour
+
+  const left = (value: number, unit: string) =>
+    `${value} ${unit}${value === 1 ? "" : "s"}`
+
+  if (diffMs < hour) return left(Math.max(1, Math.round(diffMs / minute)), "minute")
+  if (diffMs < day) return left(Math.round(diffMs / hour), "hour")
+  if (diffMs < 7 * day) return left(Math.round(diffMs / day), "day")
+  return new Date(iso).toLocaleDateString(LOCALE, { day: "numeric", month: "long", timeZone })
 }

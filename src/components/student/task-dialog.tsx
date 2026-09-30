@@ -4,15 +4,16 @@ import { cn } from "cn"
 import type { SignedFile } from "@/components/assignments/file-list"
 import { MathProse } from "@/components/assignments/math-prose"
 import { TaskComments } from "@/components/assignments/task-comments"
-import { DifficultyMeter } from "@/components/aviary/difficulty-meter"
+import { DifficultyMeter } from "@/components/assignments/difficulty-meter"
 import { AttachmentTiles, FileLinks } from "@/components/student/file-chip"
 import { Badge, tagColorFor } from "@/components/ui/badge"
 import { UnsubmitControl, WorkTray, type TaskActions } from "@/components/student/hand-in"
+import { ProgressReport } from "@/components/student/progress-report"
 import { LateNotice } from "@/components/student/late-notice"
 import type { TaskComment } from "@/lib/assignments/comment-model"
 import { formatDue, isOverdue, relativeLate, relativeToNow } from "@/lib/assignments/dates"
 import { TYPE_LABEL, type AssignmentType, type ReviewVerdict, type Stage } from "@/lib/assignments/model"
-import { DIFFICULTY_LABEL, DIFFICULTY_POINTS, type Difficulty } from "@/lib/aviary/difficulty"
+import { DIFFICULTY_LABEL, type Difficulty } from "@/lib/assignments/difficulty"
 import {
   phaseOf,
   TASK_TITLE_ID,
@@ -82,7 +83,10 @@ export function TaskDialogBody({
     <>
       {/* One scroller on a phone; from `sm` the header stays put. */}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain sm:overflow-visible">
-        <header className="flex shrink-0 flex-col gap-3 px-6 pt-6 pr-16 pb-5 max-sm:pt-4">
+        <header
+          style={{ animationDelay: "120ms" }}
+          className="flex shrink-0 animate-slide-up-fade flex-col gap-3 px-6 pt-6 pr-16 pb-5 max-sm:pt-4 motion-reduce:animate-none"
+        >
           <ul role="list" aria-label="About this task" className="flex flex-wrap gap-1.5">
             <Badge render={<li />} variant="gray">
               {TYPE_LABEL[task.type]}
@@ -95,9 +99,6 @@ export function TaskDialogBody({
             <Badge render={<li />} variant="gray" className="gap-1.5">
               <DifficultyMeter difficulty={task.difficulty} className="h-2.5 text-on-tag/60" />
               {DIFFICULTY_LABEL[task.difficulty]}
-              <span className="text-on-tag/60">
-                {task.verdict === "approved" ? "earned " : null}+{DIFFICULTY_POINTS[task.difficulty]}
-              </span>
             </Badge>
           </ul>
           <TopicTags tags={task.topics} />
@@ -108,9 +109,14 @@ export function TaskDialogBody({
             {task.title}
           </h2>
           <StatusLine task={task} phase={phase} timeZone={timeZone} />
+          {phase === "working" ? (
+            <ProgressReport assignmentId={task.id} value={task.completionPct} save={actions?.progress} />
+          ) : null}
         </header>
 
-        <div className="flex flex-col gap-5 border-t border-outline px-6 pt-5 pb-6 sm:min-h-0 sm:flex-1 sm:overflow-y-auto sm:overscroll-contain">
+        <div
+          style={{ animationDelay: "200ms" }}
+          className="flex animate-slide-up-fade flex-col gap-5 border-t border-outline px-6 pt-5 pb-6 motion-reduce:animate-none sm:min-h-0 sm:flex-1 sm:overflow-y-auto sm:overscroll-contain">
           <TutorFeedback task={task} />
           <Brief task={task} />
           <TaskComments
