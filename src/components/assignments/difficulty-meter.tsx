@@ -1,6 +1,6 @@
 import { cn } from "cn"
 
-import { difficultyLevel, DIFFICULTIES, type Difficulty } from "@/lib/aviary/difficulty"
+import { difficultyLevel, DIFFICULTIES, type Difficulty } from "@/lib/assignments/difficulty"
 
 /**
  * Four rising bars, filled up to the task's difficulty. Monochrome on purpose:

@@ -36,6 +36,7 @@ export type TaskActions = {
   submit?: Action<SubmitState>
   unsubmit?: Action<SubmitState>
   removeDraft?: Action<SubmitState>
+  progress?: (assignmentId: string, pct: number) => Promise<{ error?: string }>
 }
 
 type Staged = UploadedFile & {

@@ -479,16 +479,22 @@
   color: var(--on-surface);
 }
 
-/* Nav items: 32px, 14px medium #404040, 16px #737373 icons, 5% black when
-   active (DESIGN_3.md › Navigation). The collapsed rail keeps its own size. */
+/* Nav items: 32px, 14px #404040, 16px #737373 icons; hover is 5% black and
+   the active item a 5% black fill with ink text (DESIGN.md › Navigation). */
 .dub [data-sidebar="menu-button"] {
   height: 32px;
   gap: 10px;
   border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 20px;
   color: var(--on-surface-secondary);
+}
+/* The drawer is touch-only: give each item a 40px target. */
+@media (max-width: 767px) {
+  .dub [data-sidebar="menu-button"] {
+    height: 40px;
+  }
 }
 .dub [data-sidebar="menu-button"] svg {
   width: 16px;
@@ -500,6 +506,12 @@
 .dub [data-sidebar="menu-button"][data-active] {
   background-color: var(--surface-hover);
   color: var(--on-surface);
+}
+.dub [data-sidebar="menu-button"]:active {
+  background-color: rgb(23 23 23 / 0.1);
+}
+.dub [data-sidebar="menu-button"][data-active] {
+  font-weight: 500;
 }
 .dub [data-sidebar="menu-button"]:hover svg,
 .dub [data-sidebar="menu-button"][data-active] svg {

@@ -18,7 +18,7 @@ import {
 } from "@/lib/assignments/actions"
 import { formatBytes, type UploadedFile } from "@/lib/assignments/files"
 import type { AssignmentType } from "@/lib/assignments/model"
-import type { Difficulty } from "@/lib/aviary/difficulty"
+import type { Difficulty } from "@/lib/assignments/difficulty"
 
 import {
   DifficultyChoice,

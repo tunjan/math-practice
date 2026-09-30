@@ -65,6 +65,35 @@ export async function startTask(assignmentId: string): Promise<{ error?: string 
   return {}
 }
 
+/**
+ * Records how far along the student says they are, 1–99. Zero would put the
+ * task back in "Assigned" and 100 is what handing it in is for, so the report
+ * stays inside that range. Only for a task not yet handed in.
+ */
+export async function reportProgress(
+  assignmentId: string,
+  pct: number
+): Promise<{ error?: string }> {
+  if (!UUID.test(assignmentId)) return { error: "Unknown task." }
+  if (!Number.isInteger(pct) || pct < 1 || pct > 99) return { error: "Progress is 1 to 99." }
+
+  const profile = await requireRole("student")
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("assignments")
+    .update({ completion_pct: pct })
+    .eq("id", assignmentId)
+    .eq("student_id", profile.id)
+    .is("submitted_at", null)
+    .select("id")
+
+  if (error || !data?.length) return { error: "Couldn't save your progress. Try again." }
+
+  revalidateTask(assignmentId)
+  return {}
+}
+
 export type SubmitState = { error?: string; notice?: string }
 
 /**

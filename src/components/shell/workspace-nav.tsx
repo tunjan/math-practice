@@ -4,7 +4,6 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
-  Bird,
   BookOpen,
   CalendarDays,
   ClipboardList,
@@ -21,6 +20,7 @@ import { Avatar, Wordmark } from "@/components/brand/primitives"
 import { CommandPalette, useIsMac } from "@/components/shell/command-palette"
 import { Button } from "@/components/ui/button"
 import { Kbd } from "@/components/ui/kbd"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Sidebar,
   SidebarContent,
@@ -47,7 +47,6 @@ const ICONS = {
   tasks: ListTodo,
   calendar: CalendarDays,
   syllabus: BookOpen,
-  aviary: Bird,
 } satisfies Record<string, LucideIcon>
 
 export type NavItem = {
@@ -75,6 +74,7 @@ function AppSidebar({
   person,
   signOutId,
   onSearch,
+  dub,
   className,
 }: {
   home: string
@@ -82,15 +82,26 @@ function AppSidebar({
   person: Person
   signOutId: string
   onSearch: () => void
+  dub: boolean
   className?: string
 }) {
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
   const isMac = useIsMac()
+  const signOut = () => {
+    (document.getElementById(signOutId) as HTMLFormElement | null)?.requestSubmit()
+  }
+  // Collapsed-rail tooltips are portalled, so they need the theme scope too.
+  const tip = (label: string) => ({ children: label, className })
 
   return (
     <Sidebar collapsible="icon" className={cn("border-r border-sidebar-border bg-sidebar", className)}>
-      <SidebarHeader className="h-14 justify-center border-b border-sidebar-border px-3 group-data-[collapsible=icon]:px-0">
+      <SidebarHeader
+        className={cn(
+          "h-14 justify-center px-3 group-data-[collapsible=icon]:px-0",
+          dub ? "border-b-0 pl-4 pr-2" : "border-b border-sidebar-border"
+        )}
+      >
         <div className="flex items-center justify-between group-data-[collapsible=icon]:justify-center">
           <Wordmark href={home} className="group-data-[collapsible=icon]:hidden" />
           {isMobile ? (
@@ -105,26 +116,47 @@ function AppSidebar({
             </Button>
           ) : (
             <SidebarTrigger
-              className="hidden md:flex text-on-surface-muted hover:text-on-surface group-data-[collapsible=icon]:size-9"
+              className={cn(
+                "hidden md:flex text-on-surface-muted hover:text-on-surface",
+                "group-data-[collapsible=icon]:size-9",
+                dub && "hover:bg-black/5"
+              )}
               aria-label="Toggle sidebar"
             />
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-3 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:py-2">
+      <SidebarContent
+        className={cn(
+          "px-2 py-3 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:py-2",
+          dub && "pt-1"
+        )}
+      >
         <SidebarGroup className="p-0">
           <SidebarGroupContent>
-            <SidebarMenu className="gap-1 group-data-[collapsible=icon]:items-center">
-              <SidebarMenuItem className="mb-2 group-data-[collapsible=icon]:mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+            <SidebarMenu
+              className={cn("group-data-[collapsible=icon]:items-center", dub ? "gap-0.5" : "gap-1")}
+            >
+              <SidebarMenuItem
+                className={cn(
+                  "group-data-[collapsible=icon]:mb-1 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center",
+                  dub ? "mb-4" : "mb-2"
+                )}
+              >
                 <SidebarMenuButton
-                  tooltip="Search"
+                  tooltip={tip("Search")}
                   aria-keyshortcuts="Meta+K Control+K"
                   onClick={() => {
                     if (isMobile) setOpenMobile(false)
                     onSearch()
                   }}
-                  className="border border-outline text-on-surface-muted hover:text-on-surface"
+                  className={cn(
+                    "border text-on-surface-muted hover:text-on-surface",
+                    dub
+                      ? "border-outline bg-surface hover:bg-surface-muted! group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:hover:bg-surface-hover!"
+                      : "border-outline",
+                  )}
                 >
                   <Search className="size-5 shrink-0" aria-hidden />
                   <span className="flex-1 truncate group-data-[collapsible=icon]:hidden">Search</span>
@@ -143,7 +175,7 @@ function AppSidebar({
                     <SidebarMenuButton
                       render={<Link href={item.href} />}
                       isActive={active}
-                      tooltip={item.label}
+                      tooltip={tip(item.label)}
                       aria-current={active ? "page" : undefined}
                       onClick={() => {
                         if (isMobile) {
@@ -162,28 +194,55 @@ function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2 gap-2 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:py-2">
-        <div className="flex items-center gap-3 px-2 py-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0">
-          <Avatar name={person.name} />
-          <div className="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
+      <SidebarFooter
+        className={cn(
+          "gap-1 p-2 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:py-2",
+          !dub && "border-t border-sidebar-border"
+        )}
+      >
+        {/* Expanded: who is signed in, with sign out beside them. */}
+        <div className="flex items-center gap-3 rounded-lg py-2 pl-2 pr-1 group-data-[collapsible=icon]:hidden">
+          <Avatar name={person.name} className={cn(dub && "bg-surface-sunken")} />
+          <div className="flex min-w-0 flex-1 flex-col">
             <span className="truncate body-md text-on-surface">{person.name}</span>
             <span className="truncate body-sm text-on-surface-muted">
               {person.email ?? person.role}
             </span>
           </div>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Sign out"
+                  onClick={signOut}
+                  className={cn(
+                    "shrink-0 text-on-surface-muted after:absolute after:-inset-1 hover:text-on-surface",
+                    dub && "hover:bg-black/5"
+                  )}
+                />
+              }
+            >
+              <LogOut className="size-4" aria-hidden />
+            </TooltipTrigger>
+            <TooltipContent side="top" className={className}>
+              Sign out
+            </TooltipContent>
+          </Tooltip>
         </div>
 
-        <SidebarMenu className="group-data-[collapsible=icon]:items-center">
-          <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+        {/* Collapsed: the avatar, then sign out as a rail item. */}
+        <Avatar name={person.name} className={cn("mb-1 hidden group-data-[collapsible=icon]:flex", dub && "bg-surface-sunken")} />
+        <SidebarMenu className="hidden group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center">
+          <SidebarMenuItem className="flex justify-center">
             <SidebarMenuButton
-              tooltip="Sign out"
-              onClick={() => {
-                (document.getElementById(signOutId) as HTMLFormElement | null)?.requestSubmit()
-              }}
-              className="text-on-surface-muted hover:bg-surface-sunken hover:text-on-surface"
+              tooltip={tip("Sign out")}
+              onClick={signOut}
+              className={cn("text-on-surface-muted hover:bg-surface-sunken hover:text-on-surface")}
             >
               <LogOut className="size-5 shrink-0" aria-hidden />
-              <span className="truncate group-data-[collapsible=icon]:hidden">Sign out</span>
+              <span className="sr-only">Sign out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -195,11 +254,10 @@ function AppSidebar({
 }
 
 /**
- * DESIGN.md › sidebar
- *
- * A 260px white sidebar with a hairline edge on application shells. Items are
- * 40px, `label-md`, 8px radius; the active item takes an `outline` fill.
- * Built using shadcn sidebar components with responsive sheet drawer on mobile.
+ * The workspace shell, built on shadcn's sidebar with a sheet drawer on mobile:
+ * a 260px white sidebar with a hairline edge. Under Quiet Console the active
+ * item takes an `outline` fill; under Dub (`className="dub"`) a 5% black fill
+ * with ink text, and the header drops its divider.
  */
 export function WorkspaceShell({
   home,
@@ -221,6 +279,7 @@ export function WorkspaceShell({
     () => items.map((item) => ({ href: item.href, label: item.label, Icon: ICONS[item.icon] })),
     [items]
   )
+  const dub = className?.split(/\s+/).includes("dub") ?? false
 
   return (
     <SidebarProvider className={className}>
@@ -232,13 +291,24 @@ export function WorkspaceShell({
         person={person}
         signOutId={signOutId}
         onSearch={() => setSearching(true)}
+        dub={dub}
         className={className}
       />
       <CommandPalette open={searching} onOpenChange={setSearching} pages={pages} scope={className} />
 
-      <SidebarInset className="min-h-svh bg-canvas-neutral">
+      <SidebarInset
+        className={cn(
+          "min-h-svh",
+          dub ? "bg-surface" : "bg-canvas-neutral"
+        )}
+      >
         {/* Mobile top bar */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-sidebar-border bg-sidebar px-4 md:hidden">
+        <header
+          className={cn(
+            "sticky top-0 z-30 flex h-14 items-center justify-between border-b border-sidebar-border px-4 md:hidden",
+            dub ? "bg-surface" : "bg-sidebar"
+          )}
+        >
           <Wordmark href={home} />
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" aria-label="Search" onClick={() => setSearching(true)}>

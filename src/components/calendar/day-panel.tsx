@@ -57,7 +57,7 @@ export function DayPanel({
       aria-labelledby="day-panel-title"
       className={cn("flex flex-col overflow-hidden rounded-xl border border-outline bg-surface", className)}
     >
-      <header className="flex h-12 items-center justify-between gap-3 border-b border-outline px-4">
+      <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-outline px-4">
         <h2 id="day-panel-title" className="truncate text-sm font-semibold text-on-surface">
           {weekday} {date}
         </h2>
@@ -71,7 +71,7 @@ export function DayPanel({
       {placements.length === 0 && plans.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-on-surface-muted">Nothing scheduled</p>
       ) : (
-        <ul role="list" className="divide-y divide-outline">
+        <ul role="list" className="divide-y divide-outline xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
           {plans.map((plan) => (
             <li key={plan.id}>
               <PlanRow plan={plan} href={planHref(plan)} showPerson={showPerson} />

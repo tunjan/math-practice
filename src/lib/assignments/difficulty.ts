@@ -13,14 +13,6 @@ export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   ultra: "Ultra",
 }
 
-/** What an approval is worth. Mirrors private.difficulty_points() in 0016_aviary.sql. */
-export const DIFFICULTY_POINTS: Record<Difficulty, number> = {
-  easy: 10,
-  medium: 20,
-  hard: 40,
-  ultra: 75,
-}
-
 /** 1–4, for the bar meter. */
 export function difficultyLevel(difficulty: Difficulty): number {
   return DIFFICULTIES.indexOf(difficulty) + 1
@@ -28,8 +20,4 @@ export function difficultyLevel(difficulty: Difficulty): number {
 
 export function asDifficulty(value: unknown): Difficulty | null {
   return DIFFICULTIES.includes(value as Difficulty) ? (value as Difficulty) : null
-}
-
-export function formatPoints(points: number): string {
-  return `${points.toLocaleString("en-GB")} ${points === 1 ? "point" : "points"}`
 }

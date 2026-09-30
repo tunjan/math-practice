@@ -181,9 +181,11 @@ export function CalendarView({
   }, [])
 
   return (
-    <div className="dub flex flex-1 flex-col bg-surface">
-      <header className="border-b border-outline">
-        <div className="mx-auto flex h-12 w-full max-w-screen-xl items-center justify-between gap-4 px-3 sm:h-16 lg:px-6">
+    // From xl up the page is exactly one screen: the month stretches to fill
+    // it and the agenda scrolls on its own, so nothing sits below the fold.
+    <div className="dub flex flex-1 flex-col bg-surface xl:h-svh xl:min-h-0">
+      <header className="shrink-0 border-b border-outline">
+        <div className="flex h-12 w-full items-center justify-between gap-4 px-3 sm:h-16 lg:px-6">
           <h1 className="text-lg leading-7 font-semibold text-on-surface">Calendar</h1>
           <Button variant="primary" className="h-9 gap-2 rounded-lg px-3 sm:h-10" onClick={() => openNew(selected)}>
             <Plus aria-hidden />
@@ -195,7 +197,7 @@ export function CalendarView({
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-screen-xl flex-1 flex-col gap-4 px-3 pt-5 pb-12 lg:px-6">
+      <div className="flex w-full flex-1 flex-col gap-4 px-3 pt-4 pb-12 lg:px-6 xl:min-h-0 xl:pb-6">
         <div className="flex flex-wrap items-center gap-2">
           <Tooltip>
             <TooltipTrigger
@@ -239,7 +241,7 @@ export function CalendarView({
             </Link>
           </div>
 
-          <h2 id={monthTitleId} aria-live="polite" className="ml-2 text-base font-semibold text-on-surface">
+          <h2 id={monthTitleId} aria-live="polite" className="ml-2 font-display text-lg leading-7 font-medium text-on-surface sm:text-2xl sm:leading-8">
             {formatMonth(month)}
           </h2>
 
@@ -255,8 +257,8 @@ export function CalendarView({
           </div>
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div ref={gridRef} className="min-w-0">
+        <div className="grid items-start gap-4 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-stretch 2xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div ref={gridRef} className="min-w-0 xl:min-h-0">
             <MonthGrid
               month={month}
               today={today}
@@ -277,7 +279,7 @@ export function CalendarView({
             planHref={planHref}
             showPerson={showPerson}
             onEdit={openEdit}
-            className="lg:sticky lg:top-4"
+            className="xl:max-h-full xl:min-h-0 xl:self-start"
           />
         </div>
       </div>

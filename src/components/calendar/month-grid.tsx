@@ -19,8 +19,11 @@ import type { DayPlacement, WeekPlan } from "@/lib/calendar/model"
 
 import { WeekBars } from "./week-plans"
 
-/** Three lines fit a cell; past that, two items and a count. */
+/** Lines a cell shows before it is measured; past that, one fewer and a count. */
 const CELL_LINES = 3
+/** A chip line with its gap, and the cell's padding, date disc and gap. */
+const LINE_PX = 22
+const CELL_CHROME_PX = 44
 
 /**
  * The month as one bordered card (DESIGN.md › Card list): Monday first,
@@ -56,6 +59,25 @@ export function MonthGrid({
 }) {
   const weeks = React.useMemo(() => monthGrid(month), [month])
 
+  // From xl up the weeks stretch to fill the screen, so each week fits as many
+  // chips as its height allows instead of a fixed three.
+  const gridRef = React.useRef<HTMLDivElement>(null)
+  const [lines, setLines] = React.useState<number[]>([])
+  React.useLayoutEffect(() => {
+    const grid = gridRef.current
+    if (!grid) return
+    const measure = () => {
+      const rows = grid.querySelectorAll<HTMLElement>("[data-week]")
+      const next = Array.from(rows, (row) =>
+        Math.max(1, Math.floor((row.clientHeight - CELL_CHROME_PX) / LINE_PX))
+      )
+      setLines((prev) => (prev.length === next.length && prev.every((n, i) => n === next[i]) ? prev : next))
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(grid)
+    return () => observer.disconnect()
+  }, [weeks.length])
+
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>, day: DayKey) {
     let next: DayKey | null = null
     switch (event.key) {
@@ -89,11 +111,12 @@ export function MonthGrid({
 
   return (
     <div
+      ref={gridRef}
       role="grid"
       aria-labelledby={labelledBy}
-      className="flex flex-col overflow-hidden rounded-xl border border-outline bg-surface"
+      className="flex flex-col overflow-hidden rounded-xl border border-outline bg-surface xl:h-full"
     >
-      <div role="row" className="grid grid-cols-7 border-b border-outline">
+      <div role="row" className="grid shrink-0 grid-cols-7 border-b border-outline">
         {WEEKDAYS.map((weekday) => (
           <div
             key={weekday.short}
@@ -111,9 +134,13 @@ export function MonthGrid({
         ))}
       </div>
 
-      {weeks.map((week) => (
-        <div key={week[0]} role="presentation" className="border-b border-outline last:border-b-0">
-          <div role="row" className="grid grid-cols-7">
+      {weeks.map((week, index) => (
+        <div
+          key={week[0]}
+          role="presentation"
+          className="flex flex-col border-b border-outline last:border-b-0 xl:min-h-0 xl:flex-1"
+        >
+          <div role="row" data-week className="grid grid-cols-7 xl:min-h-0 xl:flex-1">
             {week.map((day) => (
               <DayCell
                 key={day}
@@ -122,6 +149,7 @@ export function MonthGrid({
                 isToday={day === today}
                 isSelected={day === selected}
                 placements={placements.get(day) ?? []}
+                lines={lines[index] ?? CELL_LINES}
                 onSelect={onSelect}
                 onKeyDown={handleKeyDown}
               />
@@ -152,6 +180,7 @@ const DayCell = React.memo(function DayCell({
   isToday,
   isSelected,
   placements,
+  lines,
   onSelect,
   onKeyDown,
 }: {
@@ -160,11 +189,12 @@ const DayCell = React.memo(function DayCell({
   isToday: boolean
   isSelected: boolean
   placements: DayPlacement[]
+  lines: number
   onSelect: (day: DayKey, options: { focus: boolean }) => void
   onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>, day: DayKey) => void
 }) {
-  const overflow = placements.length > CELL_LINES
-  const visible = overflow ? placements.slice(0, CELL_LINES - 1) : placements
+  const overflow = placements.length > lines
+  const visible = overflow ? placements.slice(0, lines - 1) : placements
   const hidden = placements.length - visible.length
 
   return (
@@ -178,7 +208,7 @@ const DayCell = React.memo(function DayCell({
       onClick={() => onSelect(day, { focus: false })}
       onKeyDown={(event) => onKeyDown(event, day)}
       className={cn(
-        "relative flex min-h-14 min-w-0 cursor-pointer flex-col gap-1 border-l border-outline p-1 outline-none first:border-l-0 md:min-h-28 md:p-1.5",
+        "relative flex min-h-14 min-w-0 cursor-pointer flex-col gap-1 overflow-hidden border-l border-outline p-1 outline-none first:border-l-0 md:min-h-28 md:p-1.5 lg:min-h-32 xl:min-h-0",
         "transition-colors duration-75 focus-visible:z-10",
         isSelected ? "bg-blue-100/50" : "hover:bg-surface-muted"
       )}
@@ -186,7 +216,7 @@ const DayCell = React.memo(function DayCell({
       <span
         aria-hidden
         className={cn(
-          "mx-auto flex size-6 items-center justify-center rounded-full text-xs tabular-nums md:mx-0",
+          "mx-auto flex size-6 items-center justify-center rounded-full text-xs tabular-nums md:mx-0 lg:size-7 lg:text-sm",
           isToday
             ? "bg-blue-600 font-semibold text-white"
             : isSelected
@@ -269,6 +299,9 @@ function Chip({ placement }: { placement: DayPlacement }) {
   return (
     <li className="flex min-w-0 items-center gap-1.5 rounded-md px-1.5 text-xs leading-5 text-on-surface-secondary">
       <Dot placement={placement} />
+      {placement.time ? (
+        <span className="hidden shrink-0 font-mono text-on-surface-muted tabular-nums 2xl:inline">{placement.time}</span>
+      ) : null}
       <span className="min-w-0 truncate">{item.title}</span>
     </li>
   )
