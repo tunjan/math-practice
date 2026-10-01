@@ -25,7 +25,7 @@ import { NativeSelect } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { DayKey } from "@/lib/calendar/dates"
 import { deleteExam, saveExam } from "@/lib/syllabus/actions"
-import { formatPercent, GCSE_GRADES, IB_GRADES, type Exam, type SyllabusTopic } from "@/lib/syllabus/model"
+import { formatPercent, GCSE_GRADES, IB_GRADES, SPANISH_GRADES, type Exam, type SyllabusTopic } from "@/lib/syllabus/model"
 
 const DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
 
@@ -33,8 +33,11 @@ function formatDate(day: string): string {
   return DAY.format(new Date(`${day}T00:00:00Z`))
 }
 
-function gradeColor(grade: number, isGcse?: boolean) {
-  if (isGcse) {
+function gradeColor(grade: number, system: "spanish" | "gcse" | "ib") {
+  if (system === "spanish") {
+    return grade >= 7 ? "green" : grade >= 5 ? "yellow" : "red"
+  }
+  if (system === "gcse") {
     return grade >= 7 ? "green" : grade >= 4 ? "yellow" : "red"
   }
   return grade >= 6 ? "green" : grade >= 4 ? "yellow" : "red"
@@ -60,7 +63,9 @@ export function ExamsSection({
   topics: SyllabusTopic[]
   today: DayKey
 }) {
+  const isSpanish = topics.some((t) => t.course === "3eso" || t.course === "4eso" || t.course === "1bach" || t.course === "2bach")
   const isGcse = topics.some((t) => t.course === "0580")
+  const system: "spanish" | "gcse" | "ib" = isSpanish ? "spanish" : isGcse ? "gcse" : "ib"
   const [draft, setDraft] = React.useState<Draft | null>(null)
   // Keeps the last draft on screen while the dialog animates out.
   const [shown, setShown] = React.useState(draft)
@@ -90,7 +95,7 @@ export function ExamsSection({
                 <th scope="col" className="border-r border-border px-3 font-medium">Exam</th>
                 <th scope="col" className="w-56 border-r border-border px-3 font-medium">Topics</th>
                 <th scope="col" className="w-20 border-r border-border px-3 text-right font-medium">Score</th>
-                <th scope="col" className="w-20 border-r border-border px-3 font-medium">Grade</th>
+                <th scope="col" className="w-20 border-r border-border px-3 font-medium">{system === "spanish" ? "Nota" : "Grade"}</th>
                 <th scope="col" className="w-56 px-3 font-medium">Notes</th>
               </tr>
             </thead>
@@ -127,7 +132,7 @@ export function ExamsSection({
                       {exam.ibGrade === null ? (
                         <span className="text-muted-foreground">–</span>
                       ) : (
-                        <Badge variant={gradeColor(exam.ibGrade, isGcse)} className="font-mono">
+                        <Badge variant={gradeColor(exam.ibGrade, system)} className="font-mono">
                           {exam.ibGrade}
                         </Badge>
                       )}
@@ -155,7 +160,7 @@ export function ExamsSection({
               exam={shown.mode === "edit" ? shown.exam : null}
               topics={topics}
               today={today}
-              isGcse={isGcse}
+              system={system}
               onDone={() => setDraft(null)}
             />
           ) : null}
@@ -170,14 +175,14 @@ function ExamForm({
   exam,
   topics,
   today,
-  isGcse,
+  system,
   onDone,
 }: {
   studentId: string
   exam: Exam | null
   topics: SyllabusTopic[]
   today: DayKey
-  isGcse?: boolean
+  system: "spanish" | "gcse" | "ib"
   onDone: () => void
 }) {
   const [title, setTitle] = React.useState(exam?.title ?? "")
@@ -260,10 +265,10 @@ function ExamForm({
               aria-invalid={percentInvalid || undefined}
             />
           </Field>
-          <Field label={isGcse ? "Grade" : "IB grade"} htmlFor="exam-grade">
+          <Field label={system === "spanish" ? "Nota (1–10)" : system === "gcse" ? "Grade" : "IB grade"} htmlFor="exam-grade">
             <NativeSelect id="exam-grade" value={grade} onChange={(e) => setGrade(e.target.value)}>
               <option value="">Not marked</option>
-              {(isGcse ? GCSE_GRADES : IB_GRADES).map((g) => (
+              {(system === "spanish" ? SPANISH_GRADES : system === "gcse" ? GCSE_GRADES : IB_GRADES).map((g) => (
                 <option key={g} value={g}>
                   {g}
                 </option>

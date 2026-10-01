@@ -226,14 +226,21 @@ export function toPlannedTopics(rows: PlannedRow[] | null, withPerson: boolean):
     const topic = row.syllabus_topics
     const student = row.profiles
     if (!topic || !student || topic.course !== student.course) return []
-    if (topic.level === "AHL" && student.level !== "HL") return []
-    if (topic.level === "Extended" && student.level !== "Extended") return []
+    if (topic.level === "AHL") {
+      if (student.level !== "HL") return []
+    } else if (topic.level === "Extended") {
+      if (student.level !== "Extended") return []
+    } else if (topic.level === "SL" || topic.level === "Core") {
+      // Available to all tiers in IB / GCSE
+    } else if (topic.level !== student.level) {
+      return []
+    }
     return [
       {
         studentId: row.student_id,
         person: withPerson ? student.full_name || student.email || "Unknown student" : null,
         tag: { code: topic.code, title: topic.title, topic: topic.topic, subtopic: topic.subtopic },
-        strand: topicName(topic.topic, topic.course),
+        strand: topicName(topic.topic, topic.course, topic.level),
         plannedStart: row.planned_start,
         plannedEnd: row.planned_end,
         updatedAt: row.updated_at,

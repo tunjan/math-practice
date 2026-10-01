@@ -265,6 +265,33 @@
   5. Tasks can be tagged with 0580 Core subtopics.
   6. Exams section allows recording 1–9 grades.
 
+### Phase 16 — Spanish ESO and Bachillerato mathematics support (3º & 4º ESO, 1º & 2º Bachillerato Ciencias y Sociales)
+- **Status:** done (awaiting user verification)
+- **What it is:** Extends the syllabus tracker to support the Spanish curriculum (LOMLOE):
+  - Programmes: "ESO" and "Bachillerato"
+  - Courses: 3º ESO (Común), 4º ESO (Ciencias and Sociales), 1º Bachillerato (Ciencias - Matemáticas I and Sociales - Matemáticas CCSS I), 2º Bachillerato (Ciencias - Matemáticas II and Sociales - Matemáticas CCSS II).
+  - 1–10 grading scale for Spanish school exams (Sobresaliente 9–10, Notable 7–8, Bien/Suficiente 5–6, Insuficiente 1–4).
+  - Course- and track-aware strand and subtopic naming in Spanish (e.g. Álgebra matricial, Geometría en el espacio, etc.).
+- **Notes:**
+  - Migrations `0028_spanish_enums.sql` and `0029_spanish_syllabus.sql`:
+    - Enums extended: `ib_programme` (`eso`, `bachillerato`), `ib_course` (`3eso`, `4eso`, `1bach`, `2bach`), `ib_level` and `syllabus_level` (`Ciencias`, `Sociales`, `Común`).
+    - Constraints updated: `syllabus_topics_course_level_code unique (course, level, code)` so tracks under the same course can share code numbering; `exams_ib_grade_range` widened to 1–10.
+    - Guard triggers (`guard_assignment_topic`, `guard_topic_progress`, `guard_exam_topic`) updated to enforce matching course and tier rules (`or (p.level = t.level)`).
+    - Reference data: Complete subtopics for all 7 tracks (~290 subtopics across ESO and Bachillerato).
+  - App code:
+    - `src/lib/syllabus/model.ts`: Programme, course, and level definitions, labels, and courseLevels helper. `courseShortName` formatting for ESO and Bachillerato. Spanish strand names and `SPANISH_GRADES` (1–10).
+    - `src/components/syllabus/course-card.tsx`: Programme and course selects dynamically cascade valid levels (e.g. 3º ESO automatically locks to "Común", 4º ESO / Bachillerato show "Ciencias" and "Sociales").
+    - `src/components/syllabus/syllabus-tracker.tsx` & `src/components/syllabus/topic-picker.tsx`: Pass course and level to `topicName` to render Spanish block headers correctly.
+    - `src/components/syllabus/exams-section.tsx`: Shows 1–10 grades for Spanish curriculum with Spanish grade bands (≥7 green, ≥5 yellow, <5 red).
+    - `src/lib/calendar/load.ts`: Respects `Común`, `Ciencias`, and `Sociales` level filtering.
+- **Verify by:**
+  1. Apply `0028_spanish_enums.sql` and `0029_spanish_syllabus.sql` in the Supabase project.
+  2. On a student's profile page as tutor, select Programme "ESO" or "Bachillerato", pick a course and track (e.g. 2º Bachillerato + Ciencias), and Save.
+  3. Header displays "2º Bachillerato (Ciencias)".
+  4. Syllabus tab renders the Spanish blocks (e.g. Álgebra lineal, Geometría en el espacio, Continuidad y derivabilidad, etc.) and full list of subtopics in Spanish.
+  5. Tasks can be tagged with the subtopics.
+  6. Exams section allows recording 1–10 grades with passing grade coloring.
+
 ## 6. Working Agreement
 
 - Implementation proceeds **one phase at a time**. Each phase is announced before it starts (what will and won't change).

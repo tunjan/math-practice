@@ -10,9 +10,9 @@ import { isDayKey } from "@/lib/calendar/dates"
 
 import {
   COURSES,
+  courseLevels,
   LEVELS,
   PROGRAMME_COURSES,
-  PROGRAMME_LEVELS,
   PROGRAMMES,
   STATUSES,
   type Course,
@@ -50,7 +50,7 @@ export async function saveStudentCourse(
     if (!COURSES.includes(course)) return { error: "Pick a course." }
     if (!LEVELS.includes(level)) return { error: "Pick a level." }
     if (!PROGRAMME_COURSES[programme]?.includes(course)) return { error: "Pick a course in this programme." }
-    if (!PROGRAMME_LEVELS[programme]?.includes(level)) return { error: "Pick a level in this programme." }
+    if (!courseLevels(programme, course)?.includes(level)) return { error: "Pick a level in this programme." }
     values = { programme, course, level }
   }
 

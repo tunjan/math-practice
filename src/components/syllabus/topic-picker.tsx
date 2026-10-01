@@ -27,7 +27,7 @@ function groupByStrand(topics: SyllabusTopic[]): Group[] {
   const groups = new Map<number, SyllabusTopic[]>()
   for (const t of topics) groups.set(t.topic, [...(groups.get(t.topic) ?? []), t])
   return [...groups].map(([topic, items]) => ({
-    value: `${topic} · ${topicName(topic, items[0]?.course)}`,
+    value: `${topic} · ${topicName(topic, items[0]?.course, items[0]?.level)}`,
     items,
   }))
 }

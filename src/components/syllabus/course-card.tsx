@@ -11,12 +11,11 @@ import { NativeSelect } from "@/components/ui/select"
 import { saveStudentCourse, type CourseFormState } from "@/lib/syllabus/actions"
 import {
   COURSE_LABEL,
+  courseLevels,
   COURSES,
   LEVEL_LABEL,
-  LEVELS,
   PROGRAMME_COURSES,
   PROGRAMME_LABEL,
-  PROGRAMME_LEVELS,
   PROGRAMMES,
   type Course,
   type Level,
@@ -41,17 +40,24 @@ export function CourseCard({ studentId, current }: { studentId: string; current:
   const handleProgrammeChange = (newProgramme: string) => {
     setProgramme(newProgramme)
     const validCourses = PROGRAMME_COURSES[newProgramme as Programme] ?? COURSES
-    const validLevels = PROGRAMME_LEVELS[newProgramme as Programme] ?? LEVELS
-    if (!validCourses.includes(course as Course)) {
-      setCourse(validCourses[0] ?? "")
+    const nextCourse = validCourses.includes(course as Course) ? (course as Course) : (validCourses[0] ?? "")
+    setCourse(nextCourse)
+    const validLevels = courseLevels(newProgramme as Programme, nextCourse)
+    if (!validLevels.includes(level as Level)) {
+      setLevel(validLevels[0] ?? "")
     }
+  }
+
+  const handleCourseChange = (newCourse: string) => {
+    setCourse(newCourse)
+    const validLevels = courseLevels(programme as Programme, newCourse as Course)
     if (!validLevels.includes(level as Level)) {
       setLevel(validLevels[0] ?? "")
     }
   }
 
   const availableCourses = PROGRAMME_COURSES[programme as Programme] ?? COURSES
-  const availableLevels = PROGRAMME_LEVELS[programme as Programme] ?? LEVELS
+  const availableLevels = courseLevels(programme as Programme, course as Course)
 
   const dirty =
     programme !== (current?.programme ?? "ib_dp") ||
@@ -89,7 +95,7 @@ export function CourseCard({ studentId, current }: { studentId: string; current:
               </NativeSelect>
             </Field>
             <Field label="Course" htmlFor="course">
-              <NativeSelect id="course" name="course" value={course} onChange={(e) => setCourse(e.target.value)}>
+              <NativeSelect id="course" name="course" value={course} onChange={(e) => handleCourseChange(e.target.value)}>
                 <option value="" disabled>
                   Choose…
                 </option>

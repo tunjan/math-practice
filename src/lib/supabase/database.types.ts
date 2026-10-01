@@ -809,11 +809,11 @@ export type Database = {
     Enums: {
       assignment_type: "problem_set" | "reading_notes"
       calendar_event_kind: "lesson" | "exam" | "study" | "other"
-      ib_course: "AA" | "AI" | "0580"
-      ib_level: "SL" | "HL" | "Core" | "Extended"
-      ib_programme: "ib_dp" | "gcse"
+      ib_course: "AA" | "AI" | "0580" | "3eso" | "4eso" | "1bach" | "2bach"
+      ib_level: "SL" | "HL" | "Core" | "Extended" | "Ciencias" | "Sociales" | "Común"
+      ib_programme: "ib_dp" | "gcse" | "eso" | "bachillerato"
       review_verdict: "approved" | "changes_requested"
-      syllabus_level: "SL" | "AHL" | "Core" | "Extended"
+      syllabus_level: "SL" | "AHL" | "Core" | "Extended" | "Ciencias" | "Sociales" | "Común"
       task_difficulty: "easy" | "medium" | "hard" | "ultra"
       topic_status: "to_see" | "in_progress" | "seen"
       user_role: "tutor" | "student"
@@ -929,11 +929,11 @@ export const Constants = {
     Enums: {
       assignment_type: ["problem_set", "reading_notes"],
       calendar_event_kind: ["lesson", "exam", "study", "other"],
-      ib_course: ["AA", "AI", "0580"],
-      ib_level: ["SL", "HL", "Core", "Extended"],
-      ib_programme: ["ib_dp", "gcse"],
+      ib_course: ["AA", "AI", "0580", "3eso", "4eso", "1bach", "2bach"],
+      ib_level: ["SL", "HL", "Core", "Extended", "Ciencias", "Sociales", "Común"],
+      ib_programme: ["ib_dp", "gcse", "eso", "bachillerato"],
       review_verdict: ["approved", "changes_requested"],
-      syllabus_level: ["SL", "AHL", "Core", "Extended"],
+      syllabus_level: ["SL", "AHL", "Core", "Extended", "Ciencias", "Sociales", "Común"],
       task_difficulty: ["easy", "medium", "hard", "ultra"],
       topic_status: ["to_see", "in_progress", "seen"],
       user_role: ["tutor", "student"],

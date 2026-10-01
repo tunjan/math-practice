@@ -11,19 +11,25 @@ export type SyllabusLevel = Enums["syllabus_level"]
 /** A student's course: all three set, or no course at all. */
 export type StudentCourse = { programme: Programme; course: Course; level: Level }
 
-export const PROGRAMMES = ["ib_dp", "gcse"] as const satisfies readonly Programme[]
-export const COURSES = ["AA", "AI", "0580"] as const satisfies readonly Course[]
-export const LEVELS = ["SL", "HL", "Core", "Extended"] as const satisfies readonly Level[]
+export const PROGRAMMES = ["ib_dp", "gcse", "eso", "bachillerato"] as const satisfies readonly Programme[]
+export const COURSES = ["AA", "AI", "0580", "3eso", "4eso", "1bach", "2bach"] as const satisfies readonly Course[]
+export const LEVELS = ["SL", "HL", "Core", "Extended", "Ciencias", "Sociales", "Común"] as const satisfies readonly Level[]
 
 export const PROGRAMME_LABEL: Record<Programme, string> = {
   ib_dp: "IB Diploma",
   gcse: "Cambridge IGCSE",
+  eso: "ESO",
+  bachillerato: "Bachillerato",
 }
 
 export const COURSE_LABEL: Record<Course, string> = {
   AA: "Analysis and approaches",
   AI: "Applications and interpretation",
   "0580": "Mathematics (0580)",
+  "3eso": "3º ESO",
+  "4eso": "4º ESO",
+  "1bach": "1º Bachillerato",
+  "2bach": "2º Bachillerato",
 }
 
 export const LEVEL_LABEL: Record<Level, string> = {
@@ -31,22 +37,47 @@ export const LEVEL_LABEL: Record<Level, string> = {
   HL: "Higher level",
   Core: "Core",
   Extended: "Extended",
+  Ciencias: "Ciencias",
+  Sociales: "Sociales",
+  Común: "Común",
 }
 
 export const PROGRAMME_COURSES: Record<Programme, readonly Course[]> = {
   ib_dp: ["AA", "AI"],
   gcse: ["0580"],
+  eso: ["3eso", "4eso"],
+  bachillerato: ["1bach", "2bach"],
 }
 
 export const PROGRAMME_LEVELS: Record<Programme, readonly Level[]> = {
   ib_dp: ["SL", "HL"],
   gcse: ["Core", "Extended"],
+  eso: ["Común", "Ciencias", "Sociales"],
+  bachillerato: ["Ciencias", "Sociales"],
 }
 
-/** "Maths AA HL" or "GCSE Core Maths", the short name used in headers and tags. */
+export function courseLevels(programme: Programme, course?: Course | string | null): readonly Level[] {
+  if (programme === "eso") {
+    if (course === "3eso") return ["Común"] as const
+    if (course === "4eso") return ["Ciencias", "Sociales"] as const
+    return ["Común", "Ciencias", "Sociales"] as const
+  }
+  if (programme === "bachillerato") {
+    return ["Ciencias", "Sociales"] as const
+  }
+  return PROGRAMME_LEVELS[programme] ?? LEVELS
+}
+
+/** "Maths AA HL", "GCSE Core Maths", or "1º Bachillerato (Ciencias)", the short name used in headers and tags. */
 export function courseShortName(course: StudentCourse): string {
   if (course.course === "0580") {
     return course.level === "Core" ? "GCSE Core Maths" : "GCSE Extended Maths"
+  }
+  if (course.programme === "eso") {
+    return course.course === "3eso" ? "3º ESO Matemáticas" : `4º ESO Matemáticas (${course.level})`
+  }
+  if (course.programme === "bachillerato") {
+    return `${COURSE_LABEL[course.course]} (${course.level})`
   }
   return `Maths ${course.course} ${course.level}`
 }
@@ -93,8 +124,84 @@ export const GCSE_TOPIC_NAMES: Record<number, string> = {
   9: "Statistics",
 }
 
-export function topicName(topic: number, course?: Course | null): string {
+export const SPANISH_STRAND_NAMES: Record<string, Record<number, string>> = {
+  "3eso": {
+    1: "Números",
+    2: "Álgebra",
+    3: "Geometría",
+    4: "Funciones",
+    5: "Estadística y probabilidad",
+  },
+  "4eso-Ciencias": {
+    1: "Números y operaciones",
+    2: "Álgebra",
+    3: "Geometría y trigonometría",
+    4: "Funciones",
+    5: "Estadística y probabilidad",
+  },
+  "4eso-Sociales": {
+    1: "Números y matemática financiera",
+    2: "Álgebra",
+    3: "Geometría práctica",
+    4: "Funciones",
+    5: "Estadística y probabilidad",
+  },
+  "1bach-Ciencias": {
+    1: "Números y álgebra",
+    2: "Trigonometría",
+    3: "Geometría analítica",
+    4: "Funciones, límites y continuidad",
+    5: "Cálculo diferencial (Derivadas)",
+    6: "Estadística y probabilidad",
+  },
+  "1bach-Sociales": {
+    1: "Aritmética y matemática financiera",
+    2: "Álgebra",
+    3: "Funciones y límites",
+    4: "Derivadas y aplicaciones",
+    5: "Estadística y probabilidad",
+  },
+  "2bach-Ciencias": {
+    1: "Álgebra lineal",
+    2: "Geometría en el espacio",
+    3: "Continuidad y derivabilidad",
+    4: "Cálculo integral",
+    5: "Probabilidad y distribuciones",
+  },
+  "2bach-Sociales": {
+    1: "Álgebra matricial",
+    2: "Programación lineal",
+    3: "Análisis matemático",
+    4: "Probabilidad",
+    5: "Inferencia estadística",
+  },
+}
+
+export const SPANISH_FALLBACK_STRANDS: Record<number, string> = {
+  1: "Números",
+  2: "Álgebra",
+  3: "Geometría",
+  4: "Funciones",
+  5: "Estadística y probabilidad",
+  6: "Probabilidad y estadística",
+}
+
+export function topicName(
+  topic: number,
+  course?: Course | null,
+  level?: SyllabusLevel | Level | null
+): string {
   if (course === "0580") return GCSE_TOPIC_NAMES[topic] ?? `Topic ${topic}`
+  if (course === "AA" || course === "AI") return IB_TOPIC_NAMES[topic] ?? `Topic ${topic}`
+  if (course) {
+    if (level && SPANISH_STRAND_NAMES[`${course}-${level}`]) {
+      return SPANISH_STRAND_NAMES[`${course}-${level}`][topic] ?? `Tema ${topic}`
+    }
+    if (SPANISH_STRAND_NAMES[course]) {
+      return SPANISH_STRAND_NAMES[course][topic] ?? `Tema ${topic}`
+    }
+    return SPANISH_FALLBACK_STRANDS[topic] ?? `Tema ${topic}`
+  }
   return IB_TOPIC_NAMES[topic] ?? GCSE_TOPIC_NAMES[topic] ?? `Topic ${topic}`
 }
 
@@ -123,7 +230,10 @@ export function topicsForCourse(all: SyllabusTopic[], course: StudentCourse): Sy
       if (course.course === "0580") {
         return t.level === "Core" || course.level === "Extended"
       }
-      return t.level === "SL" || course.level === "HL"
+      if (course.programme === "ib_dp") {
+        return t.level === "SL" || course.level === "HL"
+      }
+      return t.level === course.level
     })
     .sort((a, b) => a.topic - b.topic || a.subtopic - b.subtopic)
 }
@@ -212,6 +322,7 @@ export type Exam = {
 
 export const IB_GRADES = [1, 2, 3, 4, 5, 6, 7] as const
 export const GCSE_GRADES = [9, 8, 7, 6, 5, 4, 3, 2, 1] as const
+export const SPANISH_GRADES = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] as const
 
 /** "78%" or "78.5%": whole numbers stay whole. */
 export function formatPercent(percent: number): string {

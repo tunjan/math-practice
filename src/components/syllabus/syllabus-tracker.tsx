@@ -221,8 +221,8 @@ export function SyllabusTracker({
                         aria-hidden
                         className={cn("size-4 text-muted-foreground transition-transform", !isCollapsed && "rotate-90")}
                       />
-                      <TopicTags tags={[{ code: String(strand), title: topicName(strand, rows[0]?.course), topic: strand, subtopic: 0 }]} inline />
-                      <span className="font-medium text-foreground">{topicName(strand, rows[0]?.course)}</span>
+                      <TopicTags tags={[{ code: String(strand), title: topicName(strand, rows[0]?.course, rows[0]?.level), topic: strand, subtopic: 0 }]} inline />
+                      <span className="font-medium text-foreground">{topicName(strand, rows[0]?.course, rows[0]?.level)}</span>
                       <span className="text-xs text-muted-foreground">
                         {all.filter((row) => row.progress.status === "seen").length}/{all.length} seen
                       </span>
