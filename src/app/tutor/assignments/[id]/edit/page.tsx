@@ -50,11 +50,16 @@ export default async function EditAssignmentPage({
   const courseTopics = course ? topicsForCourse(syllabus, course) : []
 
   return (
-    <Page width="narrow">
-      <PageHeader
-        back={{ href: `/tutor/assignments/${id}`, label: assignment.title }}
-        title="Edit task"
-      />
+    <Page
+      width="narrow"
+      header={
+        <PageHeader
+          back={{ href: `/tutor/assignments/${id}`, label: assignment.title }}
+          title="Edit task"
+          description={assignment.title}
+        />
+      }
+    >
       <EditAssignmentForm
         assignmentId={id}
         initial={{

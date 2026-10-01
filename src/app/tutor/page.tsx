@@ -1,24 +1,8 @@
 import type { Metadata } from "next"
-import Link from "next/link"
-import { CalendarClock, CircleCheck, ClipboardList, UserPlus } from "lucide-react"
 
-import { EmptyState, Page, PageHeader } from "@/components/brand/primitives"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableIdentity,
-  TableRow,
-} from "@/components/brand/table"
-import { NewTaskDialog } from "@/components/assignments/new-task-dialog"
-import { StatusBadge } from "@/components/assignments/status-badge"
-import { ButtonLink } from "@/components/ui/button"
-import { Card, CardHeader, StatStrip } from "@/components/ui/card"
+import { TutorOverview, TutorWelcome, type OverviewRow } from "@/components/tutor/tutor-overview"
 import { requireRole } from "@/lib/auth/session"
 import { createClient } from "@/lib/supabase/server"
-import { formatDue, relativeToNow } from "@/lib/assignments/dates"
 import { asStage, needsAttention, type AssignmentRow } from "@/lib/assignments/model"
 import { loadTaskOptions } from "@/lib/assignments/task-options"
 
@@ -93,201 +77,27 @@ export default async function TutorOverviewPage() {
 
   const firstName = profile.fullName.split(" ")[0]
 
-  // Nobody enrolled, nobody invited, nothing set: a tutor's first visit. Four
-  // zeros and two empty lists say nothing, so show the way in instead.
+  // Nobody enrolled, nobody invited, nothing set: a tutor's first visit.
   if (taskOptions.recipients.length === 0 && rows.length === 0) {
-    return (
-      <Page>
-        <PageHeader
-          title={firstName ? `Welcome, ${firstName}` : "Welcome"}
-          description="Your workspace is ready. It fills up once you have a student."
-        />
-        <GetStarted />
-      </Page>
-    )
+    return <TutorWelcome firstName={firstName} />
   }
 
+  const withOverdue = (row: AssignmentRow): OverviewRow => ({ ...row, overdue: isOverdue(row) })
+
   return (
-    <Page>
-      <PageHeader
-        title={firstName ? `Hello, ${firstName}` : "Overview"}
-        description={summary(toReview.length, overdue.length)}
-        actions={
-          <>
-            <ButtonLink href="/tutor/students">
-              <UserPlus aria-hidden />
-              Invite student
-            </ButtonLink>
-            <NewTaskDialog {...taskOptions} />
-          </>
-        }
-      />
-
-      <StatStrip
-        stats={[
-          { label: "To review", value: toReview.length },
-          { label: "Overdue", value: overdue.length },
-          { label: "Active tasks", value: active.length },
-          { label: "Students", value: studentCount ?? 0 },
-        ]}
-      />
-
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <Card>
-          <CardHeader
-            title="Needs your attention"
-            description="Hand-ins to review, overdue work and returned tasks."
-            action={
-              attention.length > 0 ? (
-                <ButtonLink href="/tutor/assignments" size="sm">
-                  View all
-                </ButtonLink>
-              ) : null
-            }
-          />
-          {attention.length === 0 ? (
-            rows.length === 0 ? (
-              <EmptyState
-                icon={<ClipboardList />}
-                title="No tasks yet"
-                description="Set a problem set or some reading, pick a deadline, and it lands in the student's list."
-                action={<NewTaskDialog {...taskOptions} />}
-              />
-            ) : (
-              <EmptyState
-                icon={<CircleCheck />}
-                title="All caught up"
-                description="Hand-ins and overdue work will show up here."
-              />
-            )
-          ) : (
-            <Table>
-              <TableHeader>
-                <tr>
-                  <TableHead>Task</TableHead>
-                  <TableHead className="hidden sm:table-cell">Due</TableHead>
-                  <TableHead className="hidden w-px sm:table-cell">Status</TableHead>
-                </tr>
-              </TableHeader>
-              <TableBody>
-                {attention.slice(0, LIST_LIMIT).map((row) => (
-                  <TableRow key={row.id} className="relative">
-                    <TableCell className="max-w-0 w-full">
-                      <Link
-                        href={`/tutor/assignments/${row.id}`}
-                        className="after:absolute after:inset-0"
-                      >
-                        <TableIdentity primary={row.title} secondary={row.studentName} />
-                      </Link>
-                      <div className="mt-1.5 sm:hidden">
-                        <StatusBadge
-                          stage={row.stage}
-                          verdict={row.verdict}
-                          overdue={isOverdue(row)}
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden whitespace-nowrap sm:table-cell">
-                      <span className="mono-data-sm text-on-surface-secondary">
-                        {formatDue(row.dueAt, tz)}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <StatusBadge
-                        stage={row.stage}
-                        verdict={row.verdict}
-                        overdue={isOverdue(row)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </Card>
-
-        <Card className="self-start">
-          <CardHeader title="Due this week" />
-          {upcoming.length === 0 ? (
-            <EmptyState
-              icon={<CalendarClock />}
-              title="Nothing due in the next 7 days"
-              className="py-10"
-            />
-          ) : (
-            <ul role="list">
-              {upcoming.slice(0, LIST_LIMIT).map((row) => (
-                <li key={row.id} className="border-t border-outline first:border-t-0">
-                  <Link
-                    href={`/tutor/assignments/${row.id}`}
-                    className="flex min-h-14 items-center justify-between gap-4 px-6 py-2 transition-colors hover:bg-surface-sunken"
-                  >
-                    <TableIdentity primary={row.title} secondary={row.studentName} />
-                    <span className="flex shrink-0 flex-col items-end">
-                      <span className="mono-data-sm text-on-surface">
-                        {formatDue(row.dueAt, tz)}
-                      </span>
-                      <span className="body-sm text-on-surface-muted">
-                        {relativeToNow(row.dueAt, now)}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      </div>
-    </Page>
+    <TutorOverview
+      stats={[
+        { label: "To review", value: toReview.length },
+        { label: "Overdue", value: overdue.length },
+        { label: "Active tasks", value: active.length },
+        { label: "Students", value: studentCount ?? 0 },
+      ]}
+      attention={attention.slice(0, LIST_LIMIT).map(withOverdue)}
+      upcoming={upcoming.slice(0, LIST_LIMIT).map(withOverdue)}
+      hasTasks={rows.length > 0}
+      now={now}
+      timeZone={tz}
+      taskOptions={taskOptions}
+    />
   )
-}
-
-const FIRST_STEPS = [
-  {
-    title: "Invite a student",
-    description: "Create a link and send it to them. They choose their own email and password.",
-  },
-  {
-    title: "Set a task",
-    description: "A problem set or some reading, with a deadline. You can do this before they've joined.",
-  },
-  {
-    title: "Review the hand-in",
-    description: "Their work comes back here. Approve it, or return it with feedback.",
-  },
-] as const
-
-function GetStarted() {
-  return (
-    <Card className="max-w-2xl">
-      <CardHeader title="Get started" description="Three steps from an empty workspace to a marked task." />
-      <ol role="list">
-        {FIRST_STEPS.map((step, index) => (
-          <li key={step.title} className="flex gap-4 border-t border-outline px-6 py-4">
-            <span className="mono-data-sm pt-0.5 text-on-surface-muted" aria-hidden>
-              {index + 1}
-            </span>
-            <div className="flex flex-col gap-0.5">
-              <p className="title-md text-on-surface">{step.title}</p>
-              <p className="body-sm text-on-surface-muted">{step.description}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <div className="border-t border-outline px-6 py-4">
-        <ButtonLink href="/tutor/students" variant="primary">
-          <UserPlus aria-hidden />
-          Invite your first student
-        </ButtonLink>
-      </div>
-    </Card>
-  )
-}
-
-function summary(toReview: number, overdue: number): string {
-  if (toReview === 0 && overdue === 0) return "Nothing needs you right now."
-  const parts: string[] = []
-  if (toReview > 0) parts.push(`${toReview} ${toReview === 1 ? "hand-in" : "hand-ins"} to review`)
-  if (overdue > 0) parts.push(`${overdue} overdue`)
-  return `${parts.join(" and ")}.`.replace(/^./, (c) => c.toUpperCase())
 }

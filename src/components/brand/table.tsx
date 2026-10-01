@@ -4,9 +4,9 @@ import { cn } from "cn"
 /**
  * DESIGN.md › Tables
  *
- * Full-bleed to the card edges. Header: `surface-sunken`, `label-caps`.
- * Body: 56px rows, `outline` dividers, `surface-sunken` hover, no zebra.
- * The outer cells line up with the card header's 24px inset.
+ * Full-bleed to the card edges. Header: `surface-muted`, 12px medium, sentence
+ * case. Body: 56px rows, `outline` dividers, `surface-muted` hover, no zebra.
+ * The outer cells line up with the card header's 16px inset.
  */
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -24,7 +24,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("border-b border-outline bg-surface-sunken", className)}
+      className={cn("border-b border-outline bg-surface-muted", className)}
       {...props}
     />
   )
@@ -46,7 +46,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
       data-slot="table-row"
       className={cn(
         "group/row h-14 border-b border-outline bg-surface transition-colors duration-100",
-        "hover:bg-surface-sunken data-[selected=true]:bg-surface-sunken",
+        "hover:bg-surface-muted data-[selected=true]:bg-surface-muted",
         className
       )}
       {...props}
@@ -59,7 +59,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 px-4 text-left align-middle label-caps whitespace-nowrap text-on-surface-muted first:pl-6 last:pr-6",
+        "h-10 px-3 text-left align-middle label-caps whitespace-nowrap text-on-surface-muted first:pl-4 last:pr-4",
         className
       )}
       {...props}
@@ -72,7 +72,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "px-4 py-2 align-middle body-md text-on-surface first:pl-6 last:pr-6",
+        "px-3 py-2 align-middle body-md text-on-surface-secondary first:pl-4 last:pr-4",
         className
       )}
       {...props}
@@ -96,9 +96,9 @@ function TableIdentity({
     <div className={cn("flex min-w-0 items-center gap-3", className)}>
       {leading}
       <div className="flex min-w-0 flex-col">
-        <span className="truncate body-md text-on-surface">{primary}</span>
+        <span className="truncate text-sm leading-6 font-semibold text-on-surface">{primary}</span>
         {secondary ? (
-          <span className="truncate body-sm text-on-surface-muted">{secondary}</span>
+          <span className="truncate body-md text-on-surface-muted">{secondary}</span>
         ) : null}
       </div>
     </div>

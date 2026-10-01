@@ -5,7 +5,7 @@ import { cn } from "cn"
 /**
  * DESIGN.md › progress bars are `rounded-full`.
  *
- * A hairline track with a solid ink fill and the figure in mono. With a visible
+ * A hairline track with a solid ink fill and the figure in tabular figures. With a visible
  * label it stacks (label and figure above the bar); with `hideLabel` it sits
  * inline (bar, then figure) for rows and cards.
  */
@@ -32,7 +32,7 @@ function Progress({
   )
 
   const figure = (
-    <span className="shrink-0 text-right font-mono text-xs text-on-surface-muted tabular-nums">
+    <span className="shrink-0 text-right text-xs text-on-surface-muted tabular-nums">
       {pct === null ? "–" : `${pct}%`}
     </span>
   )

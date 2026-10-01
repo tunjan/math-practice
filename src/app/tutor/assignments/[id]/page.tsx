@@ -96,19 +96,22 @@ export default async function AssignmentDetailPage({
     isOverdue(assignment.due_at) && stage !== "submitted" && stage !== "reviewed"
 
   return (
-    <Page>
-      <PageHeader
-        back={{ href: "/tutor/assignments", label: "Assignments" }}
-        title={assignment.title}
-        meta={<StatusBadge stage={stage} verdict={assignment.verdict} overdue={overdue} />}
-        description={`${studentName}, due ${formatDue(assignment.due_at, tz)} (${relativeToNow(assignment.due_at)})`}
-        actions={
-          <ButtonLink href={`/tutor/assignments/${id}/edit`}>
-            <Pencil aria-hidden />
-            Edit
-          </ButtonLink>
-        }
-      />
+    <Page
+      header={
+        <PageHeader
+          back={{ href: "/tutor/assignments", label: "Assignments" }}
+          title={assignment.title}
+          meta={<StatusBadge stage={stage} verdict={assignment.verdict} overdue={overdue} />}
+          description={`${studentName}, due ${relativeToNow(assignment.due_at)}`}
+          actions={
+            <ButtonLink href={`/tutor/assignments/${id}/edit`}>
+              <Pencil aria-hidden />
+              Edit
+            </ButtonLink>
+          }
+        />
+      }
+    >
 
       <Card>
         <CardSection className="flex flex-col gap-5">
@@ -130,16 +133,16 @@ export default async function AssignmentDetailPage({
         </CardSection>
       </Card>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex min-w-0 flex-col gap-6">
           <Card>
             <CardHeader title="Hand-ins" description={revisions.length === 0 ? undefined : `${revisions.length} ${revisions.length === 1 ? "revision" : "revisions"}`} />
             {revisions.length === 0 ? (
-              <p className="px-6 py-5 body-sm text-on-surface-muted">Nothing handed in yet.</p>
+              <p className="px-4 py-4 body-md text-on-surface-muted">Nothing handed in yet.</p>
             ) : (
               revisions.map((revision) => (
                 <section key={revision.revision} className="border-t border-outline first:border-t-0">
-                  <div className="flex h-10 items-center justify-between gap-4 bg-surface-sunken px-6">
+                  <div className="flex h-10 items-center justify-between gap-4 bg-surface-muted px-4">
                     <span className="label-caps text-on-surface-muted">
                       Revision {revision.revision}
                     </span>
@@ -203,18 +206,18 @@ export default async function AssignmentDetailPage({
                   : []),
                 {
                   label: "Due",
-                  value: <span className="mono-data-sm">{formatDue(assignment.due_at, tz)}</span>,
+                  value: <span className="tabular-nums">{formatDue(assignment.due_at, tz)}</span>,
                 },
                 {
                   label: "Set",
-                  value: <span className="mono-data-sm">{formatDue(assignment.created_at, tz)}</span>,
+                  value: <span className="tabular-nums">{formatDue(assignment.created_at, tz)}</span>,
                 },
               ]}
             />
             <Progress
               value={assignment.completion_pct}
               label="Student’s estimate"
-              className="border-t border-outline px-6 py-4"
+              className="border-t border-outline px-4 py-3"
             />
           </Card>
         </aside>

@@ -28,11 +28,14 @@ export default async function StudentSyllabusPage() {
   const today = dayKeyOf(new Date(), profile.timezone)
 
   return (
-    <Page width="wide">
-      <PageHeader
-        title="Syllabus"
-        description={`${courseShortName(profile.course)} · every subtopic, where you are with it and when it's planned. Your tutor keeps the tracker up to date; your exams are yours to add.`}
-      />
+    <Page
+      width="wide"
+      header={<PageHeader title="Syllabus" description={courseShortName(profile.course)} />}
+    >
+      <p className="body-md max-w-[70ch] text-on-surface-muted">
+        Every subtopic, where you are with it and when it&apos;s planned. Your tutor keeps the tracker up
+        to date; your exams are yours to add.
+      </p>
       <SyllabusTracker
         studentId={profile.id}
         rows={rows}

@@ -5,16 +5,17 @@ import { cn } from "cn"
 /**
  * DESIGN.md › input-field
  *
- * 40px, 8px radius, white with an `outline-strong` border. The `filled`
- * variant is the recessed search field: `surface-sunken`, no border.
+ * 40px, 6px radius, white with an `outline-strong` border; focus darkens the
+ * border inside a 4px halo (globals.css). The `filled` variant is the
+ * read-only look: neutral-100, no border.
  */
 const fieldBase = [
-  "w-full min-w-0 rounded-md border text-on-surface",
+  "w-full min-w-0 rounded-sm border text-on-surface",
   "transition-[border-color,box-shadow,background-color] duration-150 outline-none",
   "placeholder:text-on-surface-muted",
-  "focus-visible:border-on-surface focus-visible:ring-3 focus-visible:ring-on-surface/10",
+  "focus-visible:border-on-surface-muted",
   "disabled:pointer-events-none disabled:bg-surface-sunken disabled:text-on-surface-muted",
-  "aria-invalid:border-error aria-invalid:ring-3 aria-invalid:ring-error/15",
+  "aria-invalid:border-[#ef4444]",
 ].join(" ")
 
 function Input({

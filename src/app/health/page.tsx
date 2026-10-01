@@ -89,11 +89,13 @@ export default async function HealthPage() {
   const allOk = checks.every((c) => c.ok)
 
   return (
-    <Page width="narrow">
-      <PageHeader
-        title={allOk ? "All checks passing" : "Something needs attention"}
-        description="Development only. Confirms the app can reach Supabase and that the database refuses what it should."
-      />
+    <Page
+      width="narrow"
+      header={<PageHeader title={allOk ? "All checks passing" : "Something needs attention"} />}
+    >
+      <p className="body-md text-on-surface-muted">
+        Development only. Confirms the app can reach Supabase and that the database refuses what it should.
+      </p>
       <Card>
         <Table>
           <TableHeader>

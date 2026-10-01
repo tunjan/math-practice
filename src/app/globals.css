@@ -3,15 +3,17 @@
 @import "shadcn/tailwind.css";
 
 /* ---------------------------------------------------------------------------
-   Maths Tasks: Quiet Console
-   Source of truth: DESIGN.md. Every colour, radius and type style used by the
-   app is declared here and nowhere else; components reference tokens only.
+   Maths Tasks
+   Source of truth: DESIGN.md (Dub). Every colour, radius and type style used
+   by the app is declared here and nowhere else; components reference tokens.
 
-   Workspace background: canvas-neutral (#fbfbfb). DESIGN.md's default
-   limestone canvas (#dddcd8) read as too much contrast against white cards.
+   `:root` still carries the first palette the app was built with; the `dub`
+   class on <html> re-points those tokens to DESIGN.md, so every page and every
+   portalled popup gets it.
 
-   Product accent: accent-orange. It is the only identity colour and is used
-   for the brand mark, progress fills and selection controls. It is never text.
+   Radii are named one step down from DESIGN.md's Tailwind names: its
+   `rounded-lg` (8px) is `rounded-md` here, its `rounded-xl` (12px) is
+   `rounded-lg`, its `rounded-2xl` (16px) is `rounded-xl`.
    --------------------------------------------------------------------------- */
 
 @theme inline {
@@ -221,13 +223,13 @@
    Type scale (DESIGN.md › typography)
    --------------------------------------------------------------------------- */
 
+/* Stat figures: Inter, not mono. Mono is for codes and tokens only. */
 @utility display-num {
-  font-family: var(--font-mono);
-  font-size: 36px;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
-  font-feature-settings: "tnum" 1, "zero" 1;
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Extension: the public front page's single hero line. Nowhere else. */
@@ -241,10 +243,9 @@
 
 @utility headline-lg {
   font-family: var(--font-sans);
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
 }
 
 @utility headline-md {
@@ -258,88 +259,85 @@
 @utility title-md {
   font-family: var(--font-sans);
   font-size: 16px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-weight: 500;
+  line-height: 24px;
 }
 
 @utility body-lg {
   font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 24px;
 }
 
 @utility body-md {
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 20px;
 }
 
+/* Supporting copy. DESIGN.md keeps it at 14px and lets the ink step down. */
 @utility body-sm {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
-  line-height: 1.45;
+  line-height: 20px;
 }
 
 @utility label-md {
   font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 20px;
 }
 
 @utility label-sm {
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 16px;
 }
 
-/* Column headers, KPI titles, tracker steps. Never longer than three words. */
+/* Column headers and group labels. Sentence case: DESIGN.md has no all-caps. */
 @utility label-caps {
   font-family: var(--font-sans);
   font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Status pills and enum values */
-@utility mono-tag {
-  font-family: var(--font-mono);
-  font-size: 11px;
   font-weight: 500;
-  line-height: 1;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-feature-settings: "tnum" 1;
+  line-height: 16px;
 }
 
-/* Dates, sizes, counts: anything a database produced */
+/* Count chips */
+@utility mono-tag {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dates, sizes, counts: Inter with tabular figures */
 @utility mono-data {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.4;
-  font-feature-settings: "tnum" 1;
+  line-height: 20px;
+  font-variant-numeric: tabular-nums;
 }
 
 @utility mono-data-sm {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 400;
-  line-height: 1.4;
-  font-feature-settings: "tnum" 1;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
 }
 
 @utility caption {
   font-family: var(--font-sans);
   font-size: 12px;
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 16px;
 }
 
 @utility shadow-overlay {
@@ -365,7 +363,7 @@
   body {
     @apply bg-canvas-neutral text-on-surface;
     font-size: 14px;
-    line-height: 1.45;
+    line-height: 20px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -416,15 +414,18 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Dub scope (DESIGN_3.md)
-   The student task page and its dialog follow the Dub system: monochrome
-   neutral scale, #E5E5E5 hairlines, a black primary, Satoshi display over
-   Inter, Geist Mono for data. Scoped by re-pointing the shared tokens, so the
-   primitives (buttons, chips, prose) pick it up without forks. Add `dub` to a
-   page root, and to any portalled popup that belongs to it.
+   Dub (DESIGN.md)
+   Monochrome neutral scale, #E5E5E5 hairlines, a black primary, Satoshi
+   display over Inter, Geist Mono for codes. Applied by re-pointing the shared
+   tokens, so the primitives pick it up without forks. The class sits on
+   <html>, so portalled popups inherit it too.
    --------------------------------------------------------------------------- */
 
 .dub {
+  --canvas: #e5e5e5;
+  --canvas-cool: #fafafa;
+  --canvas-neutral: #ffffff;
+
   --surface: #ffffff;
   --surface-muted: #fafafa;
   --surface-sunken: #f5f5f5;
@@ -528,12 +529,24 @@
   box-shadow: 0 0 0 4px rgb(0 0 0 / 0.2);
 }
 
+/* Fields: a neutral-500 border inside a 4px neutral-200 halo (DESIGN.md › Inputs). */
+.dub [data-slot="input"]:focus-visible,
+.dub [data-slot="textarea"]:focus-visible,
+.dub [data-slot="select"]:focus-visible {
+  box-shadow: 0 0 0 4px var(--outline);
+}
+.dub [data-slot="input"][aria-invalid="true"]:focus-visible,
+.dub [data-slot="textarea"][aria-invalid="true"]:focus-visible {
+  box-shadow: 0 0 0 4px #fee2e2;
+}
+
 /* Composer fields are borderless: the caret marks focus, not a halo. */
 .dub [data-composer]:focus-visible {
   box-shadow: none;
 }
 
 /* Modal overlay: #F5F5F5 at 50% over a 12px blur (DESIGN_3.md › Modal). */
+.dub [data-slot="dialog-backdrop"],
 .dub[data-slot="dialog-backdrop"] {
   background-color: rgb(245 245 245 / 0.5);
   backdrop-filter: blur(12px);

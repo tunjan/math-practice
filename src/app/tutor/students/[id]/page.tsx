@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
-import { Avatar, Page, PageHeader } from "@/components/brand/primitives"
+import { Page, PageHeader } from "@/components/brand/primitives"
 import { CourseCard } from "@/components/syllabus/course-card"
 import { ExamsSection } from "@/components/syllabus/exams-section"
 import { SyllabusTracker } from "@/components/syllabus/syllabus-tracker"
@@ -41,21 +41,20 @@ export default async function StudentDetailPage({ params }: PageProps<"/tutor/st
   const today = dayKeyOf(new Date(), tutor.timezone)
 
   return (
-    <Page width="wide" className="dub">
-      <PageHeader
-        back={{ href: "/tutor/students", label: "Students" }}
-        title={
-          <span className="flex items-center gap-3">
-            <Avatar name={name} />
-            {name}
-          </span>
-        }
-        description={course ? `${courseShortName(course)} · ${student.email ?? ""}` : (student.email ?? undefined)}
-      />
+    <Page
+      width="wide"
+      header={
+        <PageHeader
+          back={{ href: "/tutor/students", label: "Students" }}
+          title={name}
+          description={course ? `${courseShortName(course)} · ${student.email ?? ""}` : (student.email ?? undefined)}
+        />
+      }
+    >
 
       {course ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-base font-semibold text-on-surface">Syllabus</h2>
+          <h2 className="title-md text-on-surface">Syllabus</h2>
           <SyllabusTracker
             studentId={student.id}
             rows={rows}

@@ -175,7 +175,6 @@ export function PendingInvites({
           icon={<MailPlus />}
           title="No pending invites"
           description="Invites you create appear here until the student accepts."
-          className="py-10"
         />
       ) : (
         <Table>
@@ -193,10 +192,10 @@ export function PendingInvites({
             {invites.map((invite) => (
               <TableRow key={invite.id}>
                 <TableCell className="w-full max-w-0">
-                  <span className="block truncate">{invite.fullName || "Unnamed student"}</span>
+                  <span className="block truncate font-medium text-on-surface">{invite.fullName || "Unnamed student"}</span>
                 </TableCell>
                 <TableCell className="hidden whitespace-nowrap sm:table-cell">
-                  <span className="mono-data-sm text-on-surface-secondary">
+                  <span className="text-on-surface-muted tabular-nums">
                     {date(invite.expiresAt)}
                   </span>
                 </TableCell>
@@ -206,7 +205,7 @@ export function PendingInvites({
                       {invite.queued} {invite.queued === 1 ? "task" : "tasks"}
                     </Badge>
                   ) : (
-                    <span className="mono-data-sm text-on-surface-muted">0</span>
+                    <span className="text-on-surface-muted tabular-nums">0</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right">

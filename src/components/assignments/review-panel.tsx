@@ -61,7 +61,7 @@ export function ReviewPanel({
               : "You asked for changes. The student can hand in a new revision."}
           </p>
           {feedback ? (
-            <div className="rounded-md border border-outline bg-surface-sunken px-4 py-3">
+            <div className="rounded-md border border-outline bg-surface-muted px-3 py-2.5">
               <MathProse>{feedback}</MathProse>
             </div>
           ) : null}
@@ -80,7 +80,7 @@ export function ReviewPanel({
           <FormMessage error={clearState.error} notice={clearState.notice} />
           <form action={clearAction}>
             <input type="hidden" name="assignment_id" value={assignmentId} />
-            <Button type="submit" variant="ghost" size="sm" disabled={clearing} className="-ml-3">
+            <Button type="submit" variant="ghost" size="sm" disabled={clearing} className="-ml-3 w-fit">
               <Undo2 aria-hidden />
               {clearing ? "Withdrawing" : "Withdraw verdict"}
             </Button>

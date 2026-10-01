@@ -66,13 +66,14 @@ export default async function AssignmentsPage({
   const newTask = <NewTaskDialog {...taskOptions} defaultOpen={"new" in params} />
 
   return (
-    <Page>
-      <PageHeader
-        title="Assignments"
-        description="Every task you've set. Attention holds hand-ins, returned work and anything past due."
-        actions={rows.length > 0 || queued.length > 0 ? newTask : null}
-      />
-
+    <Page
+      header={
+        <PageHeader
+          title="Assignments"
+          actions={rows.length > 0 || queued.length > 0 ? newTask : null}
+        />
+      }
+    >
       {rows.length === 0 && queued.length === 0 ? (
         <Card>
           <EmptyState

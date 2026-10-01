@@ -36,8 +36,8 @@ function NativeSelect({
 }
 
 // ── Select (Base UI) ────────────────────────────────────────────────────────
-// For compact pickers. The popup is DESIGN.md's menu-surface and its rows are
-// menu-items; the trigger is left to the caller.
+// For compact pickers. The popup is DESIGN.md's popover (8px radius, 8px
+// padding) and its rows are 36px menu items; the trigger is left to the caller.
 
 const Select = SelectPrimitive.Root
 const SelectTrigger = SelectPrimitive.Trigger
@@ -62,7 +62,7 @@ function SelectContent({
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(
-            "flex max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) flex-col overflow-y-auto rounded-xl border border-outline bg-surface p-2 text-on-surface shadow-overlay outline-none",
+            "flex max-h-(--available-height) min-w-(--anchor-width) origin-(--transform-origin) flex-col overflow-y-auto rounded-md border border-outline bg-surface p-2 text-on-surface shadow-lg outline-none",
             "transition-[opacity,scale] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0",
             className
           )}
@@ -78,14 +78,14 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "flex h-10 w-full cursor-default items-center gap-3 rounded-md px-3 body-md text-on-surface outline-none select-none",
+        "flex h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 label-md text-on-surface-secondary outline-none select-none",
         "data-highlighted:bg-surface-sunken data-disabled:opacity-45",
-        "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-on-surface-secondary",
+        "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-on-surface-muted",
         className
       )}
       {...props}
     >
-      <SelectPrimitive.ItemText className="flex min-w-0 flex-1 items-center gap-3 truncate">
+      <SelectPrimitive.ItemText className="flex min-w-0 flex-1 items-center gap-2 truncate">
         {children}
       </SelectPrimitive.ItemText>
       <SelectPrimitive.ItemIndicator className="ml-auto">
@@ -98,7 +98,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
 function SelectGroupLabel({ className, ...props }: SelectPrimitive.GroupLabel.Props) {
   return (
     <SelectPrimitive.GroupLabel
-      className={cn("px-3 pt-2 pb-1.5 label-caps text-on-surface-muted", className)}
+      className={cn("px-2 pt-1.5 pb-1 label-caps text-on-surface-muted", className)}
       {...props}
     />
   )
@@ -107,7 +107,7 @@ function SelectGroupLabel({ className, ...props }: SelectPrimitive.GroupLabel.Pr
 function SelectSeparator({ className, ...props }: SelectPrimitive.Separator.Props) {
   return (
     <SelectPrimitive.Separator
-      className={cn("-mx-2 my-2 h-px bg-outline", className)}
+      className={cn("-mx-1 my-1 h-px bg-outline", className)}
       {...props}
     />
   )

@@ -137,11 +137,10 @@ export function AssignmentBrowser({
   const confirmCount = confirmIds?.length ?? 0
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <FormMessage error={deleteState.error} notice={deleteState.notice} />
 
-      <Card>
-        <CardHeader className="gap-3">
+      <div data-slot="toolbar" className="flex flex-wrap items-center justify-between gap-2">
           <ToggleGroup
             variant="track"
             aria-label="Filter tasks"
@@ -151,7 +150,7 @@ export function AssignmentBrowser({
             {FILTERS.map((option) => (
               <ToggleGroupItem key={option} value={option} title={FILTER_HINT[option]}>
                 {FILTER_LABEL[option]}
-                <span className="mono-data-sm text-on-surface-muted">{counts[option]}</span>
+                <span className="text-xs font-normal text-on-surface-muted tabular-nums">{counts[option]}</span>
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
@@ -163,13 +162,12 @@ export function AssignmentBrowser({
                 aria-hidden
               />
               <Input
-                variant="filled"
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search tasks, students, topics"
                 aria-label="Search tasks"
-                className="pl-9"
+                className="rounded-md border-outline pl-9"
               />
             </div>
             <NativeSelect
@@ -177,6 +175,7 @@ export function AssignmentBrowser({
               onChange={(event) => setSort(event.target.value as Sort)}
               aria-label="Sort tasks"
               wrapperClassName="sm:w-44"
+              className="rounded-md border-outline"
             >
               {SORTS.map((option) => (
                 <option key={option} value={option}>
@@ -185,8 +184,9 @@ export function AssignmentBrowser({
               ))}
             </NativeSelect>
           </div>
-        </CardHeader>
+      </div>
 
+      <Card>
         {visible.length === 0 ? (
           <EmptyState
             icon={<ClipboardList />}
@@ -244,7 +244,7 @@ export function AssignmentBrowser({
                     <TableCell className="w-full max-w-0 md:min-w-56">
                       <Link
                         href={`/tutor/assignments/${row.id}`}
-                        className="rounded-xs after:absolute after:inset-0"
+                        className="rounded-sm after:absolute after:inset-0"
                       >
                         <TableIdentity
                           primary={row.title}
@@ -259,16 +259,16 @@ export function AssignmentBrowser({
                       </div>
                     </TableCell>
                     <TableCell className="hidden whitespace-nowrap xl:table-cell">
-                      <span className="body-sm text-on-surface-secondary">
+                      <span className="text-on-surface-muted">
                         {TYPE_LABEL[row.type]}
                       </span>
                     </TableCell>
                     <TableCell className="hidden whitespace-nowrap md:table-cell">
                       <div className="flex flex-col">
-                        <span className="mono-data-sm text-on-surface">
+                        <span className="text-on-surface-secondary tabular-nums">
                           {formatDue(row.dueAt, timeZone)}
                         </span>
-                        <span className="body-sm text-on-surface-muted">
+                        <span className="text-xs leading-4 text-on-surface-muted">
                           {relativeToNow(row.dueAt, now)}
                         </span>
                       </div>
@@ -299,7 +299,7 @@ export function AssignmentBrowser({
             {queued.map((task) => (
               <li
                 key={task.id}
-                className="flex min-h-14 items-center justify-between gap-4 border-t border-outline px-6 py-2 first:border-t-0"
+                className="flex min-h-14 items-center justify-between gap-4 border-t border-outline px-4 py-3 first:border-t-0"
               >
                 <TableIdentity
                   primary={task.title}
@@ -316,9 +316,9 @@ export function AssignmentBrowser({
         <div
           role="region"
           aria-label="Bulk actions"
-          className="fixed bottom-6 left-1/2 z-40 flex h-11 -translate-x-1/2 items-center gap-1 rounded-md bg-surface-inverse px-2 text-on-surface-inverse shadow-overlay animate-in fade-in-0 slide-in-from-bottom-2 duration-150 lg:left-[calc(50%+130px)]"
+          className="fixed bottom-6 left-1/2 z-40 flex h-12 -translate-x-1/2 items-center gap-1 rounded-lg bg-surface-inverse px-2 text-on-surface-inverse shadow-lg animate-in fade-in-0 slide-in-from-bottom-2 duration-150 lg:left-[calc(50%+130px)]"
         >
-          <span className="px-2 mono-data-sm whitespace-nowrap">
+          <span className="px-2 text-sm whitespace-nowrap tabular-nums">
             {selected.size} selected
           </span>
           <span aria-hidden className="mx-1 h-5 w-px bg-on-surface-inverse/20" />
@@ -360,7 +360,7 @@ function RowMenu({ row, onDelete }: { row: AssignmentRow; onDelete: () => void }
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Actions for ${row.title}`}
-        className="flex size-8 items-center justify-center rounded-md text-on-surface-muted transition-[opacity,background-color] hover:bg-surface hover:text-on-surface data-popup-open:bg-surface data-popup-open:opacity-100 md:opacity-0 md:group-hover/row:opacity-100 md:focus-visible:opacity-100"
+        className="flex size-8 items-center justify-center rounded-md text-on-surface-muted transition-[opacity,background-color] hover:bg-surface-hover hover:text-on-surface data-popup-open:bg-surface-hover data-popup-open:opacity-100 md:opacity-0 md:group-hover/row:opacity-100 md:focus-visible:opacity-100"
       >
         <MoreHorizontal className="size-4" aria-hidden />
       </DropdownMenuTrigger>

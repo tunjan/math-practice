@@ -4,8 +4,8 @@ import { CircleAlert, CircleCheck, Info, LoaderCircle, TriangleAlert } from "luc
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 
 /**
- * Toasts are transient overlays, so they get the overlay shadow: a white
- * 12px card with an `outline` hairline. The app is light-only, so the theme is
+ * Toasts are transient overlays, so they get a drop shadow: a white
+ * 8px card with an `outline` hairline. The app is light-only, so the theme is
  * pinned rather than following the OS. Bottom right keeps them clear of the
  * floating bulk-action bar, which docks bottom centre.
  */
@@ -27,13 +27,13 @@ const Toaster = (props: ToasterProps) => {
           "--normal-bg": "var(--surface)",
           "--normal-text": "var(--on-surface)",
           "--normal-border": "var(--outline)",
-          "--border-radius": "12px",
+          "--border-radius": "8px",
           "--width": "380px",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: "gap-3! p-4! font-sans! shadow-overlay!",
+          toast: "gap-3! px-4! py-3! font-sans! shadow-lg!",
           title: "label-md! text-on-surface!",
           description: "body-sm! mt-0.5! text-on-surface-muted!",
           actionButton:

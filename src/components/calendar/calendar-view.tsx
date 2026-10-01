@@ -291,7 +291,7 @@ export function CalendarView({
             </TooltipTrigger>
             <TooltipContent className="dub">
               Go to today
-              <Kbd className="h-5 min-w-5 border-0 bg-background/20 px-1 text-xs text-background">T</Kbd>
+              <Kbd className="h-5 min-w-5 border-0 px-1 text-xs font-light">T</Kbd>
             </TooltipContent>
           </Tooltip>
 

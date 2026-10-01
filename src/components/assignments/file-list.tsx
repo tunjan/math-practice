@@ -20,8 +20,8 @@ function formatLabel(mimeType: string) {
 }
 
 /**
- * Attachments as rows inside a card: a bordered icon tile, the name, then the
- * format and size in mono. Rows are divided by hairlines, not boxed.
+ * Attachments as rows inside a card: a round icon tile, the name, then the
+ * format and size. Rows are divided by hairlines, not boxed.
  */
 export function FileList({
   files,
@@ -31,7 +31,7 @@ export function FileList({
   emptyLabel?: string
 }) {
   if (files.length === 0) {
-    return <p className="px-6 py-5 body-sm text-on-surface-muted">{emptyLabel}</p>
+    return <p className="px-4 py-4 body-md text-on-surface-muted">{emptyLabel}</p>
   }
 
   return (
@@ -52,13 +52,13 @@ export function FileList({
                 href={file.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex min-h-16 items-center gap-3 px-6 py-3 transition-colors hover:bg-surface-sunken"
+                className="group flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted"
               >
                 <IconTile>
                   <Icon />
                 </IconTile>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate body-md text-on-surface">
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate label-md text-on-surface">
                     {file.fileName || "Attachment"}
                   </span>
                   {meta}
@@ -70,7 +70,7 @@ export function FileList({
                 <span className="sr-only">Opens in a new tab</span>
               </a>
             ) : (
-              <div className="flex min-h-16 items-center gap-3 px-6 py-3">
+              <div className="flex min-h-14 items-center gap-3 px-4 py-3">
                 <IconTile>
                   <Icon />
                 </IconTile>

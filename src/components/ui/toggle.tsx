@@ -8,8 +8,8 @@ import { cn } from "cn"
  * shadcn/ui Toggle, restyled to DESIGN.md.
  *
  * `chips`: 32px, 6px radius; the pressed chip sinks to `surface-sunken`.
- * `track`: the pill inside a `surface-sunken` track (see ToggleGroup); the
- * pressed pill is raised to `surface`, like the segmented control.
+ * `track`: a segment inside the white track (see ToggleGroup); the pressed
+ * one is an 8px `surface-muted` chip with its own hairline.
  */
 const toggleVariants = cva(
   [
@@ -28,9 +28,9 @@ const toggleVariants = cva(
           "data-pressed:bg-surface-sunken data-pressed:font-medium data-pressed:text-on-surface",
         ],
         track: [
-          "h-7 rounded-full px-3 label-md text-on-surface-muted",
+          "h-full rounded-md border border-transparent px-3 label-md text-on-surface-muted",
           "hover:text-on-surface",
-          "data-pressed:bg-surface data-pressed:text-on-surface",
+          "data-pressed:border-outline data-pressed:bg-surface-muted data-pressed:text-on-surface",
         ],
       },
     },

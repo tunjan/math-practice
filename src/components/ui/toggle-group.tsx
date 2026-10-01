@@ -14,7 +14,7 @@ const ToggleGroupContext = React.createContext<VariantProps<typeof toggleVariant
 
 /**
  * shadcn/ui ToggleGroup on Base UI: one tab stop, arrow keys move between
- * items. `track` wraps the items in a `surface-sunken` pill track.
+ * items. `track` is DESIGN.md's toggle group: a white 12px track with a hairline.
  */
 function ToggleGroup({
   className,
@@ -30,7 +30,7 @@ function ToggleGroup({
         "flex w-fit items-center",
         variant === "chips" && "flex-wrap gap-1",
         variant === "track" &&
-          "h-9 max-w-full gap-0.5 overflow-x-auto rounded-full bg-surface-sunken p-1 [scrollbar-width:none]",
+          "h-10 max-w-full gap-1 overflow-x-auto rounded-lg border border-outline bg-surface p-1 [scrollbar-width:none]",
         className
       )}
       {...props}

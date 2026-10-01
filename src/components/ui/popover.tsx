@@ -12,7 +12,7 @@ function PopoverTrigger({ ...props }: PopoverPrimitive.Trigger.Props) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
 }
 
-/** DESIGN.md › menu-surface: white, 16px radius, 8px padding, overlay shadow. */
+/** DESIGN.md › Popover: white, 8px radius, 8px padding, hairline and a soft drop shadow. */
 function PopoverContent({
   className,
   align = "start",
@@ -37,7 +37,7 @@ function PopoverContent({
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={cn(
-            "flex w-72 origin-(--transform-origin) flex-col rounded-xl border border-outline bg-surface p-2 text-on-surface shadow-overlay outline-none",
+            "flex w-72 origin-(--transform-origin) flex-col rounded-md border border-outline bg-surface p-2 text-on-surface shadow-lg outline-none",
             "transition-[opacity,scale] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0",
             className
           )}

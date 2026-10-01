@@ -35,7 +35,7 @@ export function FormSection({
   children: React.ReactNode
 }) {
   return (
-    <section className="grid gap-5 border-t border-outline p-6 first:border-t-0 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8">
+    <section className="grid gap-5 border-t border-outline p-4 first:border-t-0 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8">
       <div className="flex flex-col gap-1">
         <h2 className="title-md text-on-surface">{title}</h2>
         {description ? (
@@ -47,14 +47,14 @@ export function FormSection({
   )
 }
 
-/** Visual radio: the selection mark takes the product accent. */
+/** Visual radio: blue-500 when chosen, like every selection control. */
 function RadioMark({ checked }: { checked: boolean }) {
   return (
     <span
       aria-hidden
       className={cn(
         "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors",
-        checked ? "border-accent-orange bg-accent-orange" : "border-outline-strong bg-surface"
+        checked ? "border-[#3b82f6] bg-[#3b82f6]" : "border-outline-strong bg-surface"
       )}
     >
       {checked ? <span className="size-1.5 rounded-full bg-surface" /> : null}
@@ -144,7 +144,7 @@ export function InstructionsField({ defaultValue = "" }: { defaultValue?: string
         <div
           role="group"
           aria-label="Editor mode"
-          className="flex h-8 items-center rounded-full bg-surface-sunken p-1"
+          className="flex h-8 items-center rounded-md bg-surface-sunken p-1"
         >
           {(["write", "preview"] as const).map((option) => (
             <button
@@ -153,7 +153,7 @@ export function InstructionsField({ defaultValue = "" }: { defaultValue?: string
               aria-pressed={mode === option}
               onClick={() => setMode(option)}
               className={cn(
-                "h-6 rounded-full px-3 label-sm capitalize transition-colors",
+                "h-6 rounded-sm px-3 label-sm capitalize transition-colors",
                 mode === option ? "bg-surface text-on-surface" : "text-on-surface-muted hover:text-on-surface"
               )}
             >

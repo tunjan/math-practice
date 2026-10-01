@@ -388,6 +388,7 @@ function NewTaskForm({
         ) : null}
 
         <input
+          data-composer
           ref={titleRef}
           name="title"
           data-field="title"
@@ -408,6 +409,7 @@ function NewTaskForm({
 
         {/* Stays mounted during preview so the text is always submitted. */}
         <textarea
+          data-composer
           ref={instructionsRef}
           name="description"
           aria-label="Instructions"

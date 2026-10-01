@@ -4,10 +4,10 @@ import { cn } from "cn"
 /**
  * DESIGN.md › Layout, Elevation
  *
- * A card is one continuous white surface with a 1px `outline` border and no
- * shadow, subdivided by hairlines rather than stacked sub-cards. Tables inside
- * run full-bleed to the card edges, so padding lives on the sections, not on
- * the card.
+ * A card is one continuous white surface with a 12px radius, a 1px `outline`
+ * border and no shadow, subdivided by hairlines rather than stacked sub-cards.
+ * Tables inside run full-bleed to the card edges, so the 16px padding lives on
+ * the sections, not on the card.
  */
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -38,7 +38,7 @@ function CardHeader({
     <div
       data-slot="card-header"
       className={cn(
-        "flex min-h-16 flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-outline px-6 py-4",
+        "flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-outline px-4 py-3",
         className
       )}
       {...props}
@@ -80,7 +80,7 @@ function CardSection({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-section"
-      className={cn("border-t border-outline p-6 first:border-t-0", className)}
+      className={cn("border-t border-outline p-4 first:border-t-0", className)}
       {...props}
     />
   )
@@ -91,7 +91,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "flex flex-wrap items-center gap-3 border-t border-outline px-6 py-4",
+        "flex flex-wrap items-center gap-2 border-t border-outline bg-surface-muted px-4 py-3",
         className
       )}
       {...props}
@@ -116,13 +116,13 @@ function StatStrip({
         <div
           key={stat.label}
           className={cn(
-            "flex min-w-0 flex-col gap-3 p-6",
+            "flex min-w-0 flex-col gap-1 p-4",
             index % 2 === 1 && "border-l border-outline",
             index >= 2 && "border-t border-outline lg:border-t-0",
             index > 0 && "lg:border-l"
           )}
         >
-          <span className="label-caps text-on-surface-muted">{stat.label}</span>
+          <span className="truncate body-md text-on-surface-muted">{stat.label}</span>
           <span className="display-num text-on-surface">{stat.value}</span>
           {stat.note ? (
             <span className="body-sm text-on-surface-muted">{stat.note}</span>
@@ -146,10 +146,10 @@ function DetailList({
       {items.map((item) => (
         <div
           key={item.label}
-          className="flex items-baseline justify-between gap-4 border-t border-outline px-6 py-3 first:border-t-0"
+          className="flex items-baseline justify-between gap-4 border-t border-outline px-4 py-3 first:border-t-0"
         >
           <dt className="body-sm shrink-0 text-on-surface-muted">{item.label}</dt>
-          <dd className="body-md min-w-0 text-right text-on-surface">{item.value}</dd>
+          <dd className="body-md min-w-0 text-right text-on-surface-secondary">{item.value}</dd>
         </div>
       ))}
     </dl>

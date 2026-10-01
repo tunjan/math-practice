@@ -59,7 +59,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} ${geistMono.variable} ${satoshi.variable} h-full`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${geistMono.variable} ${satoshi.variable} dub h-full`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-canvas-neutral font-sans text-on-surface">

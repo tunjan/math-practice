@@ -29,15 +29,15 @@ function Node({ index, state }: { index: number; state: "past" | "current" | "fu
       {state === "past" ? (
         <Check className="size-3.5 [stroke-width:2.5]" />
       ) : (
-        <span className="font-mono text-[11px] leading-none font-medium">{index + 1}</span>
+        <span className="text-xs leading-none font-medium tabular-nums">{index + 1}</span>
       )}
     </span>
   )
 }
 
 /**
- * Assigned, Opened, Submitted, Reviewed. Step names are `label-caps`; marks are
- * near-black like every other data mark in the system.
+ * Assigned, Opened, Submitted, Reviewed. Step names are 14px medium; marks
+ * are black like every other data mark in the system.
  */
 export function LifecycleTracker({
   stage,
@@ -79,7 +79,7 @@ export function LifecycleTracker({
               <div className="flex min-w-0 flex-col gap-1 pt-1.5">
                 <span
                   className={cn(
-                    "label-caps",
+                    "label-md",
                     state === "future" ? "text-on-surface-muted" : "text-on-surface"
                   )}
                 >
@@ -122,7 +122,7 @@ export function LifecycleTracker({
               <div className="flex min-w-0 flex-col gap-1 pt-1 @lg:pt-0 @lg:pr-4">
                 <span
                   className={cn(
-                    "label-caps",
+                    "label-md",
                     state === "future" ? "text-on-surface-muted" : "text-on-surface"
                   )}
                 >

@@ -66,18 +66,18 @@ export default async function StudentsPage() {
     })
 
   return (
-    <Page>
-      <PageHeader
-        title="Students"
-        description={
-          roster.length === 0
-            ? "Invite your first student to get started."
-            : `${roster.length} ${roster.length === 1 ? "student" : "students"} enrolled${
-                openInvites.length > 0 ? `, ${openInvites.length} invited` : ""
-              }.`
-        }
-      />
-
+    <Page
+      header={
+        <PageHeader
+          title="Students"
+          description={
+            roster.length === 0
+              ? undefined
+              : `${roster.length} enrolled${openInvites.length > 0 ? `, ${openInvites.length} invited` : ""}`
+          }
+        />
+      }
+    >
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex min-w-0 flex-col gap-6">
           <Card>
@@ -86,7 +86,7 @@ export default async function StudentsPage() {
               <EmptyState
                 icon={<Users />}
                 title="No students yet"
-                description="Students appear here once they accept an invite."
+                description="Students appear here once they accept an invite. Create a link to get started."
               />
             ) : (
               <Table>
@@ -107,7 +107,7 @@ export default async function StudentsPage() {
                         <TableCell className="w-full max-w-0">
                           <Link
                             href={`/tutor/students/${student.id}`}
-                            className="rounded-xs after:absolute after:inset-0"
+                            className="rounded-sm after:absolute after:inset-0"
                           >
                             <TableIdentity
                               leading={<Avatar name={name} />}
@@ -117,19 +117,19 @@ export default async function StudentsPage() {
                           </Link>
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className="mono-data">{counts.active}</span>
+                          <span className="tabular-nums">{counts.active}</span>
                         </TableCell>
                         <TableCell className="text-right">
                           <span
                             className={
-                              counts.toReview > 0 ? "mono-data" : "mono-data text-on-surface-muted"
+                              counts.toReview > 0 ? "font-medium text-on-surface tabular-nums" : "text-on-surface-muted tabular-nums"
                             }
                           >
                             {counts.toReview}
                           </span>
                         </TableCell>
                         <TableCell className="hidden text-right whitespace-nowrap md:table-cell">
-                          <span className="mono-data-sm text-on-surface-muted">
+                          <span className="text-on-surface-muted tabular-nums">
                             {joined(student.created_at)}
                           </span>
                         </TableCell>
