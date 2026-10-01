@@ -37,7 +37,7 @@ function PopoverContent({
         <PopoverPrimitive.Popup
           data-slot="popover-content"
           className={cn(
-            "flex w-72 origin-(--transform-origin) flex-col rounded-md border border-outline bg-surface p-2 text-on-surface shadow-lg outline-none",
+            "flex w-72 origin-(--transform-origin) flex-col rounded-lg border border-border bg-background p-2 text-foreground shadow-lg outline-none",
             "transition-[opacity,scale] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0",
             className
           )}
@@ -62,7 +62,7 @@ function PopoverTitle({ className, ...props }: PopoverPrimitive.Title.Props) {
   return (
     <PopoverPrimitive.Title
       data-slot="popover-title"
-      className={cn("label-md text-on-surface", className)}
+      className={cn("label-md text-foreground", className)}
       {...props}
     />
   )
@@ -75,7 +75,7 @@ function PopoverDescription({
   return (
     <PopoverPrimitive.Description
       data-slot="popover-description"
-      className={cn("body-sm text-on-surface-muted", className)}
+      className={cn("body-md text-muted-foreground", className)}
       {...props}
     />
   )

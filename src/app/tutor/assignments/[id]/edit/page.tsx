@@ -27,9 +27,9 @@ export default async function EditAssignmentPage({
     supabase
       .from("assignments")
       .select(
-        `id, title, description, type, difficulty, due_at, category_id,
+        `id, title, description, type, difficulty, due_at, category_id, exercise_count,
          assignment_topics(topic_id),
-         profiles!assignments_student_id_fkey(programme, course, level)`
+         profiles!assignments_student_id_fkey(full_name, timezone, programme, course, level)`
       )
       .eq("id", id)
       .maybeSingle(),
@@ -67,6 +67,7 @@ export default async function EditAssignmentPage({
           description: assignment.description ?? "",
           type: assignment.type,
           difficulty: assignment.difficulty,
+          exerciseCount: assignment.exercise_count,
           dueAt: assignment.due_at,
           categoryId: assignment.category_id,
           syllabusTopicIds: assignment.assignment_topics.map((row) => row.topic_id),
@@ -74,6 +75,11 @@ export default async function EditAssignmentPage({
         existingFiles={existingFiles}
         topics={topics}
         syllabus={courseTopics}
+        student={
+          assignment.profiles
+            ? { name: assignment.profiles.full_name || "The student", timeZone: assignment.profiles.timezone }
+            : null
+        }
       />
     </Page>
   )

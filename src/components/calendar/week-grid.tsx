@@ -117,7 +117,7 @@ export function WeekGrid({
       role="grid"
       aria-labelledby={labelledBy}
       data-slot="week-grid"
-      className="flex flex-col overflow-hidden rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10 xl:h-full"
+      className="flex flex-col overflow-hidden rounded-2xl bg-card text-card-foreground ring-1 ring-foreground/10 xl:h-full"
     >
       <div role="row" data-slot="week-grid-days" className="flex shrink-0 border-b border-border">
         <div aria-hidden className={GUTTER} />
@@ -149,7 +149,7 @@ export function WeekGrid({
               <span
                 aria-hidden
                 className={cn(
-                  "flex size-6 items-center justify-center rounded-md text-xs tabular-nums",
+                  "flex size-6 items-center justify-center rounded-lg text-xs tabular-nums",
                   "group-aria-selected/day:font-medium group-aria-selected/day:text-info",
                   "group-data-today/day:bg-info group-data-today/day:font-medium group-data-today/day:text-primary-foreground"
                 )}
@@ -273,7 +273,7 @@ function DayColumn({
  * filled for as long as they run.
  */
 const blockVariants = cva(
-  "absolute flex min-w-0 flex-col overflow-hidden rounded-sm px-1 py-0.5 text-xs leading-4 md:px-1.5",
+  "absolute flex min-w-0 flex-col overflow-hidden rounded-md px-1 py-0.5 text-xs leading-4 md:px-1.5",
   {
     variants: {
       variant: {

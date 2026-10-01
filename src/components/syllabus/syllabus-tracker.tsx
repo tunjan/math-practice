@@ -37,7 +37,7 @@ import {
   STATUS_LABEL,
   STATUSES,
   summarise,
-  TOPIC_NAME,
+  topicName,
   type TopicProgress,
   type TopicStatus,
   type TrackerRow,
@@ -132,7 +132,7 @@ export function SyllabusTracker({
           value={summary.averageStars === null ? "–" : `${summary.averageStars.toFixed(1)} ★`}
         />
         <div
-          className="ml-auto h-1.5 min-w-32 flex-1 overflow-hidden rounded-full bg-surface-sunken sm:max-w-48"
+          className="ml-auto h-1.5 min-w-32 flex-1 overflow-hidden rounded-full bg-muted sm:max-w-48"
           role="progressbar"
           aria-label="Seen"
           aria-valuemin={0}
@@ -148,7 +148,7 @@ export function SyllabusTracker({
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative w-full sm:w-64">
-          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-on-surface-muted" />
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -171,12 +171,12 @@ export function SyllabusTracker({
         {toolbar ? <div className="ml-auto flex items-center gap-2">{toolbar}</div> : null}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-outline bg-surface">
+      <div className="overflow-x-auto rounded-xl border border-border bg-background">
         <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
           <thead>
-            <tr className="h-9 border-b border-outline bg-surface-sunken/70 text-xs font-medium text-on-surface-muted">
+            <tr className="h-9 border-b border-border bg-muted/70 text-xs font-medium text-muted-foreground">
               {editable ? (
-                <th scope="col" className="w-10 border-r border-outline px-3">
+                <th scope="col" className="w-10 border-r border-border px-3">
                   <Checkbox
                     aria-label="Select all shown"
                     checked={visible.length > 0 && visible.every((row) => selected.has(row.id))}
@@ -202,7 +202,7 @@ export function SyllabusTracker({
             const isCollapsed = collapsed.has(strand)
             return (
               <tbody key={strand}>
-                <tr className="h-9 border-b border-outline bg-surface-muted">
+                <tr className="h-9 border-b border-border bg-muted/50">
                   <td colSpan={columns} className="px-3">
                     <button
                       type="button"
@@ -219,11 +219,11 @@ export function SyllabusTracker({
                     >
                       <ChevronRight
                         aria-hidden
-                        className={cn("size-4 text-on-surface-muted transition-transform", !isCollapsed && "rotate-90")}
+                        className={cn("size-4 text-muted-foreground transition-transform", !isCollapsed && "rotate-90")}
                       />
-                      <TopicTags tags={[{ code: String(strand), title: TOPIC_NAME[strand] ?? "", topic: strand, subtopic: 0 }]} inline />
-                      <span className="font-medium text-on-surface">{TOPIC_NAME[strand]}</span>
-                      <span className="text-xs text-on-surface-muted">
+                      <TopicTags tags={[{ code: String(strand), title: topicName(strand, rows[0]?.course), topic: strand, subtopic: 0 }]} inline />
+                      <span className="font-medium text-foreground">{topicName(strand, rows[0]?.course)}</span>
+                      <span className="text-xs text-muted-foreground">
                         {all.filter((row) => row.progress.status === "seen").length}/{all.length} seen
                       </span>
                     </button>
@@ -248,7 +248,7 @@ export function SyllabusTracker({
           {visible.length === 0 ? (
             <tbody>
               <tr>
-                <td colSpan={columns} className="px-3 py-10 text-center text-sm text-on-surface-muted">
+                <td colSpan={columns} className="px-3 py-10 text-center text-sm text-muted-foreground">
                   No subtopics match.
                 </td>
               </tr>
@@ -274,21 +274,21 @@ export function SyllabusTracker({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <span className="flex items-baseline gap-1.5">
-      <span className="font-mono text-sm text-on-surface tabular-nums">{value}</span>
-      <span className="text-xs text-on-surface-muted">{label}</span>
+      <span className="font-mono text-sm text-foreground tabular-nums">{value}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </span>
   )
 }
 
 function Th({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <th scope="col" className={cn("border-r border-outline px-3 font-medium whitespace-nowrap", className)}>
+    <th scope="col" className={cn("border-r border-border px-3 font-medium whitespace-nowrap", className)}>
       {children}
     </th>
   )
 }
 
-const cellClass = "border-r border-outline px-3 align-middle"
+const cellClass = "border-r border-border px-3 align-middle"
 
 function Row({
   row,
@@ -310,7 +310,7 @@ function Row({
 
   const rowProps = {
     "data-selected": selected || undefined,
-    className: "h-10 border-b border-outline transition-colors hover:bg-surface-muted/60 data-selected:bg-blue-50/70 data-popup-open:bg-surface-muted",
+    className: "h-10 border-b border-border transition-colors hover:bg-muted/60 data-selected:bg-tertiary-container/40 data-popup-open:bg-muted/50",
   }
 
   const cells = (
@@ -325,11 +325,11 @@ function Row({
       </td>
       <td className={cn(cellClass, "max-w-0")}>
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-on-surface" title={row.title}>
+          <span className="truncate text-foreground" title={row.title}>
             {row.title}
           </span>
           {row.level === "AHL" ? (
-            <span className="shrink-0 text-xs text-on-surface-muted" title="Additional higher level">
+            <span className="shrink-0 text-xs text-muted-foreground" title="Additional higher level">
               HL
             </span>
           ) : null}
@@ -349,23 +349,23 @@ function Row({
           onValueChange={editable ? (stars) => onSave({ stars }) : undefined}
         />
       </td>
-      <td className={cn(cellClass, late && "text-error")}>
+      <td className={cn(cellClass, late && "text-destructive")}>
         {editable ? (
           <PlannedCell progress={progress} code={row.code} late={late} onSave={onSave} />
         ) : (
-          <span className={cn("text-sm", late ? "font-medium" : windowLabel(progress) ? "text-on-surface" : "text-on-surface-muted")}>
+          <span className={cn("text-sm", late ? "font-medium" : windowLabel(progress) ? "text-foreground" : "text-muted-foreground")}>
             {windowLabel(progress) ?? "–"}
           </span>
         )}
       </td>
-      <td className={cn(cellClass, "text-right font-mono text-on-surface-secondary tabular-nums")}>
-        {row.taskCount || <span className="text-on-surface-muted">–</span>}
+      <td className={cn(cellClass, "text-right font-mono text-foreground/80 tabular-nums")}>
+        {row.taskCount || <span className="text-muted-foreground">–</span>}
       </td>
       <td className={cn(cellClass, "max-w-0 border-r-0")}>
         {editable ? (
           <NotesCell notes={progress.notes} code={row.code} onSave={(notes) => onSave({ notes })} />
         ) : (
-          <span className="block truncate text-on-surface-secondary" title={progress.notes ?? undefined}>
+          <span className="block truncate text-foreground/80" title={progress.notes ?? undefined}>
             {progress.notes ?? ""}
           </span>
         )}
@@ -399,7 +399,7 @@ function RowMenu({
   const planned = Boolean(progress.plannedStart || progress.plannedEnd)
 
   return (
-    <ContextMenuContent className="dub w-56">
+    <ContextMenuContent className="w-56">
       <ContextMenuGroup>
         <ContextMenuLabel>
           {row.code} · Status
@@ -418,16 +418,16 @@ function RowMenu({
       <ContextMenuSub>
         <ContextMenuSubTrigger>
           <Star aria-hidden /> Knows it
-          <span className="ml-auto font-mono text-xs text-on-surface-muted tabular-nums">{progress.stars}/5</span>
+          <span className="ml-auto font-mono text-xs text-muted-foreground tabular-nums">{progress.stars}/5</span>
         </ContextMenuSubTrigger>
-        <ContextMenuSubContent className="dub min-w-36">
+        <ContextMenuSubContent className="min-w-36">
           <ContextMenuRadioGroup
             value={progress.stars}
             onValueChange={(stars: number) => stars !== progress.stars && onSave({ stars })}
           >
             {[5, 4, 3, 2, 1, 0].map((stars) => (
               <ContextMenuRadioItem key={stars} value={stars} closeOnClick>
-                {stars === 0 ? <span className="text-on-surface-muted">No stars</span> : <StarRating value={stars} />}
+                {stars === 0 ? <span className="text-muted-foreground">No stars</span> : <StarRating value={stars} />}
               </ContextMenuRadioItem>
             ))}
           </ContextMenuRadioGroup>
@@ -463,15 +463,15 @@ function StatusSelect({
     <Select value={value} onValueChange={(next) => next && onValueChange(next as TopicStatus)}>
       <SelectTrigger
         aria-label={label}
-        className="flex h-7 items-center rounded-md px-1 outline-none hover:bg-surface-sunken focus-visible:ring-2 focus-visible:ring-on-surface/20"
+        className="flex h-7 items-center rounded-lg px-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/20"
       >
         {value ? (
           <Badge variant={STATUS_COLOR[value]}>{STATUS_LABEL[value]}</Badge>
         ) : (
-          <span className="px-1 text-sm text-on-surface-muted">Status</span>
+          <span className="px-1 text-sm text-muted-foreground">Status</span>
         )}
       </SelectTrigger>
-      <SelectContent className="dub min-w-40">
+      <SelectContent className="min-w-40">
         {STATUSES.map((status) => (
           <SelectItem key={status} value={status} className="h-9">
             <Badge variant={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Badge>
@@ -506,11 +506,11 @@ function DateRangeForm({
       }}
     >
       <div className="grid grid-cols-2 gap-2">
-        <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           Start
           <DateField value={from} onChange={setFrom} placeholder="Any" clearable className="h-9 text-sm" />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
+        <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           End
           <DateField
             value={to}
@@ -523,7 +523,7 @@ function DateRangeForm({
           />
         </label>
       </div>
-      {invalid ? <p className="text-xs text-error">End must be on or after the start.</p> : null}
+      {invalid ? <p className="text-xs text-destructive">End must be on or after the start.</p> : null}
       <div className="flex justify-end gap-2">
         {onClear ? (
           <Button type="button" variant="ghost" size="sm" onClick={onClear}>
@@ -557,8 +557,8 @@ function PlannedCell({
       <PopoverTrigger
         aria-label={`Plan ${code}${label ? `, currently ${label}` : ""}`}
         className={cn(
-          "-mx-1 flex h-7 w-full items-center gap-1.5 rounded-md px-1 text-left text-sm outline-none hover:bg-surface-sunken focus-visible:ring-2 focus-visible:ring-on-surface/20",
-          label ? (late ? "font-medium text-error" : "text-on-surface") : "text-on-surface-muted"
+          "-mx-1 flex h-7 w-full items-center gap-1.5 rounded-lg px-1 text-left text-sm outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/20",
+          label ? (late ? "font-medium text-destructive" : "text-foreground") : "text-muted-foreground"
         )}
       >
         {label ?? (
@@ -567,7 +567,7 @@ function PlannedCell({
           </>
         )}
       </PopoverTrigger>
-      <PopoverContent className="dub w-80">
+      <PopoverContent className="w-80">
         <DateRangeForm
           key={String(open)}
           start={progress.plannedStart}
@@ -612,11 +612,11 @@ function NotesCell({
     >
       <PopoverTrigger
         aria-label={`Notes for ${code}`}
-        className="-mx-1 block h-7 w-full truncate rounded-md px-1 text-left text-sm outline-none hover:bg-surface-sunken focus-visible:ring-2 focus-visible:ring-on-surface/20"
+        className="-mx-1 block h-7 w-full truncate rounded-lg px-1 text-left text-sm outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/20"
       >
-        {notes ? <span className="text-on-surface-secondary">{notes}</span> : <span className="text-on-surface-muted/60">Add a note</span>}
+        {notes ? <span className="text-foreground/80">{notes}</span> : <span className="text-muted-foreground/60">Add a note</span>}
       </PopoverTrigger>
-      <PopoverContent className="dub w-80" align="end">
+      <PopoverContent className="w-80" align="end">
         <form
           className="flex flex-col gap-2 p-1"
           onSubmit={(event) => {
@@ -662,12 +662,12 @@ function BulkBar({
     <div
       role="toolbar"
       aria-label="Edit selected subtopics"
-      className="sticky bottom-4 z-10 mx-auto flex w-fit max-w-full flex-wrap items-center gap-1 rounded-xl bg-surface-inverse p-1.5 pl-4 text-sm text-on-surface-inverse shadow-overlay"
+      className="sticky bottom-4 z-10 mx-auto flex w-fit max-w-full flex-wrap items-center gap-1 rounded-2xl bg-foreground p-1.5 pl-4 text-sm text-background shadow-xl"
     >
       <span className="mr-2 font-medium tabular-nums">{count} selected</span>
       <Select value={null} onValueChange={(next) => next && onSave({ status: next as TopicStatus })}>
         <SelectTrigger render={<Button variant="inverse" size="sm" />}>Set status</SelectTrigger>
-        <SelectContent className="dub min-w-40">
+        <SelectContent className="min-w-40">
           {STATUSES.map((status) => (
             <SelectItem key={status} value={status} className="h-9">
               <Badge variant={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Badge>
@@ -679,7 +679,7 @@ function BulkBar({
         <PopoverTrigger render={<Button variant="inverse" size="sm" />}>
           <CalendarRange aria-hidden /> Plan
         </PopoverTrigger>
-        <PopoverContent className="dub w-80" side="top">
+        <PopoverContent className="w-80" side="top">
           <DateRangeForm
             start={null}
             end={null}

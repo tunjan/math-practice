@@ -91,15 +91,17 @@ export type Database = {
       assignments: {
         Row: {
           category_id: string | null
-          completion_pct: number
           created_at: string
           description: string | null
           difficulty: Database["public"]["Enums"]["task_difficulty"]
           due_at: string
+          exercise_count: number
+          exercises_done: number
           feedback: string | null
           id: string
           reviewed_at: string | null
           stage: string | null
+          started_at: string | null
           student_id: string
           student_opened_at: string | null
           submitted_at: string | null
@@ -115,14 +117,16 @@ export type Database = {
         }
         Insert: {
           category_id?: string | null
-          completion_pct?: number
           created_at?: string
           description?: string | null
           difficulty?: Database["public"]["Enums"]["task_difficulty"]
           due_at: string
+          exercise_count?: number
+          exercises_done?: number
           feedback?: string | null
           id?: string
           reviewed_at?: string | null
+          started_at?: string | null
           student_id: string
           student_opened_at?: string | null
           submitted_at?: string | null
@@ -138,14 +142,16 @@ export type Database = {
         }
         Update: {
           category_id?: string | null
-          completion_pct?: number
           created_at?: string
           description?: string | null
           difficulty?: Database["public"]["Enums"]["task_difficulty"]
           due_at?: string
+          exercise_count?: number
+          exercises_done?: number
           feedback?: string | null
           id?: string
           reviewed_at?: string | null
+          started_at?: string | null
           student_id?: string
           student_opened_at?: string | null
           submitted_at?: string | null
@@ -442,6 +448,7 @@ export type Database = {
           description: string | null
           difficulty: Database["public"]["Enums"]["task_difficulty"]
           due_at: string
+          exercise_count: number
           id: string
           invite_id: string
           title: string
@@ -454,6 +461,7 @@ export type Database = {
           description?: string | null
           difficulty?: Database["public"]["Enums"]["task_difficulty"]
           due_at: string
+          exercise_count?: number
           id: string
           invite_id: string
           title: string
@@ -466,6 +474,7 @@ export type Database = {
           description?: string | null
           difficulty?: Database["public"]["Enums"]["task_difficulty"]
           due_at?: string
+          exercise_count?: number
           feedback?: string | null
           id?: string
           invite_id?: string
@@ -800,11 +809,11 @@ export type Database = {
     Enums: {
       assignment_type: "problem_set" | "reading_notes"
       calendar_event_kind: "lesson" | "exam" | "study" | "other"
-      ib_course: "AA" | "AI"
-      ib_level: "SL" | "HL"
-      ib_programme: "ib_dp"
+      ib_course: "AA" | "AI" | "0580"
+      ib_level: "SL" | "HL" | "Core" | "Extended"
+      ib_programme: "ib_dp" | "gcse"
       review_verdict: "approved" | "changes_requested"
-      syllabus_level: "SL" | "AHL"
+      syllabus_level: "SL" | "AHL" | "Core" | "Extended"
       task_difficulty: "easy" | "medium" | "hard" | "ultra"
       topic_status: "to_see" | "in_progress" | "seen"
       user_role: "tutor" | "student"
@@ -920,11 +929,11 @@ export const Constants = {
     Enums: {
       assignment_type: ["problem_set", "reading_notes"],
       calendar_event_kind: ["lesson", "exam", "study", "other"],
-      ib_course: ["AA", "AI"],
-      ib_level: ["SL", "HL"],
-      ib_programme: ["ib_dp"],
+      ib_course: ["AA", "AI", "0580"],
+      ib_level: ["SL", "HL", "Core", "Extended"],
+      ib_programme: ["ib_dp", "gcse"],
       review_verdict: ["approved", "changes_requested"],
-      syllabus_level: ["SL", "AHL"],
+      syllabus_level: ["SL", "AHL", "Core", "Extended"],
       task_difficulty: ["easy", "medium", "hard", "ultra"],
       topic_status: ["to_see", "in_progress", "seen"],
       user_role: ["tutor", "student"],

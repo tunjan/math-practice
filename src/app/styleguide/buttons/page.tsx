@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 export default function Page() {
   const variants = ["primary", "secondary", "ghost", "destructive", "danger", "link"] as const
   return (
-    <div className="dub min-h-screen bg-surface p-10">
+    <div className="min-h-screen bg-background p-10">
       <div className="flex flex-col gap-6">
         {variants.map((v) => (
           <div key={v} className="flex flex-wrap items-center gap-3" data-row={v}>
@@ -16,7 +16,7 @@ export default function Page() {
             <Button variant={v} size="icon" aria-label="Delete"><Trash2 aria-hidden /></Button>
           </div>
         ))}
-        <div className="flex gap-3 rounded-xl bg-surface-inverse p-2 w-fit">
+        <div className="flex gap-3 rounded-2xl bg-foreground p-2 w-fit">
           <Button variant="inverse" size="sm"><X aria-hidden />Clear</Button>
           <Button variant="inverse" size="sm"><Trash2 aria-hidden />Delete</Button>
         </div>

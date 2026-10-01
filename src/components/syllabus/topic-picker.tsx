@@ -18,7 +18,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox"
-import { TOPIC_NAME, topicColor, type SyllabusTopic } from "@/lib/syllabus/model"
+import { topicName, topicColor, type SyllabusTopic } from "@/lib/syllabus/model"
 import { cn } from "cn"
 
 type Group = { value: string; items: SyllabusTopic[] }
@@ -26,7 +26,10 @@ type Group = { value: string; items: SyllabusTopic[] }
 function groupByStrand(topics: SyllabusTopic[]): Group[] {
   const groups = new Map<number, SyllabusTopic[]>()
   for (const t of topics) groups.set(t.topic, [...(groups.get(t.topic) ?? []), t])
-  return [...groups].map(([topic, items]) => ({ value: `${topic} · ${TOPIC_NAME[topic]}`, items }))
+  return [...groups].map(([topic, items]) => ({
+    value: `${topic} · ${topicName(topic, items[0]?.course)}`,
+    items,
+  }))
 }
 
 /** "1.2" matches by code prefix; anything else searches the title. */
@@ -97,7 +100,7 @@ export function TopicPicker({
             placeholder={selected.length ? "" : "Syllabus topics: search by code or name"}
           />
         </ComboboxChips>
-        <ComboboxContent anchor={anchor} className="dub">
+        <ComboboxContent anchor={anchor}>
           <ComboboxEmpty>No subtopic matches.</ComboboxEmpty>
           <ComboboxList>
             {(group: Group) => (
@@ -116,7 +119,7 @@ export function TopicPicker({
                       </span>
                       <span className="min-w-0 flex-1 truncate">{t.title}</span>
                       {t.level === "AHL" ? (
-                        <span className="shrink-0 text-xs text-on-surface-muted">HL</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">HL</span>
                       ) : null}
                     </ComboboxItem>
                   )}

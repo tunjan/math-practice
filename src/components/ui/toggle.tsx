@@ -7,15 +7,15 @@ import { cn } from "cn"
 /**
  * shadcn/ui Toggle, restyled to DESIGN.md.
  *
- * `chips`: 32px, 6px radius; the pressed chip sinks to `surface-sunken`.
+ * `chips`: 32px, 8px radius; the pressed chip sinks to `muted`.
  * `track`: a segment inside the white track (see ToggleGroup); the pressed
- * one is an 8px `surface-muted` chip with its own hairline.
+ * one is an 8px `muted/50` chip with its own hairline (DESIGN.md › Toggle group).
  */
 const toggleVariants = cva(
   [
     "group/toggle inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap outline-none",
     "transition-colors duration-100",
-    "focus-visible:ring-2 focus-visible:ring-on-surface/25",
+    "focus-visible:ring-2 focus-visible:ring-foreground/50",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   ].join(" "),
@@ -23,14 +23,14 @@ const toggleVariants = cva(
     variants: {
       variant: {
         chips: [
-          "h-8 rounded-md px-2.5 text-sm text-on-surface-muted",
-          "hover:bg-surface-hover hover:text-on-surface",
-          "data-pressed:bg-surface-sunken data-pressed:font-medium data-pressed:text-on-surface",
+          "h-8 rounded-lg px-2.5 text-sm text-muted-foreground",
+          "hover:bg-accent hover:text-foreground",
+          "data-pressed:bg-muted data-pressed:font-medium data-pressed:text-foreground",
         ],
         track: [
-          "h-full rounded-md border border-transparent px-3 label-md text-on-surface-muted",
-          "hover:text-on-surface",
-          "data-pressed:border-outline data-pressed:bg-surface-muted data-pressed:text-on-surface",
+          "h-full rounded-lg border border-transparent px-3 label-md text-muted-foreground",
+          "hover:text-foreground",
+          "data-pressed:border-border data-pressed:bg-muted/50 data-pressed:text-foreground data-pressed:shadow-xs",
         ],
       },
     },

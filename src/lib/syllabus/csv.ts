@@ -237,7 +237,7 @@ export function llmPlanPrompt({
   rows: TrackerRow[]
 }): string {
   const open = rows.filter((row) => row.progress.status !== "seen").length
-  return `You are helping an IB Diploma mathematics tutor plan the syllabus for one student taking ${courseName}.
+  return `You are helping a mathematics tutor plan the syllabus for one student taking ${courseName}.
 
 Schedule the ${open} subtopics below that are not yet "seen" between ${from} and ${to}.
 
@@ -254,7 +254,7 @@ Rules the import checks (a file that breaks one is rejected):
 How to plan:
 - Every subtopic not yet "seen" gets a planned_start and planned_end between ${from} and ${to}.
 - Rows already "seen" keep their dates as given (blank stays blank).
-- Respect prerequisites: number and algebra and functions come before calculus, and SL content comes before the AHL content that builds on it.
+- Respect prerequisites: foundational topics come before advanced applications, and core/SL content comes before the extended/AHL content that builds on it.
 - A subtopic usually takes one or two weeks. Windows may overlap, but keep each week to a realistic load.
 - Leave the last weeks before ${to} for review rather than new content.
 - Subtopics with low stars or already in progress can come earlier.

@@ -18,7 +18,7 @@ function ContextMenuTrigger(props: ContextMenuPrimitive.Trigger.Props) {
 }
 
 const popupClass = [
-  "flex max-h-(--available-height) min-w-48 origin-(--transform-origin) flex-col overflow-y-auto rounded-xl border border-outline bg-surface p-1.5 text-on-surface shadow-overlay outline-none",
+  "flex max-h-(--available-height) min-w-48 origin-(--transform-origin) flex-col overflow-y-auto rounded-lg border border-border bg-background p-2 text-foreground shadow-lg outline-none",
   "transition-[opacity,scale] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0",
 ].join(" ")
 
@@ -47,9 +47,9 @@ function ContextMenuContent({
 }
 
 const itemClass = [
-  "relative flex h-9 w-full cursor-default items-center gap-2.5 rounded-md px-2.5 body-md text-on-surface outline-none select-none",
-  "data-highlighted:bg-surface-sunken data-disabled:pointer-events-none data-disabled:opacity-45",
-  "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-on-surface-secondary",
+  "relative flex h-9 w-full cursor-default items-center gap-2.5 rounded-md px-2 label-md text-foreground/80 outline-none select-none",
+  "data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
+  "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-foreground/80",
 ].join(" ")
 
 function ContextMenuItem({
@@ -60,7 +60,7 @@ function ContextMenuItem({
   return (
     <ContextMenuPrimitive.Item
       data-slot="context-menu-item"
-      className={cn(itemClass, variant === "destructive" && "text-error [&_svg]:text-error", className)}
+      className={cn(itemClass, variant === "destructive" && "text-destructive [&_svg]:text-destructive", className)}
       {...props}
     />
   )
@@ -70,7 +70,7 @@ function ContextMenuLabel({ className, ...props }: ContextMenuPrimitive.GroupLab
   return (
     <ContextMenuPrimitive.GroupLabel
       data-slot="context-menu-label"
-      className={cn("px-2.5 pt-1.5 pb-1 label-caps text-on-surface-muted", className)}
+      className={cn("px-2.5 pt-1.5 pb-1 label-sm text-muted-foreground", className)}
       {...props}
     />
   )
@@ -107,7 +107,7 @@ function ContextMenuSubTrigger({ className, children, ...props }: ContextMenuPri
   return (
     <ContextMenuPrimitive.SubmenuTrigger
       data-slot="context-menu-sub-trigger"
-      className={cn(itemClass, "data-popup-open:bg-surface-sunken", className)}
+      className={cn(itemClass, "data-popup-open:bg-muted", className)}
       {...props}
     >
       {children}
@@ -124,7 +124,7 @@ function ContextMenuSeparator({ className, ...props }: ContextMenuPrimitive.Sepa
   return (
     <ContextMenuPrimitive.Separator
       data-slot="context-menu-separator"
-      className={cn("-mx-1.5 my-1.5 h-px bg-outline", className)}
+      className={cn("-mx-1.5 my-1.5 h-px bg-border", className)}
       {...props}
     />
   )

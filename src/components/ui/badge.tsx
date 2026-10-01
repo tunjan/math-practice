@@ -9,7 +9,8 @@ import { cn } from "cn"
  * Every tag is an Airtable single-select pill: a fully rounded pale fill, the
  * shared near-black ink, 12px regular text. The colour names the option; the
  * semantic names (success, warning…) are the status tones mapped onto it.
- * `outline`, `solid` and `count` are not tags and keep their own shapes.
+ * `outline` and `solid` are DESIGN.md's neutral and black badges; `count` is
+ * the 4px count chip.
  */
 const TAG = "h-5 max-w-full rounded-full px-2 text-xs leading-none font-normal text-on-tag [&>span]:truncate"
 
@@ -44,11 +45,11 @@ const badgeVariants = cva(
         violet: cn(TAG, TAG_COLORS.purple),
         accent: cn(TAG, TAG_COLORS.orange),
         outline:
-          "rounded-sm border border-outline-strong px-2.5 py-1 label-sm text-on-surface-secondary",
-        solid: "rounded-sm bg-primary px-2.5 py-1 label-sm text-on-primary",
+          "rounded-full border border-border bg-background px-2 py-px label-sm text-muted-foreground",
+        solid: "rounded-full bg-primary px-2 py-px label-sm text-primary-foreground",
         /** Count chip beside a label, e.g. a filter or a group heading */
         count:
-          "min-w-5 justify-center rounded-xs bg-surface-sunken px-1.5 py-0.5 mono-tag text-on-surface-muted",
+          "min-w-5 justify-center rounded-sm bg-muted px-1.5 py-0.5 label-sm tabular-nums text-muted-foreground",
       },
     },
     defaultVariants: {

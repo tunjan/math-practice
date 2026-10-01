@@ -18,7 +18,7 @@ const rows: TrackerRow[] = raw.map(([t, s, level, title, status, stars, a, b, n,
 
 export default function Fixture() {
   return (
-    <div className="dub w-full bg-surface p-8">
+    <div className="w-full bg-background p-8">
       <SyllabusTracker studentId="00000000-0000-0000-0000-000000000000" rows={rows} editable today="2026-09-25" />
     </div>
   )

@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/brand/table"
 import { InviteForm, PendingInvites, type OpenInvite } from "@/components/invites/invite-panel"
+import { LocalTime } from "@/components/tutor/local-time"
 import { Card, CardHeader } from "@/components/ui/card"
 import { requireRole } from "@/lib/auth/session"
 import { createClient } from "@/lib/supabase/server"
@@ -28,7 +29,7 @@ export default async function StudentsPage() {
   const [{ data: students }, { data: invites }, { data: assignments }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, email, created_at")
+      .select("id, full_name, email, timezone, created_at")
       .eq("role", "student")
       .order("full_name"),
     supabase
@@ -93,6 +94,7 @@ export default async function StudentsPage() {
                 <TableHeader>
                   <tr>
                     <TableHead>Student</TableHead>
+                    <TableHead className="hidden text-right sm:table-cell">Local time</TableHead>
                     <TableHead className="text-right">Active</TableHead>
                     <TableHead className="text-right">To review</TableHead>
                     <TableHead className="hidden text-right md:table-cell">Joined</TableHead>
@@ -107,7 +109,7 @@ export default async function StudentsPage() {
                         <TableCell className="w-full max-w-0">
                           <Link
                             href={`/tutor/students/${student.id}`}
-                            className="rounded-sm after:absolute after:inset-0"
+                            className="rounded-md after:absolute after:inset-0"
                           >
                             <TableIdentity
                               leading={<Avatar name={name} />}
@@ -116,20 +118,23 @@ export default async function StudentsPage() {
                             />
                           </Link>
                         </TableCell>
+                        <TableCell className="hidden text-right whitespace-nowrap sm:table-cell">
+                          <LocalTime timeZone={student.timezone} />
+                        </TableCell>
                         <TableCell className="text-right">
                           <span className="tabular-nums">{counts.active}</span>
                         </TableCell>
                         <TableCell className="text-right">
                           <span
                             className={
-                              counts.toReview > 0 ? "font-medium text-on-surface tabular-nums" : "text-on-surface-muted tabular-nums"
+                              counts.toReview > 0 ? "font-medium text-foreground tabular-nums" : "text-muted-foreground tabular-nums"
                             }
                           >
                             {counts.toReview}
                           </span>
                         </TableCell>
                         <TableCell className="hidden text-right whitespace-nowrap md:table-cell">
-                          <span className="text-on-surface-muted tabular-nums">
+                          <span className="text-muted-foreground tabular-nums">
                             {joined(student.created_at)}
                           </span>
                         </TableCell>

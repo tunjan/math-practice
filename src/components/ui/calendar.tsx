@@ -49,21 +49,21 @@ function Calendar({
           "flex h-(--cell-size) w-full items-center justify-center px-(--cell-size)",
           defaults.month_caption
         ),
-        caption_label: cn("label-md text-on-surface select-none", defaults.caption_label),
+        caption_label: cn("label-md text-foreground select-none", defaults.caption_label),
         month_grid: cn("w-full border-collapse", defaults.month_grid),
         weekdays: cn("flex", defaults.weekdays),
         weekday: cn(
-          "flex-1 label-sm font-normal text-on-surface-muted select-none",
+          "flex-1 label-sm font-normal text-muted-foreground select-none",
           defaults.weekday
         ),
         week: cn("mt-1 flex w-full", defaults.week),
         day: cn("relative aspect-square h-full w-full p-0 text-center select-none", defaults.day),
-        range_start: cn("rounded-l-md bg-surface-sunken", defaults.range_start),
-        range_middle: cn("rounded-none bg-surface-sunken", defaults.range_middle),
-        range_end: cn("rounded-r-md bg-surface-sunken", defaults.range_end),
+        range_start: cn("rounded-l-lg bg-muted", defaults.range_start),
+        range_middle: cn("rounded-none bg-muted", defaults.range_middle),
+        range_end: cn("rounded-r-lg bg-muted", defaults.range_end),
         today: defaults.today,
-        outside: cn("text-on-surface-muted", defaults.outside),
-        disabled: cn("text-on-surface-muted opacity-40", defaults.disabled),
+        outside: cn("text-muted-foreground", defaults.outside),
+        disabled: cn("text-muted-foreground opacity-40", defaults.disabled),
         hidden: cn("invisible", defaults.hidden),
         ...classNames,
       }}
@@ -101,13 +101,13 @@ function CalendarDayButton({
       data-selected={selected || undefined}
       data-today={modifiers.today || undefined}
       className={cn(
-        "flex size-(--cell-size) w-full min-w-(--cell-size) items-center justify-center rounded-md",
-        "font-mono text-[13px] leading-none tabular-nums text-on-surface outline-none",
-        "transition-colors duration-100 hover:bg-surface-hover",
-        "focus-visible:ring-2 focus-visible:ring-on-surface/25",
-        "data-today:font-semibold data-today:ring-1 data-today:ring-outline-strong data-today:ring-inset",
-        "data-selected:bg-primary data-selected:text-on-primary data-selected:hover:bg-primary-hover data-selected:ring-0",
-        modifiers.outside && !selected && "text-on-surface-muted",
+        "flex size-(--cell-size) w-full min-w-(--cell-size) items-center justify-center rounded-lg",
+        "font-mono text-[13px] leading-none tabular-nums text-foreground outline-none",
+        "transition-colors duration-100 hover:bg-accent",
+        "focus-visible:ring-2 focus-visible:ring-foreground/25",
+        "data-today:font-semibold data-today:ring-1 data-today:ring-input data-today:ring-inset",
+        "data-selected:bg-primary data-selected:text-primary-foreground data-selected:hover:bg-primary/90 data-selected:ring-0",
+        modifiers.outside && !selected && "text-muted-foreground",
         className
       )}
       {...props}

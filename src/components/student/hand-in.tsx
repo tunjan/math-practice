@@ -36,7 +36,7 @@ export type TaskActions = {
   submit?: Action<SubmitState>
   unsubmit?: Action<SubmitState>
   removeDraft?: Action<SubmitState>
-  progress?: (assignmentId: string, pct: number) => Promise<{ error?: string }>
+  progress?: (assignmentId: string, done: number) => Promise<{ error?: string }>
 }
 
 type Staged = UploadedFile & {
@@ -93,7 +93,7 @@ function ChipRemove({
       aria-label={label}
       disabled={pending}
       onClick={onClick}
-      className="-ml-0.5 flex size-9 shrink-0 items-center justify-center rounded-sm text-on-surface-muted transition-colors hover:bg-surface-sunken hover:text-on-surface disabled:pointer-events-none"
+      className="-ml-0.5 flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none"
     >
       {pending ? <LoaderCircle className="size-3.5 motion-safe:animate-spin" /> : <X className="size-3.5" />}
     </button>
@@ -328,12 +328,12 @@ export function WorkTray({
               type="button"
               onClick={() => inputRef.current?.click()}
               className={cn(
-                "flex h-10 items-center gap-2 rounded-md border border-dashed px-3 label-md transition-colors",
+                "flex h-10 items-center gap-2 rounded-lg border border-dashed px-3 label-md transition-colors",
                 dragging
-                  ? "border-on-surface bg-surface text-on-surface"
+                  ? "border-foreground bg-background text-foreground"
                   : nudge
-                    ? "border-on-surface bg-surface-sunken text-on-surface"
-                    : "border-outline-strong text-on-surface-secondary hover:border-on-surface-muted hover:bg-surface hover:text-on-surface"
+                    ? "border-foreground bg-muted text-foreground"
+                    : "border-input text-foreground/80 hover:border-muted-foreground hover:bg-background hover:text-foreground"
               )}
             >
               <Plus aria-hidden className="size-4" />
@@ -371,7 +371,7 @@ export function WorkTray({
             <p
               id={hintId}
               role="status"
-              className="caption text-on-surface-secondary sm:max-w-52 sm:text-right"
+              className="caption text-foreground/80 sm:max-w-52 sm:text-right"
             >
               {hint}
             </p>

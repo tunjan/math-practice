@@ -122,14 +122,14 @@ export const BOARD_COLUMN_TONE = {
 export function boardColumn(task: {
   stage: Stage
   verdict: ReviewVerdict | null
-  completionPct: number
+  started: boolean
   /** Files saved but not handed in, e.g. after an unsubmit. */
   hasDraft: boolean
 }): BoardColumn {
   if (task.verdict === "approved") return "finished"
   if (task.verdict === "changes_requested") return "revise"
   if (task.stage === "submitted") return "submitted"
-  if (task.completionPct > 0 || task.hasDraft) return "in_progress"
+  if (task.started || task.hasDraft) return "in_progress"
   return "assigned"
 }
 

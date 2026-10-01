@@ -5,8 +5,8 @@ import { Reveal } from "./reveal"
 
 function FileChip({ name }: { name: string }) {
   return (
-    <span className="inline-flex w-fit items-center gap-1.5 rounded-md border border-outline bg-surface px-2 py-1 text-xs text-on-surface-secondary">
-      <FileText className="size-3.5 text-on-surface-muted" aria-hidden />
+    <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground/80">
+      <FileText className="size-3.5 text-muted-foreground" aria-hidden />
       {name}
     </span>
   )
@@ -38,8 +38,8 @@ const STEPS = [
     line: "A mark and a note per question.",
     proof: (
       <>
-        <span className="font-mono text-xl text-on-surface">
-          2<span className="text-on-surface-muted">/3</span>
+        <span className="font-mono text-xl text-foreground">
+          2<span className="text-muted-foreground">/3</span>
         </span>
         <Badge variant="success">Marked</Badge>
       </>
@@ -52,13 +52,13 @@ export function Loop() {
   return (
     <ol aria-label="How it works" className="grid gap-14 pb-24 md:grid-cols-3 md:gap-0 lg:pb-32">
       {STEPS.map(({ verb, line, proof }, i) => (
-        <li key={verb} className="border-t border-outline-strong pt-8 md:pr-10">
+        <li key={verb} className="border-t border-input pt-8 md:pr-10">
           <Reveal delay={i * 90} className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
-              <h2 className="font-display text-3xl leading-[1.15] font-medium text-on-surface">{verb}</h2>
-              <p className="text-sm text-on-surface-muted">{line}</p>
+              <h2 className="font-display text-3xl leading-[1.15] font-medium text-foreground">{verb}</h2>
+              <p className="text-sm text-muted-foreground">{line}</p>
             </div>
-            <div className="flex h-16 items-center justify-between gap-3 rounded-lg bg-surface-muted px-4">
+            <div className="flex h-16 items-center justify-between gap-3 rounded-xl bg-muted/50 px-4">
               {proof}
             </div>
           </Reveal>

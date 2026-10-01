@@ -11,21 +11,43 @@ export type SyllabusLevel = Enums["syllabus_level"]
 /** A student's course: all three set, or no course at all. */
 export type StudentCourse = { programme: Programme; course: Course; level: Level }
 
-export const PROGRAMMES = ["ib_dp"] as const satisfies readonly Programme[]
-export const COURSES = ["AA", "AI"] as const satisfies readonly Course[]
-export const LEVELS = ["SL", "HL"] as const satisfies readonly Level[]
+export const PROGRAMMES = ["ib_dp", "gcse"] as const satisfies readonly Programme[]
+export const COURSES = ["AA", "AI", "0580"] as const satisfies readonly Course[]
+export const LEVELS = ["SL", "HL", "Core", "Extended"] as const satisfies readonly Level[]
 
-export const PROGRAMME_LABEL: Record<Programme, string> = { ib_dp: "IB Diploma" }
+export const PROGRAMME_LABEL: Record<Programme, string> = {
+  ib_dp: "IB Diploma",
+  gcse: "Cambridge IGCSE",
+}
 
 export const COURSE_LABEL: Record<Course, string> = {
   AA: "Analysis and approaches",
   AI: "Applications and interpretation",
+  "0580": "Mathematics (0580)",
 }
 
-export const LEVEL_LABEL: Record<Level, string> = { SL: "Standard level", HL: "Higher level" }
+export const LEVEL_LABEL: Record<Level, string> = {
+  SL: "Standard level",
+  HL: "Higher level",
+  Core: "Core",
+  Extended: "Extended",
+}
 
-/** "Maths AA HL", the short name used in headers and tags. */
+export const PROGRAMME_COURSES: Record<Programme, readonly Course[]> = {
+  ib_dp: ["AA", "AI"],
+  gcse: ["0580"],
+}
+
+export const PROGRAMME_LEVELS: Record<Programme, readonly Level[]> = {
+  ib_dp: ["SL", "HL"],
+  gcse: ["Core", "Extended"],
+}
+
+/** "Maths AA HL" or "GCSE Core Maths", the short name used in headers and tags. */
 export function courseShortName(course: StudentCourse): string {
+  if (course.course === "0580") {
+    return course.level === "Core" ? "GCSE Core Maths" : "GCSE Extended Maths"
+  }
   return `Maths ${course.course} ${course.level}`
 }
 
@@ -51,13 +73,29 @@ export type SyllabusTopic = {
   title: string
 }
 
-/** The five strands, shared by AA and AI. */
-export const TOPIC_NAME: Record<number, string> = {
+export const IB_TOPIC_NAMES: Record<number, string> = {
   1: "Number and algebra",
   2: "Functions",
   3: "Geometry and trigonometry",
   4: "Statistics and probability",
   5: "Calculus",
+}
+
+export const GCSE_TOPIC_NAMES: Record<number, string> = {
+  1: "Number",
+  2: "Algebra and graphs",
+  3: "Coordinate geometry",
+  4: "Geometry",
+  5: "Mensuration",
+  6: "Trigonometry",
+  7: "Transformations and vectors",
+  8: "Probability",
+  9: "Statistics",
+}
+
+export function topicName(topic: number, course?: Course | null): string {
+  if (course === "0580") return GCSE_TOPIC_NAMES[topic] ?? `Topic ${topic}`
+  return IB_TOPIC_NAMES[topic] ?? GCSE_TOPIC_NAMES[topic] ?? `Topic ${topic}`
 }
 
 /** Each strand has its own tag colour, the way an Airtable option does. */
@@ -67,6 +105,10 @@ export const TOPIC_COLOR = {
   3: "teal",
   4: "orange",
   5: "pink",
+  6: "cyan",
+  7: "yellow",
+  8: "green",
+  9: "red",
 } as const satisfies Record<number, TagColor>
 
 export function topicColor(topic: number): TagColor {
@@ -76,7 +118,13 @@ export function topicColor(topic: number): TagColor {
 /** The subtopics a student on this course studies, in syllabus order. */
 export function topicsForCourse(all: SyllabusTopic[], course: StudentCourse): SyllabusTopic[] {
   return all
-    .filter((t) => t.course === course.course && (t.level === "SL" || course.level === "HL"))
+    .filter((t) => {
+      if (t.course !== course.course) return false
+      if (course.course === "0580") {
+        return t.level === "Core" || course.level === "Extended"
+      }
+      return t.level === "SL" || course.level === "HL"
+    })
     .sort((a, b) => a.topic - b.topic || a.subtopic - b.subtopic)
 }
 
@@ -163,6 +211,7 @@ export type Exam = {
 }
 
 export const IB_GRADES = [1, 2, 3, 4, 5, 6, 7] as const
+export const GCSE_GRADES = [9, 8, 7, 6, 5, 4, 3, 2, 1] as const
 
 /** "78%" or "78.5%": whole numbers stay whole. */
 export function formatPercent(percent: number): string {

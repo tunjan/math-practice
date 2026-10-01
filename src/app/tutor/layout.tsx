@@ -14,13 +14,13 @@ export default async function TutorLayout({ children }: LayoutProps<"/tutor">) {
 
   return (
     <WorkspaceShell
-      className="dub"
       home="/tutor"
       items={NAV}
       person={{
         name: profile.fullName || "Tutor",
         email: profile.email,
         role: "Tutor",
+        timeZone: profile.timezone,
       }}
     >
       {children}

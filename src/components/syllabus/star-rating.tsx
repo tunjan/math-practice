@@ -66,7 +66,7 @@ export function StarRating({
             else if (event.key === "Home" || event.key === "0") move(event, 0)
             else if (/^[1-5]$/.test(event.key)) move(event, Number(event.key))
           }}
-          className="rounded-xs p-px outline-none focus-visible:ring-2 focus-visible:ring-on-surface/30"
+          className="rounded-sm p-px outline-none focus-visible:ring-2 focus-visible:ring-foreground/30"
         >
           <StarGlyph filled={n <= shown} preview={hover !== null} />
         </button>
@@ -82,8 +82,8 @@ function StarGlyph({ filled, preview = false }: { filled: boolean; preview?: boo
       className={cn(
         "size-3.5",
         filled
-          ? cn("fill-amber-400 text-amber-400", preview && "fill-amber-300 text-amber-300")
-          : "fill-transparent text-neutral-300"
+          ? cn("fill-warning text-warning", preview && "fill-warning/60 text-warning/60")
+          : "fill-transparent text-input"
       )}
     />
   )

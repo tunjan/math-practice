@@ -18,11 +18,11 @@ import { cn } from "cn"
 const buttonVariants = cva(
   [
     "group/button relative inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap select-none",
-    "rounded-md border text-sm leading-5 font-medium outline-none",
+    "rounded-lg border text-sm leading-5 font-medium outline-none",
     // Colour settles quickly; the halo and the press spring on Dub's curve.
     "transition-[color,background-color,border-color,text-decoration-color,box-shadow,scale] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
     "active:scale-[0.96] active:duration-75",
-    "focus-visible:ring-4 focus-visible:ring-on-surface/15",
+    "focus-visible:ring-4 focus-visible:ring-foreground/15",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
     // Disabled and loading share the quiet `bg-subtle` look and stay put.
     "data-disabled:scale-100 data-disabled:cursor-not-allowed data-disabled:shadow-none data-disabled:ring-0",
@@ -33,45 +33,45 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: [
-          "border-primary bg-primary text-on-primary shadow-xs",
-          "hover:border-primary-hover hover:bg-primary-hover hover:ring-4 hover:ring-outline",
-          "active:bg-primary-pressed",
-          "data-disabled:border-outline data-disabled:bg-surface-sunken data-disabled:text-on-surface-muted",
+          "border-primary bg-primary text-primary-foreground shadow-xs",
+          "hover:border-primary/90 hover:bg-primary/90 hover:ring-4 hover:ring-border",
+          "active:bg-primary",
+          "data-disabled:border-border data-disabled:bg-muted data-disabled:text-muted-foreground",
         ],
         secondary: [
-          "border-outline bg-surface text-on-surface shadow-xs",
-          "hover:bg-surface-muted active:bg-surface-sunken",
-          "data-popup-open:border-outline-strong data-popup-open:ring-4 data-popup-open:ring-outline",
-          "data-disabled:bg-surface-sunken data-disabled:text-on-surface-muted",
+          "border-border bg-background text-foreground shadow-xs",
+          "hover:bg-muted/50 active:bg-muted",
+          "data-popup-open:border-input data-popup-open:ring-4 data-popup-open:ring-border",
+          "data-disabled:bg-muted data-disabled:text-muted-foreground",
         ],
         ghost: [
-          "border-transparent bg-transparent text-on-surface-secondary",
-          "hover:bg-surface-hover hover:text-on-surface active:bg-on-surface/10",
-          "data-popup-open:bg-surface-hover data-popup-open:text-on-surface",
-          "data-disabled:bg-transparent data-disabled:text-on-surface-muted",
+          "border-transparent bg-transparent text-foreground/80",
+          "hover:bg-accent hover:text-foreground active:bg-foreground/10",
+          "data-popup-open:bg-accent data-popup-open:text-foreground",
+          "data-disabled:bg-transparent data-disabled:text-muted-foreground",
         ],
         /** Dub's danger-outline: red ink at rest, a red fill once you mean it. */
         destructive: [
-          "border-transparent bg-transparent text-error",
-          "hover:border-[#dc2626] hover:bg-[#dc2626] hover:text-white active:border-[#b91c1c] active:bg-[#b91c1c]",
-          "data-disabled:border-transparent data-disabled:bg-transparent data-disabled:text-on-surface-muted",
+          "border-transparent bg-transparent text-destructive",
+          "hover:border-destructive hover:bg-destructive hover:text-destructive-foreground active:border-destructive/90 active:bg-destructive/90",
+          "data-disabled:border-transparent data-disabled:bg-transparent data-disabled:text-muted-foreground",
         ],
         /** The confirm step of a destructive action, never its trigger. */
         danger: [
-          "border-[#dc2626] bg-[#dc2626] text-white shadow-xs",
-          "hover:border-[#b91c1c] hover:bg-[#b91c1c] hover:ring-4 hover:ring-[#fee2e2]",
-          "data-disabled:border-outline data-disabled:bg-surface-sunken data-disabled:text-on-surface-muted",
+          "border-destructive bg-destructive text-destructive-foreground shadow-xs",
+          "hover:border-destructive/90 hover:bg-destructive/90 hover:ring-4 hover:ring-error-container",
+          "data-disabled:border-border data-disabled:bg-muted data-disabled:text-muted-foreground",
         ],
-        /** Actions inside the floating `surface-inverse` bar */
+        /** Actions inside the floating `bg-foreground` bar */
         inverse: [
-          "border-transparent bg-transparent text-on-surface-inverse",
-          "hover:bg-white/10 active:bg-white/15",
-          "data-disabled:bg-transparent data-disabled:text-on-surface-inverse/40",
+          "border-transparent bg-transparent text-background",
+          "hover:bg-background/10 active:bg-background/15",
+          "data-disabled:bg-transparent data-disabled:text-background/40",
         ],
         link: [
-          "h-auto border-transparent p-0 text-on-surface underline decoration-outline-strong underline-offset-4",
+          "h-auto border-transparent p-0 text-foreground underline decoration-input underline-offset-4",
           "hover:decoration-current active:scale-100",
-          "data-disabled:text-on-surface-muted data-disabled:no-underline",
+          "data-disabled:text-muted-foreground data-disabled:no-underline",
         ],
       },
       size: {
@@ -173,9 +173,9 @@ function ButtonKbd({ tone, children }: { tone: ButtonVariants["variant"]; childr
     <kbd
       aria-hidden
       className={cn(
-        "-mr-1 hidden h-5 min-w-5 items-center justify-center rounded-xs px-1.5 font-sans text-xs leading-none font-light md:inline-flex",
-        "transition-colors duration-200 group-data-disabled/button:bg-outline group-data-disabled/button:text-on-surface-muted",
-        onFill ? "bg-white/20 text-white/70" : "bg-surface-sunken text-on-surface-muted"
+        "-mr-1 hidden h-5 min-w-5 items-center justify-center rounded-sm px-1.5 font-sans text-xs leading-none font-light md:inline-flex",
+        "transition-colors duration-200 group-data-disabled/button:bg-border group-data-disabled/button:text-muted-foreground",
+        onFill ? "bg-background/20 text-background/70" : "bg-muted text-muted-foreground"
       )}
     >
       {children}

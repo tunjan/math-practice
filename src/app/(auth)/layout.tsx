@@ -6,7 +6,7 @@ import { Wordmark } from "@/components/brand/primitives"
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-canvas-cool">
+    <div className="flex min-h-dvh flex-col bg-muted/50">
       <header className="flex h-16 items-center px-4 md:px-8">
         <Wordmark href="/" />
       </header>

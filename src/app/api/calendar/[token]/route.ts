@@ -6,7 +6,7 @@ import { EVENT_KIND_LABEL, weekPlans } from "@/lib/calendar/model"
 import { PLANNED_TOPICS_SELECT, toPlannedTopics } from "@/lib/calendar/load"
 import { TYPE_LABEL } from "@/lib/assignments/model"
 import { addDays, dayKeyOf, utcDayKey, utcMidnight } from "@/lib/calendar/dates"
-import { formatPercent, TOPIC_NAME, toTopicTags } from "@/lib/syllabus/model"
+import { formatPercent, toTopicTags } from "@/lib/syllabus/model"
 
 /**
  * A subscribable calendar feed: /api/calendar/<token>.ics
@@ -171,7 +171,7 @@ export async function GET(
   })
 
   const plans: CalendarEvent[] = weekPlans(toPlannedTopics(plannedRows, isTutor)).map((plan) => {
-    const strand = TOPIC_NAME[plan.topic] ?? `Topic ${plan.topic}`
+    const strand = plan.strand
     const codes = plan.topics.map((t) => t.code).join(", ")
     return {
       uid: `plan-${plan.studentId}-${plan.week}-${plan.topic}@maths-tasks`,

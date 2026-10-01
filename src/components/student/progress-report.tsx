@@ -1,82 +1,139 @@
 "use client"
 
 import * as React from "react"
+import { Minus, Plus } from "lucide-react"
 import { toast } from "sonner"
 
+import { Button } from "@/components/ui/button"
 import { reportProgress } from "@/lib/student/actions"
 
-const STEP = 5
+/** Long enough to tap through a few exercises as one write. */
+const SAVE_DELAY = 600
 
 /**
- * The student's own report of how far along a task is. Dragging only moves the
- * figure; the value is saved when they let go, so a drag is one write.
+ * The student's own count of exercises done, out of the tutor's total. The
+ * buttons step by one; the figure can be typed into to jump. Changes settle
+ * for a moment before saving, so a run of taps is one write.
  */
 export function ProgressReport({
   assignmentId,
-  value,
+  done,
+  total,
   save = reportProgress,
 }: {
   assignmentId: string
-  value: number
-  save?: (assignmentId: string, pct: number) => Promise<{ error?: string }>
+  done: number
+  total: number
+  save?: (assignmentId: string, done: number) => Promise<{ error?: string }>
 }) {
-  const [pct, setPct] = React.useState(value)
-  const [seen, setSeen] = React.useState(value)
-  const saved = React.useRef(value)
+  const [count, setCount] = React.useState(done)
+  const [draft, setDraft] = React.useState(String(done))
+  const [seen, setSeen] = React.useState(done)
+  const saved = React.useRef(done)
+  const timer = React.useRef<ReturnType<typeof setTimeout>>(undefined)
+  const pending = React.useRef<number | null>(null)
+  const id = React.useId()
 
   // The board behind the dialog refreshes after a save; follow it.
-  if (value !== seen) {
-    setSeen(value)
-    setPct(value)
+  if (done !== seen) {
+    setSeen(done)
+    setCount(done)
+    setDraft(String(done))
   }
 
-  const commit = async () => {
-    const next = Math.min(99, Math.max(1, pct))
-    if (next === saved.current) return
-    const previous = saved.current
-    saved.current = next
-    setPct(next)
-    const result = await save(assignmentId, next)
-    if (result.error) {
-      saved.current = previous
-      setPct(previous)
-      toast.error(result.error)
-    }
+  const commit = React.useCallback(
+    async (next: number) => {
+      if (next === saved.current) return
+      const previous = saved.current
+      saved.current = next
+      const result = await save(assignmentId, next)
+      if (result.error) {
+        saved.current = previous
+        setCount(previous)
+        setDraft(String(previous))
+        toast.error(result.error)
+      }
+    },
+    [assignmentId, save]
+  )
+
+  // Closing the dialog mid-wait still saves.
+  React.useEffect(
+    () => () => {
+      clearTimeout(timer.current)
+      if (pending.current !== null) void commit(pending.current)
+    },
+    [commit]
+  )
+
+  const change = (next: number, delay = SAVE_DELAY) => {
+    const clamped = Math.min(total, Math.max(0, next))
+    setCount(clamped)
+    setDraft(String(clamped))
+    clearTimeout(timer.current)
+    pending.current = clamped
+    timer.current = setTimeout(() => {
+      pending.current = null
+      void commit(clamped)
+    }, delay)
+  }
+
+  const typed = () => {
+    const parsed = Number.parseInt(draft, 10)
+    if (Number.isNaN(parsed)) setDraft(String(count))
+    else change(parsed, 0)
   }
 
   return (
-    <div className="group flex items-center gap-3">
-      <label htmlFor={`progress-${assignmentId}`} className="text-sm text-on-surface-muted">
-        Progress
+    <div className="flex items-center gap-3">
+      <label htmlFor={id} className="text-sm text-muted-foreground">
+        Exercises done
       </label>
-      <input
-        id={`progress-${assignmentId}`}
-        type="range"
-        min={0}
-        max={100}
-        step={STEP}
-        value={pct}
-        onChange={(event) => setPct(Number(event.target.value))}
-        onPointerUp={commit}
-        onKeyUp={commit}
-        onBlur={commit}
-        aria-valuetext={`${pct}% done`}
-        style={{ "--fill": `${pct}%` } as React.CSSProperties}
-        className={[
-          "h-4 w-full max-w-48 cursor-pointer appearance-none bg-transparent focus-visible:outline-none",
-          // Hairline track that fills with ink; the thumb only shows on hover or focus.
-          "[&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full",
-          "[&::-webkit-slider-runnable-track]:bg-[linear-gradient(to_right,var(--color-on-surface,#222a35)_var(--fill),var(--color-outline,#e5e7eb)_var(--fill))]",
-          "[&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-outline",
-          "[&::-moz-range-progress]:h-1 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-on-surface",
-          "[&::-webkit-slider-thumb]:-mt-[3px] [&::-webkit-slider-thumb]:size-2.5 [&::-webkit-slider-thumb]:appearance-none",
-          "[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-on-surface [&::-webkit-slider-thumb]:opacity-0",
-          "[&::-webkit-slider-thumb]:transition-opacity hover:[&::-webkit-slider-thumb]:opacity-100 focus-visible:[&::-webkit-slider-thumb]:opacity-100",
-          "[&::-moz-range-thumb]:size-2.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-on-surface",
-          "[&::-moz-range-thumb]:opacity-0 hover:[&::-moz-range-thumb]:opacity-100 focus-visible:[&::-moz-range-thumb]:opacity-100",
-        ].join(" ")}
-      />
-      <span className="w-8 font-mono text-xs text-on-surface-muted tabular-nums">{pct}%</span>
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="One fewer done"
+          disabled={count <= 0}
+          onClick={() => change(count - 1)}
+        >
+          <Minus aria-hidden />
+        </Button>
+        <span className="flex items-baseline gap-1 font-mono text-sm text-foreground tabular-nums">
+          <input
+            id={id}
+            inputMode="numeric"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value.replace(/\D/g, "").slice(0, 3))}
+            onBlur={typed}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                typed()
+              }
+            }}
+            aria-describedby={`${id}-total`}
+            style={{ width: `${Math.max(1, String(total).length)}ch` }}
+            className="rounded-sm bg-transparent text-right outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+          />
+          <span id={`${id}-total`} className="text-muted-foreground">
+            <span aria-hidden>/ </span>
+            <span className="sr-only">of </span>
+            {total}
+          </span>
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="One more done"
+          disabled={count >= total}
+          onClick={() => change(count + 1)}
+        >
+          <Plus aria-hidden />
+        </Button>
+      </div>
     </div>
   )
 }

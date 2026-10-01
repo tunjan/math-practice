@@ -5,6 +5,7 @@ import { CalendarDays, X } from "lucide-react"
 import { cn } from "cn"
 
 import { Calendar } from "@/components/ui/calendar"
+import { chipClass } from "@/components/ui/chip"
 import { fieldBase } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
@@ -43,6 +44,7 @@ function DateField({
   clearable = false,
   variant = "default",
   mono = false,
+  format,
   className,
   ...aria
 }: {
@@ -55,8 +57,11 @@ function DateField({
   placeholder?: string
   /** Shows a clear button in the popover. For optional dates. */
   clearable?: boolean
-  variant?: "default" | "filled"
+  /** `chip` is the 32px composer chip, for dialogs that lay properties in a row. */
+  variant?: "default" | "filled" | "chip"
   mono?: boolean
+  /** Text for the chosen day, when the default "5 Oct 2026" is too long. */
+  format?: (value: string) => string
   className?: string
   "aria-label"?: string
   "aria-invalid"?: boolean
@@ -80,20 +85,24 @@ function DateField({
         {...aria}
         className={cn(
           fieldBase,
-          "flex h-10 items-center gap-2 px-3 text-left",
-          mono ? "mono-data" : "body-md",
-          variant === "default" && "border-outline-strong bg-surface",
-          variant === "filled" && "border-transparent bg-surface-sunken focus-visible:bg-surface",
-          "data-popup-open:border-on-surface data-popup-open:ring-3 data-popup-open:ring-on-surface/10",
+          variant === "chip"
+            ? [chipClass, "gap-1.5 text-left"]
+            : [
+                "flex h-10 items-center gap-2 px-3 text-left",
+                mono ? "body-md tabular-nums" : "body-md",
+                variant === "default" && "border-input bg-background",
+                variant === "filled" && "border-transparent bg-muted focus-visible:bg-background",
+                "data-popup-open:border-foreground data-popup-open:ring-3 data-popup-open:ring-foreground/10",
+              ],
           className
         )}
       >
-        <CalendarDays aria-hidden className="size-4 shrink-0 text-on-surface-muted" />
-        <span className={cn("min-w-0 flex-1 truncate", !selected && "text-on-surface-muted")}>
-          {selected ? displayDay(selected) : placeholder}
+        <CalendarDays aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+        <span className={cn("min-w-0 flex-1 truncate", !selected && "text-muted-foreground")}>
+          {selected ? (format ? format(value) : displayDay(selected)) : placeholder}
         </span>
       </PopoverTrigger>
-      <PopoverContent className="dub w-auto">
+      <PopoverContent className="w-auto">
         <Calendar
           mode="single"
           required
@@ -114,7 +123,7 @@ function DateField({
               onChange("")
               setOpen(false)
             }}
-            className="mt-1 flex h-8 items-center justify-center gap-1.5 rounded-md label-md text-on-surface-muted transition-colors hover:bg-surface-hover hover:text-on-surface"
+            className="mt-1 flex h-8 items-center justify-center gap-1.5 rounded-lg label-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <X aria-hidden className="size-3.5" /> Clear date
           </button>

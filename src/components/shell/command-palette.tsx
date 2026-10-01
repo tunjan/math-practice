@@ -42,13 +42,11 @@ export function CommandPalette({
   open,
   onOpenChange,
   pages,
-  scope,
   load = loadCommandIndex,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   pages: CommandPage[]
-  scope?: string
   /** Where the index comes from; the styleguide passes sample data. */
   load?: () => Promise<CommandEntry[]>
 }) {
@@ -88,7 +86,7 @@ export function CommandPalette({
     .filter(({ items }) => items.length > 0)
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange} scope={scope}>
+    <CommandDialog open={open} onOpenChange={onOpenChange}>
       <Command loop>
         <CommandInput placeholder="Search pages, students and tasks" />
         <CommandList>
@@ -121,7 +119,7 @@ export function CommandPalette({
             )
           })}
         </CommandList>
-        <div className="flex h-9 items-center gap-1.5 border-t border-outline px-4 body-sm text-on-surface-muted">
+        <div className="flex h-9 items-center gap-1.5 border-t border-border px-4 body-md text-muted-foreground">
           <CornerDownLeft aria-hidden className="size-3.5" /> to open · Esc to close
         </div>
       </Command>

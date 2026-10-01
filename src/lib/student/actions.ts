@@ -40,10 +40,9 @@ export async function recordOpen(assignmentId: string): Promise<void> {
 }
 
 /**
- * Moves a task the student hasn't started into "In progress" by giving it the
- * smallest progress there is. Progress is the student's own report (the guard
- * lets them write it), so this is theirs to say. Only a task still at zero,
- * and not yet handed in, moves.
+ * Moves a task the student hasn't started into "In progress". Starting is the
+ * student's own report (the guard lets them write it, once), so this is
+ * theirs to say. Only a task not yet started or handed in moves.
  */
 export async function startTask(assignmentId: string): Promise<{ error?: string }> {
   if (!UUID.test(assignmentId)) return { error: "Unknown task." }
@@ -53,10 +52,10 @@ export async function startTask(assignmentId: string): Promise<{ error?: string 
 
   const { error } = await supabase
     .from("assignments")
-    .update({ completion_pct: 1 })
+    .update({ started_at: new Date().toISOString() })
     .eq("id", assignmentId)
     .eq("student_id", profile.id)
-    .eq("completion_pct", 0)
+    .is("started_at", null)
     .is("submitted_at", null)
 
   if (error) return { error: "Couldn't move that task. Try again." }
@@ -66,25 +65,27 @@ export async function startTask(assignmentId: string): Promise<{ error?: string 
 }
 
 /**
- * Records how far along the student says they are, 1–99. Zero would put the
- * task back in "Assigned" and 100 is what handing it in is for, so the report
- * stays inside that range. Only for a task not yet handed in.
+ * Records how many of the task's exercises the student says they have done.
+ * Ticking one off also counts as starting, and the database keeps the first
+ * start (see guard_assignment_update). Only for a task not yet handed in; a
+ * count above the task's total is refused by the database.
  */
 export async function reportProgress(
   assignmentId: string,
-  pct: number
+  done: number
 ): Promise<{ error?: string }> {
   if (!UUID.test(assignmentId)) return { error: "Unknown task." }
-  if (!Number.isInteger(pct) || pct < 1 || pct > 99) return { error: "Progress is 1 to 99." }
+  if (!Number.isInteger(done) || done < 0) return { error: "That isn't a number of exercises." }
 
   const profile = await requireRole("student")
   const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("assignments")
-    .update({ completion_pct: pct })
+    .update({ exercises_done: done, started_at: new Date().toISOString() })
     .eq("id", assignmentId)
     .eq("student_id", profile.id)
+    .gte("exercise_count", done)
     .is("submitted_at", null)
     .select("id")
 

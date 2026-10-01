@@ -150,16 +150,16 @@ export function MaterialUploader({
           void upload(event.dataTransfer.files)
         }}
         className={cn(
-          "flex flex-col items-center justify-center gap-3 rounded-md border border-dashed px-6 py-8 text-center transition-colors",
-          dragging ? "border-on-surface bg-surface-sunken" : "border-outline-strong bg-surface"
+          "flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 py-8 text-center transition-colors",
+          dragging ? "border-foreground bg-muted" : "border-input bg-background"
         )}
       >
         <IconTile>
           <Upload />
         </IconTile>
         <div className="flex flex-col gap-0.5">
-          <p className="body-md text-on-surface">Drop worksheets here</p>
-          <p className="body-sm text-on-surface-muted">PDF, PNG or JPEG, up to 20 MB each</p>
+          <p className="body-md text-foreground">Drop worksheets here</p>
+          <p className="body-md text-muted-foreground">PDF, PNG or JPEG, up to 20 MB each</p>
         </div>
         <Button type="button" size="sm" onClick={() => inputRef.current?.click()}>
           Choose files
@@ -192,11 +192,11 @@ export function MaterialUploader({
       ) : null}
 
       {items.length > 0 ? (
-        <ul role="list" className="flex flex-col overflow-hidden rounded-md border border-outline">
+        <ul role="list" className="flex flex-col overflow-hidden rounded-lg border border-border">
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex min-h-14 items-center gap-3 border-t border-outline px-3 py-2 first:border-t-0"
+              className="flex min-h-14 items-center gap-3 border-t border-border px-3 py-2 first:border-t-0"
             >
               <IconTile className="size-8 [&_svg]:size-4">
                 {item.status === "uploading" ? (
@@ -207,13 +207,13 @@ export function MaterialUploader({
                   <ImageIcon />
                 )}
               </IconTile>
-              <span className="min-w-0 flex-1 truncate body-md text-on-surface">
+              <span className="min-w-0 flex-1 truncate body-md text-foreground">
                 {item.fileName}
               </span>
               <span
                 className={cn(
-                  "shrink-0 mono-data-sm",
-                  item.status === "error" ? "text-error" : "text-on-surface-muted"
+                  "shrink-0 caption tabular-nums",
+                  item.status === "error" ? "text-destructive" : "text-muted-foreground"
                 )}
               >
                 {item.status === "error"

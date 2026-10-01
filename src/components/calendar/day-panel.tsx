@@ -58,7 +58,7 @@ export function DayPanel({
       data-slot="day-panel"
       aria-labelledby="day-panel-title"
       className={cn(
-        "flex flex-col gap-2 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10",
+        "flex flex-col gap-2 overflow-hidden rounded-2xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10",
         className
       )}
     >
@@ -75,7 +75,7 @@ export function DayPanel({
 
       {placements.length === 0 && plans.length === 0 ? (
         <div data-slot="day-panel-empty" className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-          <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <span className="flex size-8 items-center justify-center rounded-lg bg-muted text-muted-foreground">
             <CalendarDays aria-hidden className="size-4" />
           </span>
           <p className="text-sm text-muted-foreground">Nothing scheduled</p>
@@ -107,7 +107,7 @@ export function DayPanel({
   )
 }
 
-const rowClass = "flex w-full gap-2.5 rounded-md px-2 py-2 text-left outline-none"
+const rowClass = "flex w-full gap-2.5 rounded-lg px-2 py-2 text-left outline-none"
 const hoverClass = "transition-colors hover:bg-muted"
 
 function Row({

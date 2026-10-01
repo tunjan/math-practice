@@ -14,7 +14,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-outline bg-surface text-on-surface",
+        "relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-background text-foreground",
         className
       )}
       {...props}
@@ -38,7 +38,7 @@ function CardHeader({
     <div
       data-slot="card-header"
       className={cn(
-        "flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-outline px-4 py-3",
+        "flex min-h-14 flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-border px-4 py-3",
         className
       )}
       {...props}
@@ -59,7 +59,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return (
     <h2
       data-slot="card-title"
-      className={cn("title-md text-on-surface", className)}
+      className={cn("title-md text-foreground", className)}
       {...props}
     />
   )
@@ -69,7 +69,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       data-slot="card-description"
-      className={cn("body-sm text-on-surface-muted", className)}
+      className={cn("body-md text-muted-foreground", className)}
       {...props}
     />
   )
@@ -80,7 +80,7 @@ function CardSection({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-section"
-      className={cn("border-t border-outline p-4 first:border-t-0", className)}
+      className={cn("border-t border-border p-4 first:border-t-0", className)}
       {...props}
     />
   )
@@ -91,7 +91,7 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-footer"
       className={cn(
-        "flex flex-wrap items-center gap-2 border-t border-outline bg-surface-muted px-4 py-3",
+        "flex flex-wrap items-center gap-2 border-t border-border bg-muted/50 px-4 py-3",
         className
       )}
       {...props}
@@ -117,15 +117,15 @@ function StatStrip({
           key={stat.label}
           className={cn(
             "flex min-w-0 flex-col gap-1 p-4",
-            index % 2 === 1 && "border-l border-outline",
-            index >= 2 && "border-t border-outline lg:border-t-0",
+            index % 2 === 1 && "border-l border-border",
+            index >= 2 && "border-t border-border lg:border-t-0",
             index > 0 && "lg:border-l"
           )}
         >
-          <span className="truncate body-md text-on-surface-muted">{stat.label}</span>
-          <span className="display-num text-on-surface">{stat.value}</span>
+          <span className="truncate body-md text-muted-foreground">{stat.label}</span>
+          <span className="headline-lg tabular-nums text-foreground">{stat.value}</span>
           {stat.note ? (
-            <span className="body-sm text-on-surface-muted">{stat.note}</span>
+            <span className="body-md text-muted-foreground">{stat.note}</span>
           ) : null}
         </div>
       ))}
@@ -146,10 +146,10 @@ function DetailList({
       {items.map((item) => (
         <div
           key={item.label}
-          className="flex items-baseline justify-between gap-4 border-t border-outline px-4 py-3 first:border-t-0"
+          className="flex items-baseline justify-between gap-4 border-t border-border px-4 py-3 first:border-t-0"
         >
-          <dt className="body-sm shrink-0 text-on-surface-muted">{item.label}</dt>
-          <dd className="body-md min-w-0 text-right text-on-surface-secondary">{item.value}</dd>
+          <dt className="body-md shrink-0 text-muted-foreground">{item.label}</dt>
+          <dd className="body-md min-w-0 text-right text-foreground/80">{item.value}</dd>
         </div>
       ))}
     </dl>

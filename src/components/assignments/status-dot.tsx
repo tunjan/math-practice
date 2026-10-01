@@ -9,11 +9,11 @@ import type { StatusTone } from "@/lib/assignments/model"
  */
 export const TONE_DOT: Record<StatusTone, string> = {
   violet: "bg-violet",
-  accent: "bg-accent-orange",
+  accent: "bg-attention",
   info: "bg-info",
   warning: "bg-warning",
   success: "bg-success",
-  error: "bg-error",
+  error: "bg-destructive",
 }
 
 export function StatusDot({ tone, className }: { tone: StatusTone; className?: string }) {

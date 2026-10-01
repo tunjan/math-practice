@@ -54,7 +54,7 @@ export default async function StudentDetailPage({ params }: PageProps<"/tutor/st
 
       {course ? (
         <section className="flex flex-col gap-3">
-          <h2 className="title-md text-on-surface">Syllabus</h2>
+          <h2 className="title-md text-foreground">Syllabus</h2>
           <SyllabusTracker
             studentId={student.id}
             rows={rows}

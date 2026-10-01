@@ -23,13 +23,13 @@ export function SignupForm() {
   if (state.sentTo) {
     return (
       <div role="status" className="flex flex-col items-center gap-3 text-center">
-        <MailCheck className="size-6 text-on-surface-muted" aria-hidden />
-        <p className="body-md text-on-surface-secondary">
+        <MailCheck className="size-6 text-muted-foreground" aria-hidden />
+        <p className="body-md text-foreground/80">
           We&apos;ve sent a confirmation link to{" "}
-          <span className="font-medium break-all text-on-surface">{state.sentTo}</span>. Open it to finish
+          <span className="font-medium break-all text-foreground">{state.sentTo}</span>. Open it to finish
           setting up your account.
         </p>
-        <p className="body-md text-on-surface-muted">
+        <p className="body-md text-muted-foreground">
           The link expires in an hour. Nothing there? Check spam, or if you already have an account, sign in.
         </p>
       </div>
@@ -42,14 +42,14 @@ export function SignupForm() {
       {state.error ? <FormMessage id={errorId} error={state.error} /> : null}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor={nameId} className="text-on-surface">
+        <Label htmlFor={nameId} className="text-foreground">
           Your name
         </Label>
         <Input id={nameId} name="full_name" autoComplete="name" maxLength={120} required autoFocus />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor={emailId} className="text-on-surface">
+        <Label htmlFor={emailId} className="text-foreground">
           Email
         </Label>
         <Input
@@ -65,7 +65,7 @@ export function SignupForm() {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor={passwordId} className="text-on-surface">
+        <Label htmlFor={passwordId} className="text-foreground">
           Password
         </Label>
         <PasswordInput
@@ -77,7 +77,7 @@ export function SignupForm() {
           required
           aria-describedby={hintId}
         />
-        <p id={hintId} className="body-md text-on-surface-muted">
+        <p id={hintId} className="body-md text-muted-foreground">
           At least 10 characters.
         </p>
       </div>

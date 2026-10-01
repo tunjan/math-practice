@@ -38,12 +38,12 @@ export default function Page() {
   const [searching, setSearching] = React.useState(false)
 
   return (
-    <div className="dub min-h-screen bg-surface p-10">
+    <div className="min-h-screen bg-background p-10">
       <div className="flex max-w-3xl flex-col gap-10">
         <section className="flex flex-col gap-3" data-section="date">
-          <h2 className="label-caps text-on-surface-muted">Calendar · DateField</h2>
+          <h2 className="label-sm text-muted-foreground">Calendar · DateField</h2>
           <div className="flex flex-wrap items-start gap-6">
-            <Calendar mode="single" selected={new Date(2026, 8, 25)} defaultMonth={new Date(2026, 8, 1)} className="rounded-xl border border-outline" />
+            <Calendar mode="single" selected={new Date(2026, 8, 25)} defaultMonth={new Date(2026, 8, 1)} className="rounded-2xl border border-border" />
             <div className="flex w-64 flex-col gap-3">
               <DateField value={day} onChange={setDay} aria-label="Date" />
               <DateField value={from} onChange={setFrom} clearable placeholder="Any" aria-label="Start" />
@@ -53,7 +53,7 @@ export default function Page() {
         </section>
 
         <section className="flex flex-col gap-3" data-section="toggle">
-          <h2 className="label-caps text-on-surface-muted">ToggleGroup</h2>
+          <h2 className="label-sm text-muted-foreground">ToggleGroup</h2>
           <ToggleGroup aria-label="Show" value={[chip]} onValueChange={(next) => next[0] && setChip(next[0])}>
             {["all", "to_see", "in_progress", "seen"].map((value) => (
               <ToggleGroupItem key={value} value={value}>
@@ -65,22 +65,22 @@ export default function Page() {
             {[["attention", 3], ["active", 12], ["approved", 40], ["all", 55]].map(([value, count]) => (
               <ToggleGroupItem key={value} value={String(value)}>
                 {value}
-                <span className="mono-data-sm text-on-surface-muted">{count}</span>
+                <span className="caption tabular-nums text-muted-foreground">{count}</span>
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
         </section>
 
         <section className="flex flex-col gap-3" data-section="collapsible">
-          <h2 className="label-caps text-on-surface-muted">Collapsible</h2>
+          <h2 className="label-sm text-muted-foreground">Collapsible</h2>
           <Collapsible className="group/more w-72">
-            <CollapsibleTrigger className="flex h-8 w-full items-center justify-center rounded-lg text-sm font-medium text-on-surface-muted hover:bg-surface-hover hover:text-on-surface">
+            <CollapsibleTrigger className="flex h-8 w-full items-center justify-center rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
               <span className="group-data-open/more:hidden">Show 3 older</span>
               <span className="hidden group-data-open/more:inline">Show fewer</span>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 flex flex-col gap-2">
               {["Vectors 3.12", "Integration 5.10", "Probability 4.5"].map((title) => (
-                <div key={title} className="rounded-lg border border-outline px-3 py-2 text-sm">
+                <div key={title} className="rounded-xl border border-border px-3 py-2 text-sm">
                   {title}
                 </div>
               ))}
@@ -89,15 +89,15 @@ export default function Page() {
         </section>
 
         <section className="flex flex-col gap-3" data-section="command">
-          <h2 className="label-caps text-on-surface-muted">Command (⌘K)</h2>
+          <h2 className="label-sm text-muted-foreground">Command (⌘K)</h2>
           <Button className="w-fit" onClick={() => setSearching(true)}>
             <Search aria-hidden /> Search
           </Button>
-          <CommandPalette open={searching} onOpenChange={setSearching} pages={PAGES} scope="dub" load={loadSample} />
+          <CommandPalette open={searching} onOpenChange={setSearching} pages={PAGES} load={loadSample} />
         </section>
 
         <section className="flex flex-col gap-3" data-section="alert">
-          <h2 className="label-caps text-on-surface-muted">Alert</h2>
+          <h2 className="label-sm text-muted-foreground">Alert</h2>
           <Alert>
             <CircleAlert aria-hidden />
             <AlertTitle>2 problems: fix the file and check it again.</AlertTitle>

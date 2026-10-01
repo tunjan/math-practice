@@ -68,7 +68,7 @@ export function TaskComments({
 
   return (
     <section aria-labelledby={headingId} className={cn("flex flex-col gap-4", className)}>
-      <h3 id={headingId} className="text-sm font-medium text-on-surface">
+      <h3 id={headingId} className="text-sm font-medium text-foreground">
         Comments
       </h3>
       {shown.length > 0 ? (
@@ -112,20 +112,20 @@ function Comment({
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-full text-xs leading-none font-medium",
           comment.author === "tutor"
-            ? "bg-primary text-on-primary"
-            : "bg-surface-sunken text-on-surface-secondary"
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-foreground/80"
         )}
       >
         {initial}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex h-7 items-center gap-2">
-          <span className="truncate text-sm font-medium text-on-surface">{comment.name}</span>
+          <span className="truncate text-sm font-medium text-foreground">{comment.name}</span>
           <time
             dateTime={comment.at}
             suppressHydrationWarning
             title={formatMoment(comment.at, timeZone)}
-            className="shrink-0 text-xs text-on-surface-muted"
+            className="shrink-0 text-xs text-muted-foreground"
           >
             {when(comment.at, timeZone)}
           </time>
@@ -135,8 +135,8 @@ function Comment({
               onClick={onDelete}
               aria-label="Delete comment"
               className={cn(
-                "ml-auto flex size-6 shrink-0 items-center justify-center rounded-md text-on-surface-muted",
-                "transition-[opacity,background-color,color] duration-150 hover:bg-surface-sunken hover:text-on-surface",
+                "ml-auto flex size-6 shrink-0 items-center justify-center rounded-lg text-muted-foreground",
+                "transition-[opacity,background-color,color] duration-150 hover:bg-muted hover:text-foreground",
                 "opacity-0 group-hover/comment:opacity-100 focus-visible:opacity-100 pointer-coarse:opacity-100"
               )}
             >
@@ -144,7 +144,7 @@ function Comment({
             </button>
           ) : null}
         </div>
-        <MathProse className="gap-2 text-sm! leading-6! text-on-surface-secondary [overflow-wrap:anywhere]">
+        <MathProse className="gap-2 text-sm! leading-6! text-foreground/80 [overflow-wrap:anywhere]">
           {comment.body}
         </MathProse>
       </div>
@@ -175,13 +175,12 @@ function Composer({ onPost }: { onPost: (body: string) => Promise<boolean> }) {
         void submit()
       }}
       className={cn(
-        "flex items-end gap-2 rounded-xl border border-outline bg-surface py-1.5 pr-1.5 pl-3",
+        "flex items-end gap-2 rounded-2xl border border-border bg-background py-1.5 pr-1.5 pl-3",
         "transition-[border-color,box-shadow] duration-150",
-        "focus-within:border-outline-strong focus-within:shadow-[0_0_0_4px_var(--surface-sunken)]"
+        "focus-within:border-input focus-within:ring-4 focus-within:ring-border"
       )}
     >
       <textarea
-        data-composer
         rows={1}
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
@@ -194,7 +193,7 @@ function Composer({ onPost }: { onPost: (body: string) => Promise<boolean> }) {
         maxLength={MAX_COMMENT_LENGTH}
         aria-label="Comment"
         placeholder="Add a comment"
-        className="field-sizing-content max-h-40 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5 text-on-surface outline-none placeholder:text-on-surface-muted"
+        className="field-sizing-content max-h-40 min-h-8 flex-1 resize-none bg-transparent py-1.5 text-sm leading-5 text-foreground outline-none placeholder:text-muted-foreground"
       />
       <Button
         type="submit"
@@ -202,7 +201,7 @@ function Composer({ onPost }: { onPost: (body: string) => Promise<boolean> }) {
         size="icon-sm"
         disabled={!ready}
         aria-label="Post comment"
-        className="rounded-lg"
+        className="rounded-xl"
       >
         <ArrowUp aria-hidden />
       </Button>

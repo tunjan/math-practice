@@ -13,6 +13,8 @@ export type Recipient = {
   pending: boolean
   /** Their IB course, which decides the syllabus topics a task can carry. */
   course: StudentCourse | null
+  /** Their IANA zone, so deadlines are set on their clock. Unknown until an invitee joins. */
+  timeZone: string | null
 }
 
 export type Topic = { id: string; name: string }
@@ -29,7 +31,7 @@ export async function loadTaskOptions(
   const [{ data: students }, { data: invites }, { data: categories }, syllabus] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, email, programme, course, level")
+      .select("id, full_name, email, timezone, programme, course, level")
       .eq("role", "student")
       .order("full_name"),
     supabase
@@ -49,12 +51,14 @@ export async function loadTaskOptions(
         label: student.full_name || student.email || "Unnamed student",
         pending: false,
         course: studentCourse(student),
+        timeZone: student.timezone,
       })),
       ...(invites ?? []).map((invite) => ({
         value: `invite:${invite.id}`,
         label: invite.full_name || "Invited student",
         pending: true,
         course: null,
+        timeZone: null,
       })),
     ],
     topics: (categories ?? []).map((c) => ({ id: c.id, name: c.name })),

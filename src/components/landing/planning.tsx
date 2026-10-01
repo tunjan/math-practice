@@ -17,7 +17,7 @@ function Stars({ n }: { n: number }) {
         <Star
           key={i}
           aria-hidden
-          className={i < n ? "size-3.5 fill-info text-info" : "size-3.5 text-outline-strong"}
+          className={i < n ? "size-3.5 fill-info text-info" : "size-3.5 text-input"}
         />
       ))}
     </span>
@@ -32,16 +32,16 @@ const EXAM = 21
 
 function Syllabus() {
   return (
-    <section className="flex flex-col gap-8 rounded-xl border border-outline bg-surface p-6 sm:p-8 lg:col-span-7">
+    <section className="flex flex-col gap-8 rounded-2xl border border-border bg-background p-6 sm:p-8 lg:col-span-7">
       <header className="flex items-center justify-between gap-4">
-        <h3 className="title-md text-on-surface">Syllabus</h3>
+        <h3 className="title-md text-foreground">Syllabus</h3>
         <Badge variant="outline">AA HL</Badge>
       </header>
       <ul className="flex flex-col gap-5">
         {TOPICS.map((t) => (
           <li key={t.code} className="flex items-center gap-4">
-            <span className="w-8 font-mono text-[13px] text-on-surface-muted">{t.code}</span>
-            <span className="min-w-0 flex-1 truncate text-sm text-on-surface">{t.title}</span>
+            <span className="w-8 font-mono text-[13px] text-muted-foreground">{t.code}</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-foreground">{t.title}</span>
             <Badge variant={t.tone} className="hidden sm:inline-flex">
               {t.status}
             </Badge>
@@ -56,14 +56,14 @@ function Syllabus() {
 function Calendar() {
   const cells = [...Array(LEAD).fill(null), ...Array.from({ length: DAYS }, (_, i) => i + 1)]
   return (
-    <section className="flex flex-col gap-6 rounded-xl border border-outline bg-surface-muted p-6 sm:p-8 lg:col-span-5">
+    <section className="flex flex-col gap-6 rounded-2xl border border-border bg-muted/50 p-6 sm:p-8 lg:col-span-5">
       <header className="flex items-center justify-between gap-4">
-        <h3 className="title-md text-on-surface">Calendar</h3>
-        <span className="text-sm text-on-surface-muted">October</span>
+        <h3 className="title-md text-foreground">Calendar</h3>
+        <span className="text-sm text-muted-foreground">October</span>
       </header>
       <div className="grid grid-cols-7 gap-y-1.5 text-center font-mono text-xs">
         {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-          <span key={i} className="pb-1 text-on-surface-muted">
+          <span key={i} className="pb-1 text-muted-foreground">
             {d}
           </span>
         ))}
@@ -75,10 +75,10 @@ function Calendar() {
               key={d}
               className={
                 d === EXAM
-                  ? "mx-auto flex size-8 items-center justify-center rounded-md border border-on-surface bg-surface text-on-surface"
+                  ? "mx-auto flex size-8 items-center justify-center rounded-lg border border-foreground bg-background text-foreground"
                   : DUE.has(d)
-                    ? "mx-auto flex size-8 items-center justify-center rounded-md bg-info-container text-on-info-container"
-                    : "mx-auto flex size-8 items-center justify-center text-on-surface-muted"
+                    ? "mx-auto flex size-8 items-center justify-center rounded-lg bg-info-container text-on-info-container"
+                    : "mx-auto flex size-8 items-center justify-center text-muted-foreground"
               }
             >
               {d}
@@ -95,7 +95,7 @@ export function Planning() {
   return (
     <div className="pb-24 lg:pb-32">
       <Reveal className="flex flex-col gap-12">
-        <h2 className="font-display text-3xl leading-[1.15] font-medium text-balance text-on-surface md:text-[40px]">
+        <h2 className="font-display text-3xl leading-[1.15] font-medium text-balance text-foreground md:text-[40px]">
           The whole course, at a glance
         </h2>
         <div className="grid gap-4 lg:grid-cols-12 lg:gap-6">

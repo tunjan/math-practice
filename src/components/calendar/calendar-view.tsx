@@ -205,7 +205,7 @@ export function CalendarView({
     // it and the agenda scrolls on its own, so nothing sits below the fold.
     <div
       data-slot="calendar-view"
-      className="dub flex flex-1 flex-col bg-card text-card-foreground xl:h-svh xl:max-h-svh xl:min-h-0"
+      className="flex flex-1 flex-col bg-card text-card-foreground xl:h-[calc(100svh-1rem)] xl:max-h-[calc(100svh-1rem)] xl:min-h-0"
     >
       <header data-slot="calendar-header" className="shrink-0 border-b border-border">
         <div className="flex h-12 w-full items-center justify-between gap-4 px-3 sm:h-16 lg:px-6">
@@ -289,7 +289,7 @@ export function CalendarView({
             >
               Today
             </TooltipTrigger>
-            <TooltipContent className="dub">
+            <TooltipContent>
               Go to today
               <Kbd className="h-5 min-w-5 border-0 px-1 text-xs font-light">T</Kbd>
             </TooltipContent>
@@ -303,7 +303,7 @@ export function CalendarView({
                 const mode = next[0] as CalendarMode | undefined
                 if (mode) setView(mode)
               }}
-              className="h-8 shrink-0 gap-0.5 rounded-md bg-muted p-[3px]"
+              className="h-8 shrink-0 gap-0.5 rounded-lg bg-muted p-[3px]"
             >
               <ToggleGroupItem value="month" className={viewItemClass}>
                 Month
@@ -380,11 +380,11 @@ export function CalendarView({
 
 /** A segment of the view switch: the active one is raised off the muted track. */
 const viewItemClass =
-  "h-full rounded-sm px-2.5 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-pressed:bg-card data-pressed:text-foreground data-pressed:shadow-xs"
+  "h-full rounded-md px-2.5 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground data-pressed:bg-card data-pressed:text-foreground data-pressed:shadow-xs"
 
 const ALL = "all"
 
-const filterItemClass = "h-8 gap-1.5 rounded-sm px-2 text-sm data-highlighted:bg-accent"
+const filterItemClass = "h-8 gap-1.5 rounded-md px-2 text-sm data-highlighted:bg-accent"
 
 /** Tutor only: narrow the month to one student. */
 function StudentFilter({
@@ -406,7 +406,7 @@ function StudentFilter({
         data-slot="select-trigger"
         aria-label="Show calendar for"
         className={cn(
-          "flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-md border border-input bg-transparent pr-2 pl-2.5 text-sm whitespace-nowrap outline-none select-none sm:w-48 sm:flex-none",
+          "flex h-8 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-input bg-transparent pr-2 pl-2.5 text-sm whitespace-nowrap outline-none select-none sm:w-48 sm:flex-none",
           "transition-colors hover:bg-muted/50 data-popup-open:border-ring data-popup-open:ring-3 data-popup-open:ring-ring/15",
           "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground"
         )}
@@ -418,7 +418,7 @@ function StudentFilter({
       <SelectContent
         align="end"
         sideOffset={4}
-        className="dub min-w-48 rounded-lg border-0 p-1 shadow-md ring-1 ring-foreground/10"
+        className="min-w-48 rounded-xl border-0 p-1 shadow-md ring-1 ring-foreground/10"
       >
         <SelectItem value={ALL} className={filterItemClass}>
           All students

@@ -93,7 +93,7 @@ export default async function HealthPage() {
       width="narrow"
       header={<PageHeader title={allOk ? "All checks passing" : "Something needs attention"} />}
     >
-      <p className="body-md text-on-surface-muted">
+      <p className="body-md text-muted-foreground">
         Development only. Confirms the app can reach Supabase and that the database refuses what it should.
       </p>
       <Card>
@@ -110,7 +110,7 @@ export default async function HealthPage() {
               <TableRow key={check.name}>
                 <TableCell className="whitespace-nowrap">{check.name}</TableCell>
                 <TableCell className="max-w-0 w-full">
-                  <span className="block truncate mono-data-sm text-on-surface-secondary">
+                  <span className="block truncate caption tabular-nums text-foreground/80">
                     {check.detail}
                   </span>
                 </TableCell>

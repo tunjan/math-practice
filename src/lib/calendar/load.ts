@@ -3,7 +3,7 @@ import "server-only"
 import type { SessionProfile } from "@/lib/auth/session"
 import { asStage, assignmentStatus } from "@/lib/assignments/model"
 import type { createClient } from "@/lib/supabase/server"
-import { toTopicTags, type Course, type Level, type SyllabusLevel } from "@/lib/syllabus/model"
+import { toTopicTags, topicName, type Course, type Level, type SyllabusLevel } from "@/lib/syllabus/model"
 
 import {
   addDays,
@@ -227,11 +227,13 @@ export function toPlannedTopics(rows: PlannedRow[] | null, withPerson: boolean):
     const student = row.profiles
     if (!topic || !student || topic.course !== student.course) return []
     if (topic.level === "AHL" && student.level !== "HL") return []
+    if (topic.level === "Extended" && student.level !== "Extended") return []
     return [
       {
         studentId: row.student_id,
         person: withPerson ? student.full_name || student.email || "Unknown student" : null,
         tag: { code: topic.code, title: topic.title, topic: topic.topic, subtopic: topic.subtopic },
+        strand: topicName(topic.topic, topic.course),
         plannedStart: row.planned_start,
         plannedEnd: row.planned_end,
         updatedAt: row.updated_at,

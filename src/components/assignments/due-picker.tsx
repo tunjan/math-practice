@@ -1,73 +1,76 @@
 "use client"
 
 import * as React from "react"
+import { Globe } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  DUE_PRESETS,
-  formatDue,
-  fromDateTimeLocalValue,
-  relativeToNow,
-  resolvedTimeZone,
-  toDateTimeLocalValue,
-} from "@/lib/assignments/dates"
+import { formatDue, relativeToNow } from "@/lib/assignments/dates"
+import { DUE_PRESETS, instantOf, wallClockOf } from "@/lib/assignments/due"
+import { deviceTimeZone, sameClock, zoneCity, zoneOffsetLabel } from "@/lib/timezone"
 
 /**
- * A `datetime-local` input plus quick presets.
+ * A `datetime-local` input plus quick presets, on the student's clock.
  *
- * The input is zone-less, so the value is interpreted in the browser's own
- * timezone and converted to an absolute ISO string on the way out. The zone is
- * named on screen rather than assumed: a tutor setting deadlines from a
- * different country should be able to see which clock they are setting.
+ * The input is zone-less, so its value is read in the student's zone and
+ * converted to an absolute ISO string on the way out. The zone is named on
+ * screen, and when the tutor's own clock reads differently the deadline is
+ * shown on that too.
  */
 export function DuePicker({
   name,
   defaultValue,
+  student,
 }: {
   name: string
-  /** Absolute ISO string. Defaults to tomorrow at 18:00 local. */
+  /** Absolute ISO string. Defaults to tomorrow at 18:00 on the deadline's clock. */
   defaultValue?: string
+  /** Whose clock the deadline is on. Without one, the tutor's own. */
+  student?: { name: string; timeZone: string } | null
 }) {
   const inputId = React.useId()
 
-  // The local wall-clock value depends on the browser's timezone, so it is
-  // only computed on the client; the server renders the field empty.
-  const zone = React.useSyncExternalStore(
+  // The device's zone is only known on the client; the server renders the
+  // field empty rather than guess.
+  const viewerZone = React.useSyncExternalStore(
     () => () => {},
-    () => resolvedTimeZone(),
+    () => deviceTimeZone() ?? "UTC",
     () => null
   )
-  const hydrated = zone !== null
+  const zone = student?.timeZone ?? viewerZone
+  const hydrated = viewerZone !== null
 
   const initialValue = React.useMemo(
     () =>
-      hydrated
-        ? toDateTimeLocalValue(
-            defaultValue ? new Date(defaultValue) : DUE_PRESETS[0]!.resolve(new Date())
-          )
+      zone && hydrated
+        ? defaultValue
+          ? wallClockOf(defaultValue, zone)
+          : DUE_PRESETS[0]!.resolve(new Date(), zone)
         : "",
-    [hydrated, defaultValue]
+    [zone, hydrated, defaultValue]
   )
   const [edited, setEdited] = React.useState<string | null>(null)
-  const localValue = edited ?? initialValue
-  const setLocalValue = setEdited
+  const wall = edited ?? initialValue
 
-  const parsed = fromDateTimeLocalValue(localValue)
+  const parsed = zone ? instantOf(wall, zone) : null
+  const iso = parsed?.toISOString() ?? ""
+  const showViewerClock =
+    Boolean(iso && zone && viewerZone) && !sameClock(zone!, viewerZone!, parsed!)
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={inputId}>Due</Label>
-      <input type="hidden" name={name} value={parsed ? parsed.toISOString() : ""} />
+      <Label htmlFor={inputId}>
+        Due{zone && student ? ` (${student.name}’s time, ${zoneCity(zone)})` : ""}
+      </Label>
+      <input type="hidden" name={name} value={iso} />
 
       <Input
         id={inputId}
         type="datetime-local"
-        value={localValue}
-        onChange={(event) => setLocalValue(event.target.value)}
+        value={wall}
+        onChange={(event) => setEdited(event.target.value)}
         required
-        mono
         className="sm:max-w-72"
       />
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Quick deadlines">
@@ -76,23 +79,32 @@ export function DuePicker({
             key={preset.key}
             type="button"
             size="sm"
-            onClick={() => setLocalValue(toDateTimeLocalValue(preset.resolve(new Date())))}
+            disabled={!zone}
+            onClick={() => zone && setEdited(preset.resolve(new Date(), zone))}
           >
             {preset.label}
           </Button>
         ))}
       </div>
 
-      {parsed ? (
-        <p className="body-sm text-on-surface-muted">
-          <span className="mono-data-sm text-on-surface-secondary">
-            {formatDue(parsed.toISOString())}
-          </span>
-          , {relativeToNow(parsed.toISOString())}
-          {zone ? ` (${zone})` : ""}
-        </p>
+      {parsed && zone ? (
+        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+          <p>
+            <span className="text-xs tabular-nums text-foreground/80">{formatDue(iso, zone)}</span>,{" "}
+            {relativeToNow(iso)} ({zoneCity(zone)}, {zoneOffsetLabel(zone, parsed)})
+          </p>
+          {showViewerClock ? (
+            <p className="flex items-center gap-1.5">
+              <Globe aria-hidden className="size-4 shrink-0" />
+              For you that’s{" "}
+              <span className="text-xs tabular-nums text-foreground/80">
+                {formatDue(iso, viewerZone!)}
+              </span>
+            </p>
+          ) : null}
+        </div>
       ) : hydrated ? (
-        <p className="body-sm text-error">Choose a date and time.</p>
+        <p className="body-md text-destructive">Choose a date and time.</p>
       ) : null}
     </div>
   )

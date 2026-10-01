@@ -53,7 +53,7 @@ export function TaskDialogShell({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Backdrop
           className={cn(
-            "dub fixed inset-0 z-50 min-h-dvh bg-black/10 backdrop-blur-md",
+            "fixed inset-0 z-50 min-h-dvh bg-muted/50 backdrop-blur-md",
             "transition-opacity duration-200 data-ending-style:opacity-0 data-starting-style:opacity-0"
           )}
         />
@@ -67,7 +67,7 @@ export function TaskDialogShell({
           }
           className={cn(
             // `clip`, not `hidden`: a hidden overflow can still be scrolled by focus().
-            "dub fixed z-50 flex flex-col overflow-clip bg-surface-sunken p-1.5 text-on-surface ring-1 ring-outline outline-none ring-inset",
+            "fixed z-50 flex flex-col overflow-clip bg-muted p-1.5 text-foreground ring-1 ring-border outline-none ring-inset",
             // A soft spring in, a quick settle out.
             "transition-[translate,scale,opacity] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
             "data-ending-style:duration-200 data-ending-style:ease-[cubic-bezier(0.4,0,1,1)]",
@@ -84,17 +84,17 @@ export function TaskDialogShell({
             "sm:motion-reduce:data-starting-style:scale-100 sm:motion-reduce:data-ending-style:scale-100"
           )}
         >
-          <span aria-hidden className="mx-auto mt-0.5 mb-1.5 h-1 w-12 shrink-0 rounded-full bg-outline-strong sm:hidden" />
+          <span aria-hidden className="mx-auto mt-0.5 mb-1.5 h-1 w-12 shrink-0 rounded-full bg-input sm:hidden" />
           <div
             className={cn(
-              "relative flex min-h-0 flex-1 flex-col overflow-clip rounded-t-[10px] bg-surface sm:rounded-[10px]",
+              "relative flex min-h-0 flex-1 flex-col overflow-clip rounded-t-[10px] bg-background sm:rounded-[10px]",
               // Drawn over the content so the tray's fill can't cover it.
-              "after:pointer-events-none after:absolute after:inset-0 after:z-20 after:rounded-[inherit] after:ring-1 after:ring-outline after:ring-inset"
+              "after:pointer-events-none after:absolute after:inset-0 after:z-20 after:rounded-[inherit] after:ring-1 after:ring-border after:ring-inset"
             )}
           >
             <DialogPrimitive.Close
               aria-label="Close"
-              className="absolute top-3 right-3 z-10 flex size-9 items-center justify-center rounded-md text-on-surface-muted transition-colors duration-150 hover:bg-surface-sunken hover:text-on-surface max-sm:top-4"
+              className="absolute top-3 right-3 z-10 flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground max-sm:top-4"
             >
               <X aria-hidden className="size-4" />
             </DialogPrimitive.Close>

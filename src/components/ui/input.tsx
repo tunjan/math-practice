@@ -5,17 +5,17 @@ import { cn } from "cn"
 /**
  * DESIGN.md › input-field
  *
- * 40px, 6px radius, white with an `outline-strong` border; focus darkens the
- * border inside a 4px halo (globals.css). The `filled` variant is the
+ * 40px, 6px radius, white with an `input` border; focus darkens the border
+ * to `ring` inside a 4px `border` halo, red-tinted when invalid. The `filled` variant is the
  * read-only look: neutral-100, no border.
  */
 const fieldBase = [
-  "w-full min-w-0 rounded-sm border text-on-surface",
+  "w-full min-w-0 rounded-md border text-foreground",
   "transition-[border-color,box-shadow,background-color] duration-150 outline-none",
-  "placeholder:text-on-surface-muted",
-  "focus-visible:border-on-surface-muted",
-  "disabled:pointer-events-none disabled:bg-surface-sunken disabled:text-on-surface-muted",
-  "aria-invalid:border-[#ef4444]",
+  "placeholder:text-muted-foreground",
+  "focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-border",
+  "disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground",
+  "aria-invalid:border-destructive aria-invalid:focus-visible:ring-error-container",
 ].join(" ")
 
 function Input({
@@ -34,10 +34,10 @@ function Input({
       className={cn(
         fieldBase,
         "h-10 px-3",
-        mono ? "mono-data" : "body-md",
-        variant === "default" && "border-outline-strong bg-surface",
+        mono ? "body-md tabular-nums" : "body-md",
+        variant === "default" && "border-input bg-background",
         variant === "filled" &&
-          "border-transparent bg-surface-sunken focus-visible:bg-surface",
+          "border-transparent bg-muted focus-visible:bg-background",
         className
       )}
       {...props}

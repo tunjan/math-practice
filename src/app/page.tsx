@@ -23,13 +23,13 @@ export const metadata: Metadata = {
  */
 export default function Home() {
   return (
-    <div className="dub relative isolate min-h-dvh overflow-x-clip bg-surface">
+    <div className="relative isolate min-h-dvh overflow-x-clip bg-background">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] [background-image:linear-gradient(to_right,var(--outline)_1px,transparent_1px),linear-gradient(to_bottom,var(--outline)_1px,transparent_1px)] [background-size:56px_56px] [background-position:center_top] opacity-60 [mask-image:radial-gradient(ellipse_70%_100%_at_50%_0%,black,transparent)]"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[560px] [background-image:linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] [background-size:56px_56px] [background-position:center_top] opacity-60 [mask-image:radial-gradient(ellipse_70%_100%_at_50%_0%,black,transparent)]"
       />
 
-      <header className="sticky top-0 z-40 border-b border-transparent bg-surface/70 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-transparent bg-background/70 backdrop-blur-md">
         <div className="mx-auto flex h-16 w-full max-w-screen-xl items-center justify-between px-4 lg:px-10">
           <Wordmark href="/" />
           <ButtonLink href="/login" variant="primary" size="sm">
@@ -43,24 +43,24 @@ export default function Home() {
         <Loop />
         <Planning />
 
-        <Reveal className="flex flex-col items-center gap-6 border-t border-outline py-24 text-center lg:py-32">
-          <h2 className="font-display text-3xl leading-[1.15] font-medium text-balance text-on-surface md:text-[40px]">
+        <Reveal className="flex flex-col items-center gap-6 border-t border-border py-24 text-center lg:py-32">
+          <h2 className="font-display text-3xl leading-[1.15] font-medium text-balance text-foreground md:text-[40px]">
             Pick up where you left off
           </h2>
           <ButtonLink href="/login" variant="primary" className="px-6">
             Sign in
           </ButtonLink>
-          <p className="text-sm text-on-surface-muted">
+          <p className="text-sm text-muted-foreground">
             Students join by invite from their tutor. Tutor?{" "}
-            <Link href="/signup" className="font-medium text-on-surface underline-offset-4 hover:underline">
+            <Link href="/signup" className="font-medium text-foreground underline-offset-4 hover:underline">
               Create an account
             </Link>
           </p>
         </Reveal>
       </main>
 
-      <footer className="mx-auto flex h-20 w-full max-w-screen-xl items-center justify-between px-4 text-sm text-on-surface-muted lg:px-10">
-        <Wordmark href="/" className="text-on-surface-secondary" />
+      <footer className="mx-auto flex h-20 w-full max-w-screen-xl items-center justify-between px-4 text-sm text-muted-foreground lg:px-10">
+        <Wordmark href="/" className="text-foreground/80" />
         <span>&copy; {new Date().getFullYear()}</span>
       </footer>
     </div>

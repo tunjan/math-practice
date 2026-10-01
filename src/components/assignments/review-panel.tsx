@@ -55,18 +55,18 @@ export function ReviewPanel({
           }
         />
         <CardSection className="flex flex-col gap-4">
-          <p className="body-md text-on-surface-secondary">
+          <p className="body-md text-foreground/80">
             {verdict === "approved"
               ? "You approved this work. The student sees it as finished."
               : "You asked for changes. The student can hand in a new revision."}
           </p>
           {feedback ? (
-            <div className="rounded-md border border-outline bg-surface-muted px-3 py-2.5">
+            <div className="rounded-lg border border-border bg-muted/50 px-3 py-2.5">
               <MathProse>{feedback}</MathProse>
             </div>
           ) : null}
           {reviewedAt ? (
-            <p className="mono-data-sm text-on-surface-muted">
+            <p className="caption tabular-nums text-muted-foreground">
               {new Date(reviewedAt).toLocaleString(LOCALE, {
                 weekday: "short",
                 day: "numeric",

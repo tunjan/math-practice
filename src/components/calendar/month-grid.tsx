@@ -117,7 +117,7 @@ export function MonthGrid({
       role="grid"
       aria-labelledby={labelledBy}
       data-slot="month-grid"
-      className="flex flex-col overflow-hidden rounded-xl bg-card text-card-foreground ring-1 ring-foreground/10 xl:h-full"
+      className="flex flex-col overflow-hidden rounded-2xl bg-card text-card-foreground ring-1 ring-foreground/10 xl:h-full"
     >
       <div role="row" data-slot="month-grid-weekdays" className="grid shrink-0 grid-cols-7 border-b border-border">
         {WEEKDAYS.map((weekday) => (
@@ -222,7 +222,7 @@ const DayCell = React.memo(function DayCell({
       <span
         aria-hidden
         className={cn(
-          "mx-auto flex size-6 items-center justify-center rounded-md text-xs tabular-nums md:mx-0",
+          "mx-auto flex size-6 items-center justify-center rounded-lg text-xs tabular-nums md:mx-0",
           "group-data-outside/day:text-muted-foreground/70",
           "group-aria-selected/day:font-medium group-aria-selected/day:text-info",
           "group-data-today/day:bg-info group-data-today/day:font-medium group-data-today/day:text-primary-foreground"
@@ -286,7 +286,7 @@ export function Dot({ placement, className }: { placement: DayPlacement; classNa
  * be missed; all-day items read as a bar, as in every calendar people already
  * use; timed items are a dot and a title.
  */
-const chipVariants = cva("flex min-w-0 items-center gap-1.5 rounded-sm px-1.5 text-xs leading-5", {
+const chipVariants = cva("flex min-w-0 items-center gap-1.5 rounded-md px-1.5 text-xs leading-5", {
   variants: {
     variant: {
       exam: "bg-primary font-medium text-primary-foreground",

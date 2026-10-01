@@ -8,7 +8,7 @@ import { cn } from "cn"
  * DESIGN.md › menu-surface, menu-item
  *
  * White, 8px radius, 8px inner padding, a hairline and a soft drop shadow.
- * Rows are 36px, 14px medium, with a 6px radius; they turn `surface-sunken`
+ * Rows are 36px, 14px medium, with a 6px radius; they turn `accent`
  * when highlighted, and a destructive row red-50.
  */
 const DropdownMenu = MenuPrimitive.Root
@@ -36,7 +36,7 @@ function DropdownMenuContent({
         <MenuPrimitive.Popup
           data-slot="dropdown-menu-content"
           className={cn(
-            "flex max-h-(--available-height) min-w-48 origin-(--transform-origin) flex-col overflow-y-auto rounded-md border border-outline bg-surface p-2 text-on-surface shadow-lg outline-none",
+            "flex max-h-(--available-height) min-w-48 origin-(--transform-origin) flex-col overflow-y-auto rounded-lg border border-border bg-background p-2 text-foreground shadow-lg outline-none",
             "transition-[opacity,scale] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0",
             className
           )}
@@ -48,9 +48,9 @@ function DropdownMenuContent({
 }
 
 const itemClass = [
-  "flex h-9 w-full cursor-default items-center gap-2 rounded-sm px-2 label-md text-on-surface-secondary outline-none select-none",
-  "data-highlighted:bg-surface-sunken data-disabled:opacity-45",
-  "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-on-surface-muted",
+  "flex h-9 w-full cursor-default items-center gap-2 rounded-md px-2 label-md text-foreground/80 outline-none select-none",
+  "data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50",
+  "[&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:text-muted-foreground",
 ].join(" ")
 
 function DropdownMenuItem({
@@ -63,7 +63,7 @@ function DropdownMenuItem({
       data-slot="dropdown-menu-item"
       className={cn(
         itemClass,
-        variant === "destructive" && "text-error data-highlighted:bg-[#fef2f2] [&_svg]:text-error",
+        variant === "destructive" && "text-destructive data-highlighted:bg-error-container/50 data-highlighted:text-destructive [&_svg]:text-destructive",
         className
       )}
       {...props}
@@ -84,7 +84,8 @@ function DropdownMenuLinkItem({ className, ...props }: MenuPrimitive.LinkItem.Pr
 function DropdownMenuSeparator({ className, ...props }: MenuPrimitive.Separator.Props) {
   return (
     <MenuPrimitive.Separator
-      className={cn("-mx-1 my-1 h-px bg-outline", className)}
+      data-slot="dropdown-menu-separator"
+      className={cn("-mx-1 my-1 h-px bg-border", className)}
       {...props}
     />
   )

@@ -9,8 +9,9 @@ import { toast } from "sonner"
 import { FormMessage } from "@/components/auth/form-message"
 import { EmptyState } from "@/components/brand/primitives"
 import { Button, ButtonLink } from "@/components/ui/button"
+import { composerField } from "@/components/ui/chip"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
-  ConfirmDialog,
   Dialog,
   DialogBody,
   DialogClose,
@@ -20,12 +21,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { createAssignment, type CreateAssignmentState } from "@/lib/assignments/actions"
-import { DUE_PRESETS, fromDateTimeLocalValue, toDateTimeLocalValue } from "@/lib/assignments/dates"
+import { DUE_PRESETS, duePreset, instantOf, type WallClock } from "@/lib/assignments/due"
 import { MATERIAL_ACCEPT } from "@/lib/assignments/files"
 import type { Recipient, Topic } from "@/lib/assignments/task-options"
 import { TopicPicker } from "@/components/syllabus/topic-picker"
 import { topicsForCourse, type SyllabusTopic } from "@/lib/syllabus/model"
 import { DEFAULT_DIFFICULTY, type Difficulty } from "@/lib/assignments/difficulty"
+import { deviceTimeZone } from "@/lib/timezone"
 
 import { useMaterialUploads } from "./material-uploader"
 import { MathProse } from "./math-prose"
@@ -33,6 +35,8 @@ import {
   AttachmentChips,
   DifficultyChip,
   DueChip,
+  DueClocks,
+  ExercisesChip,
   StudentChip,
   TopicChip,
   TypeChip,
@@ -74,16 +78,18 @@ export function NewTaskDialog({
 }) {
   const router = useRouter()
   const [open, setOpen] = React.useState(defaultOpen)
-  const [confirmingDiscard, setConfirmingDiscard] = React.useState(false)
+  // What closing would throw away, while the discard confirm is open.
+  const [unsaved, setUnsaved] = React.useState<Unsaved | null>(null)
   // Every opening starts clean: a fresh reserved id and no leftover uploads.
   const [draft, setDraft] = React.useState(0)
   const formRef = React.useRef<NewTaskFormHandle>(null)
   const titleRef = React.useRef<HTMLInputElement>(null)
 
   function handleOpenChange(next: boolean, details: OpenChangeDetails) {
-    if (!next && formRef.current?.isDirty()) {
+    const pending = next ? null : formRef.current?.unsaved()
+    if (pending) {
       details.cancel()
-      setConfirmingDiscard(true)
+      setUnsaved(pending)
       return
     }
     setOpen(next)
@@ -91,7 +97,7 @@ export function NewTaskDialog({
 
   function discard() {
     formRef.current?.discard()
-    setConfirmingDiscard(false)
+    setUnsaved(null)
     setOpen(false)
   }
 
@@ -168,27 +174,51 @@ export function NewTaskDialog({
         )}
 
         <ConfirmDialog
-          open={confirmingDiscard}
-          onOpenChange={setConfirmingDiscard}
-          title="Discard this task?"
-          description="The title, instructions and any files you've uploaded will be lost."
+          open={unsaved !== null}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setUnsaved(null)
+          }}
+          title="Discard new task?"
+          description={unsaved ? <DiscardSummary {...unsaved} /> : null}
           cancelLabel="Keep editing"
-          confirm={
-            <Button variant="destructive" onClick={discard}>
-              Discard
-            </Button>
-          }
+          confirmLabel="Discard"
+          onConfirm={discard}
         />
       </DialogContent>
     </Dialog>
   )
 }
 
+/** Names exactly what discarding loses, so the tutor isn't guessing. */
+function DiscardSummary({ written, files }: Unsaved) {
+  const deleted =
+    files.length === 0 ? null : files.length === 1 ? (
+      <span className="font-medium text-foreground [overflow-wrap:anywhere]">{files[0]}</span>
+    ) : (
+      `${files.length} uploaded files`
+    )
+
+  if (written && deleted) {
+    return <>{"What you've written will be lost, and "}{deleted} will be deleted.</>
+  }
+  if (deleted) {
+    return <>{deleted} will be deleted.</>
+  }
+  return "What you've written will be lost."
+}
+
 // ── Form ────────────────────────────────────────────────────────────────────
 
+type Unsaved = {
+  /** Title, instructions or a new topic name. */
+  written: boolean
+  /** Names of uploaded files that discarding deletes from Storage. */
+  files: string[]
+}
+
 type NewTaskFormHandle = {
-  /** Anything typed or uploaded that closing would throw away. */
-  isDirty: () => boolean
+  /** What closing would throw away, or null when there's nothing to lose. */
+  unsaved: () => Unsaved | null
   /** Remove uploaded objects for a draft that is being abandoned. */
   discard: () => void
 }
@@ -214,10 +244,6 @@ function useIsMac() {
     () => true
   )
 }
-
-/** Borderless: the dialog is the field. The caret marks focus. */
-const composerField =
-  "w-full bg-transparent text-on-surface outline-none placeholder:text-on-surface-muted"
 
 function NewTaskForm({
   ref,
@@ -253,14 +279,25 @@ function NewTaskForm({
   const [target, setTarget] = React.useState<string | null>(() =>
     recipients.length === 1 ? recipients[0]!.value : null
   )
-  const [due, setDue] = React.useState(() =>
-    toDateTimeLocalValue(DUE_PRESETS[0]!.resolve(new Date()))
-  )
+  // Deadlines are set on the student's clock; the tutor's own until one is
+  // chosen, and for invitees, whose zone isn't known until they join.
+  const [viewerZone] = React.useState(() => deviceTimeZone() ?? "UTC")
+  const zoneFor = (value: string | null) =>
+    recipients.find((r) => r.value === value)?.timeZone ?? viewerZone
+  const recipient = recipients.find((r) => r.value === target)
+  const dueZone = zoneFor(target)
+  // A preset is kept by name, so switching student moves "Friday, 18:00" to
+  // their Friday; a time typed by hand keeps its clock reading.
+  const [due, setDue] = React.useState<{ wall: WallClock; preset: string | null }>(() => ({
+    wall: DUE_PRESETS[0]!.resolve(new Date(), zoneFor(target)),
+    preset: DUE_PRESETS[0]!.key,
+  }))
   const [type, setType] = React.useState("problem_set")
   const [difficulty, setDifficulty] = React.useState<Difficulty>(DEFAULT_DIFFICULTY)
+  const [exercises, setExercises] = React.useState(1)
   const [topic, setTopic] = React.useState<string | null>(null)
   const [syllabusTopics, setSyllabusTopics] = React.useState<string[]>([])
-  const course = recipients.find((r) => r.value === target)?.course ?? null
+  const course = recipient?.course ?? null
   const courseTopics = React.useMemo(
     () => (course ? topicsForCourse(syllabus, course) : []),
     [course, syllabus]
@@ -275,18 +312,18 @@ function NewTaskForm({
   React.useImperativeHandle(
     ref,
     () => ({
-      isDirty() {
+      unsaved() {
         const form = formRef.current
-        if (!form) return false
+        if (!form) return null
         const data = new FormData(form)
         const typed = (name: string) => String(data.get(name) ?? "").trim() !== ""
-        return (
-          typed("title") || typed("description") || typed("new_category") || uploads.items.length > 0
-        )
+        const written = typed("title") || typed("description") || typed("new_category")
+        const files = uploads.items.map((item) => item.fileName)
+        return written || files.length > 0 ? { written, files } : null
       },
       discard: uploads.discardAll,
     }),
-    [uploads.items.length, uploads.discardAll]
+    [uploads.items, uploads.discardAll]
   )
 
   React.useEffect(() => {
@@ -346,7 +383,7 @@ function NewTaskForm({
     }
   }
 
-  const iso = fromDateTimeLocalValue(due)?.toISOString() ?? ""
+  const iso = instantOf(due.wall, dueZone)?.toISOString() ?? ""
   const chipError = errors.target ?? errors.due
   const uploadStatus =
     uploading > 0 ? `Uploading ${uploading} ${uploading === 1 ? "file" : "files"}` : ""
@@ -378,6 +415,7 @@ function NewTaskForm({
       <input type="hidden" name="due_at" value={iso} />
       <input type="hidden" name="type" value={type} />
       <input type="hidden" name="difficulty" value={difficulty} />
+      <input type="hidden" name="exercise_count" value={exercises} />
       <input type="hidden" name="category_id" value={topic ?? ""} />
 
       <DialogBody className="flex flex-col gap-2 pt-2 pb-5">
@@ -388,7 +426,6 @@ function NewTaskForm({
         ) : null}
 
         <input
-          data-composer
           ref={titleRef}
           name="title"
           data-field="title"
@@ -402,14 +439,13 @@ function NewTaskForm({
           className={cn(composerField, "headline-md")}
         />
         {errors.title ? (
-          <p id={`${errorId}-title`} className="-mt-1 body-sm text-error">
+          <p id={`${errorId}-title`} className="-mt-1 body-md text-destructive">
             {errors.title}
           </p>
         ) : null}
 
         {/* Stays mounted during preview so the text is always submitted. */}
         <textarea
-          data-composer
           ref={instructionsRef}
           name="description"
           aria-label="Instructions"
@@ -432,7 +468,7 @@ function NewTaskForm({
         {uploads.errors.length > 0 ? (
           <ul role="alert" className="flex flex-col gap-0.5">
             {uploads.errors.map((message) => (
-              <li key={message} className="body-sm text-error">
+              <li key={message} className="body-md text-destructive">
                 {message}
               </li>
             ))}
@@ -448,14 +484,17 @@ function NewTaskForm({
               setTarget(next)
               setSyllabusTopics([])
               clearError("target")
+              const preset = due.preset ? duePreset(due.preset) : undefined
+              if (preset) setDue({ wall: preset.resolve(new Date(), zoneFor(next)), preset: preset.key })
             }}
             invalid={Boolean(errors.target)}
             describedBy={errors.target ? `${errorId}-chips` : undefined}
           />
           <DueChip
-            value={due}
-            onValueChange={(next) => {
-              setDue(next)
+            value={due.wall}
+            timeZone={dueZone}
+            onValueChange={(wall, preset) => {
+              setDue({ wall, preset })
               clearError("due")
             }}
             invalid={Boolean(errors.due)}
@@ -463,8 +502,10 @@ function NewTaskForm({
           />
           <TypeChip value={type} onValueChange={setType} />
           <DifficultyChip value={difficulty} onValueChange={setDifficulty} />
+          <ExercisesChip value={exercises} onValueChange={setExercises} />
           <TopicChip topics={topics} value={topic} onValueChange={setTopic} />
         </div>
+        <DueClocks iso={iso} recipient={recipient} viewerZone={viewerZone} />
         {courseTopics.length > 0 ? (
           <TopicPicker
             topics={courseTopics}
@@ -474,7 +515,7 @@ function NewTaskForm({
           />
         ) : null}
         {chipError ? (
-          <p id={`${errorId}-chips`} className="body-sm text-error">
+          <p id={`${errorId}-chips`} className="body-md text-destructive">
             {chipError}
           </p>
         ) : null}
@@ -499,7 +540,7 @@ function NewTaskForm({
             aria-pressed={preview}
             disabled={!instructions.trim()}
             onClick={() => setPreview((on) => !on)}
-            className="px-2 aria-pressed:bg-surface-sunken aria-pressed:text-on-surface"
+            className="px-2 aria-pressed:bg-muted aria-pressed:text-foreground"
           >
             <Eye aria-hidden />
             <span className="sr-only sm:not-sr-only">Preview</span>
@@ -535,7 +576,7 @@ function NewTaskForm({
             {pending ? "Creating" : uploading > 0 ? "Uploading" : "Create task"}
             <kbd
               aria-hidden
-              className="-mr-1.5 hidden h-5 items-center rounded-xs bg-on-primary/15 px-1.5 font-sans text-[11px] leading-none text-on-primary/80 sm:inline-flex"
+              className="-mr-1.5 hidden h-5 items-center rounded-sm bg-primary-foreground/15 px-1.5 font-sans text-[11px] leading-none text-primary-foreground/80 sm:inline-flex"
             >
               {isMac ? "⌘" : "Ctrl"} ↵
             </kbd>
@@ -546,9 +587,9 @@ function NewTaskForm({
       {dragging ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-2 flex items-center justify-center rounded-lg border-2 border-dashed border-on-surface bg-surface/90"
+          className="pointer-events-none absolute inset-2 flex items-center justify-center rounded-xl border-2 border-dashed border-foreground bg-background/90"
         >
-          <span className="label-md text-on-surface">Drop to attach</span>
+          <span className="label-md text-foreground">Drop to attach</span>
         </div>
       ) : null}
     </form>

@@ -12,15 +12,6 @@ const inter = localFont({
   fallback: ["system-ui", "-apple-system", "Segoe UI", "Helvetica", "sans-serif"],
 })
 
-const jetbrainsMono = localFont({
-  src: "../fonts/JetBrainsMono-Variable-latin.woff2",
-  variable: "--font-jetbrains-mono",
-  display: "swap",
-  weight: "100 800",
-  style: "normal",
-  fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
-})
-
 const geistMono = localFont({
   src: "../fonts/GeistMono-Variable-latin.woff2",
   variable: "--font-geist-mono",
@@ -59,10 +50,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} ${geistMono.variable} ${satoshi.variable} dub h-full`}
+      className={`${inter.variable} ${geistMono.variable} ${satoshi.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="flex min-h-full flex-col bg-canvas-neutral font-sans text-on-surface">
+      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
         <TooltipProvider delay={200}>{children}</TooltipProvider>
       </body>
     </html>

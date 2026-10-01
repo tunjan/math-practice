@@ -24,7 +24,7 @@ export type StudentTask = TaskData & {
 }
 
 const ASSIGNMENT_COLUMNS = `id, title, description, type, difficulty, due_at, stage, verdict, feedback, reviewed_at,
-  student_opened_at, submitted_at, created_at, completion_pct,
+  student_opened_at, submitted_at, created_at, started_at, exercise_count, exercises_done,
   superseded_verdict, superseded_feedback, superseded_reviewed_at, superseded_submitted_at,
   categories(name), assignment_topics(syllabus_topics(code, title, topic, subtopic))`
 
@@ -134,7 +134,9 @@ type AssignmentRow = {
   student_opened_at: string | null
   submitted_at: string | null
   created_at: string
-  completion_pct: number
+  started_at: string | null
+  exercise_count: number
+  exercises_done: number
   superseded_verdict: string | null
   superseded_feedback: string | null
   superseded_reviewed_at: string | null
@@ -215,7 +217,8 @@ function shapeTask(
     assignedAt: assignment.created_at,
     stage,
     verdict,
-    completionPct: assignment.completion_pct,
+    exerciseCount: assignment.exercise_count,
+    exercisesDone: assignment.exercises_done,
     materials,
     handIns: Array.from(byRevision.values()).sort((a, b) => a.revision - b.revision),
     draft,
@@ -224,7 +227,7 @@ function shapeTask(
     column: boardColumn({
       stage,
       verdict,
-      completionPct: assignment.completion_pct,
+      started: assignment.started_at !== null,
       hasDraft: draft.length > 0,
     }),
     openedAt: assignment.student_opened_at,

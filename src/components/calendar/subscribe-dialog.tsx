@@ -5,8 +5,8 @@ import { CalendarDays, Check, Copy, ExternalLink, KeyRound, RefreshCw, Rss } fro
 import { toast } from "sonner"
 
 import { Button, buttonVariants } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
-  ConfirmDialog,
   Dialog,
   DialogBody,
   DialogClose,
@@ -101,7 +101,7 @@ export function SubscribeDialog({
         Subscribe
       </DialogTrigger>
 
-      <DialogContent scope="dub" className="sm:w-[min(560px,calc(100vw-4rem))]">
+      <DialogContent className="sm:w-[min(560px,calc(100vw-4rem))]">
         <DialogHeader
           title="Subscribe to your calendar"
           description="See your deadlines and events in the calendar app you already use. It stays in sync on its own."
@@ -117,8 +117,7 @@ export function SubscribeDialog({
               <Input
                 id={inputId}
                 value={feedUrl}
-                readOnly
-                mono
+                readOnly 
                 onFocus={(event) => event.currentTarget.select()}
                 className="min-w-0 flex-1"
               />
@@ -132,21 +131,21 @@ export function SubscribeDialog({
             </div>
           </Field>
 
-          <ul role="list" className="flex flex-col overflow-hidden rounded-lg border border-outline">
+          <ul role="list" className="flex flex-col overflow-hidden rounded-xl border border-border">
             {APPS.map((app) => (
               <li
                 key={app.name}
-                className="flex min-h-16 items-center gap-3.5 border-t border-outline px-4 py-3 first:border-t-0"
+                className="flex min-h-16 items-center gap-3.5 border-t border-border px-4 py-3 first:border-t-0"
               >
                 <span
                   aria-hidden
-                  className="flex size-8 shrink-0 items-center justify-center rounded-md border border-outline bg-surface-muted text-on-surface-muted"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/50 text-muted-foreground"
                 >
                   <CalendarDays className="size-4" />
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-sm font-medium text-on-surface">{app.name}</span>
-                  <span className="text-sm text-on-surface-muted">{app.how}</span>
+                  <span className="text-sm font-medium text-foreground">{app.name}</span>
+                  <span className="text-sm text-muted-foreground">{app.how}</span>
                 </div>
                 {app.link === "webcal" ? (
                   <a href={webcalUrl} className={buttonVariants({ size: "sm" })}>
@@ -168,7 +167,7 @@ export function SubscribeDialog({
             ))}
           </ul>
 
-          <p className="flex gap-2.5 rounded-lg border border-warning/20 bg-warning-container px-3.5 py-3 text-sm text-on-warning-container">
+          <p className="flex gap-2.5 rounded-xl border border-warning/20 bg-warning-container px-3.5 py-3 text-sm text-on-warning-container">
             <KeyRound aria-hidden className="mt-0.5 size-4 shrink-0" />
             Anyone with this link can see your calendar, so keep it to yourself. If it gets out,
             reset it and subscribe again.
@@ -177,7 +176,6 @@ export function SubscribeDialog({
 
         <DialogFooter>
           <ConfirmDialog
-            scope="dub"
             open={confirmingReset}
             onOpenChange={setConfirmingReset}
             trigger={
@@ -188,11 +186,10 @@ export function SubscribeDialog({
             }
             title="Reset your calendar link?"
             description="The current link stops working straight away. Any calendar app subscribed to it will need the new one."
-            confirm={
-              <Button variant="destructive" onClick={reset} disabled={resetting}>
-                {resetting ? "Resetting" : "Reset link"}
-              </Button>
-            }
+            confirmLabel="Reset link"
+            pendingLabel="Resetting"
+            pending={resetting}
+            onConfirm={reset}
           />
           <DialogClose render={<Button variant="primary" className="ml-auto" />}>Done</DialogClose>
         </DialogFooter>

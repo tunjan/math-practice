@@ -4,7 +4,7 @@ import { cn } from "cn"
 import { TopicTags } from "@/components/syllabus/topic-tags"
 import { badgeVariants, TAG_COLORS } from "@/components/ui/badge"
 import type { WeekPlan } from "@/lib/calendar/model"
-import { TOPIC_NAME, topicColor } from "@/lib/syllabus/model"
+import { topicColor } from "@/lib/syllabus/model"
 
 /** Past this many bars a week shows a count; the day panel lists them all. */
 const WEEK_BARS = 3
@@ -40,15 +40,15 @@ export function WeekBars({
       {visible.map((plan) => (
         <span
           key={plan.id}
-          title={`${TOPIC_NAME[plan.topic] ?? `Topic ${plan.topic}`}: ${plan.topics.map((t) => `${t.code} ${t.title}`).join(", ")}`}
+          title={`${plan.strand}: ${plan.topics.map((t) => `${t.code} ${t.title}`).join(", ")}`}
           className={cn(
             badgeVariants({ variant: topicColor(plan.topic) }),
-            "w-full justify-start rounded-sm"
+            "w-full justify-start rounded-md"
           )}
         >
           <span className="truncate">
             {showPerson && plan.person ? `${plan.person} · ` : null}
-            <span className="hidden sm:inline">{TOPIC_NAME[plan.topic]} · </span>
+            <span className="hidden sm:inline">{plan.strand} · </span>
             <span className="font-mono tabular-nums">{planLabel(plan)}</span>
           </span>
         </span>
@@ -77,7 +77,7 @@ export function PlanRow({
         <span className="text-xs leading-5 text-muted-foreground">Week</span>
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-sm leading-5 font-medium">{TOPIC_NAME[plan.topic] ?? `Topic ${plan.topic}`}</span>
+        <span className="text-sm leading-5 font-medium">{plan.strand}</span>
         <span className="truncate text-xs text-muted-foreground">
           {["Planned this week", showPerson ? plan.person : null].filter(Boolean).join(" · ")}
         </span>

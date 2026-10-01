@@ -22,7 +22,7 @@ export default async function ResetPasswordPage() {
       description={
         user?.email ? (
           <>
-            For <span className="mono-data-sm text-on-surface">{user.email}</span>
+            For <span className="caption tabular-nums text-foreground">{user.email}</span>
           </>
         ) : undefined
       }

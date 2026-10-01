@@ -18,7 +18,7 @@ function Wordmark({ href, className }: { href: string; className?: string }) {
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center rounded-md text-on-surface transition-opacity hover:opacity-80",
+        "inline-flex items-center rounded-lg text-foreground transition-opacity hover:opacity-80",
         className
       )}
     >
@@ -50,7 +50,7 @@ function Page({
     <div
       data-slot="page"
       data-width={width}
-      className="group/page flex flex-1 flex-col bg-surface"
+      className="group/page flex flex-1 flex-col bg-background"
       {...props}
     >
       {header}
@@ -72,7 +72,7 @@ function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex w-fit items-center gap-1.5 rounded-md label-md text-on-surface-secondary transition-colors hover:text-on-surface"
+      className="inline-flex w-fit items-center gap-1.5 rounded-lg label-md text-foreground/80 transition-colors hover:text-foreground"
     >
       <ArrowLeft className="size-4" aria-hidden />
       {label}
@@ -101,7 +101,7 @@ function PageHeader({
   className?: string
 }) {
   return (
-    <header data-slot="page-header" className={cn("shrink-0 border-b border-outline", className)}>
+    <header data-slot="page-header" className={cn("shrink-0 border-b border-border", className)}>
       <div
         // Lines up with the column of the `Page` it heads.
         className="mx-auto flex h-12 w-full max-w-content items-center justify-between gap-4 px-3 group-data-[width=narrow]/page:max-w-4xl group-data-[width=wide]/page:max-w-wide sm:h-16 lg:px-6"
@@ -111,15 +111,15 @@ function PageHeader({
             <Link
               href={back.href}
               aria-label={`Back to ${back.label}`}
-              className="-ml-1.5 flex size-8 shrink-0 items-center justify-center rounded-md text-on-surface-muted transition-colors hover:bg-surface-hover hover:text-on-surface"
+              className="-ml-1.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <ArrowLeft className="size-4" aria-hidden />
             </Link>
           ) : null}
-          <h1 className="min-w-0 truncate text-lg leading-7 font-semibold text-on-surface">{title}</h1>
+          <h1 className="min-w-0 truncate text-lg leading-7 font-semibold text-foreground">{title}</h1>
           {meta}
           {description ? (
-            <p className="hidden min-w-0 truncate text-sm text-on-surface-muted lg:block">{description}</p>
+            <p className="hidden min-w-0 truncate text-sm text-muted-foreground lg:block">{description}</p>
           ) : null}
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
@@ -140,7 +140,7 @@ function IconTile({
     <span
       aria-hidden
       className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-on-surface-secondary [&_svg]:size-4",
+        "flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-foreground/80 [&_svg]:size-4",
         className
       )}
     >
@@ -174,15 +174,15 @@ function EmptyState({
       {icon ? (
         <span
           aria-hidden
-          className="flex size-16 shrink-0 items-center justify-center rounded-xl bg-surface-muted text-on-surface [&_svg]:size-6"
+          className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-muted/50 text-foreground [&_svg]:size-6"
         >
           {icon}
         </span>
       ) : null}
       <div className="flex flex-col gap-1">
-        <p className="title-md text-on-surface">{title}</p>
+        <p className="title-md text-foreground">{title}</p>
         {description ? (
-          <p className="body-md max-w-sm text-balance text-on-surface-muted">{description}</p>
+          <p className="body-md max-w-sm text-balance text-muted-foreground">{description}</p>
         ) : null}
       </div>
       {action ? <div className="flex items-center gap-2">{action}</div> : null}
@@ -212,7 +212,7 @@ function Avatar({
     <span
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full bg-surface-sunken label-sm text-on-surface-secondary",
+        "flex shrink-0 items-center justify-center rounded-full bg-muted label-sm text-foreground/80",
         size === "default" ? "size-8" : "size-6",
         className
       )}

@@ -7,7 +7,7 @@ function Label({ className, ...props }: React.ComponentProps<"label">) {
     <label
       data-slot="label"
       className={cn(
-        "flex items-center gap-2 label-md text-on-surface-secondary select-none",
+        "flex items-center gap-2 label-md text-foreground/80 select-none",
         "peer-disabled:cursor-not-allowed peer-disabled:opacity-45",
         className
       )}
@@ -40,11 +40,11 @@ function Field({
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {error ? (
-        <p id={messageId} className="body-sm text-error">
+        <p id={messageId} className="body-md text-destructive">
           {error}
         </p>
       ) : hint ? (
-        <p id={messageId} className="body-sm text-on-surface-muted">
+        <p id={messageId} className="body-md text-muted-foreground">
           {hint}
         </p>
       ) : null}

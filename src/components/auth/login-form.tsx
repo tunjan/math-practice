@@ -26,7 +26,7 @@ export function LoginForm() {
       {state.error ? <FormMessage id={errorId} error={state.error} /> : null}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor={emailId} className="text-on-surface">
+        <Label htmlFor={emailId} className="text-foreground">
           Email
         </Label>
         <Input
@@ -46,7 +46,7 @@ export function LoginForm() {
       {/* The reset link sits beside the label but comes after the field in
           tab order, so keyboard users go straight from email to password. */}
       <div className="grid grid-cols-[1fr_auto] items-baseline gap-x-3 gap-y-2">
-        <Label htmlFor={passwordId} className="text-on-surface">
+        <Label htmlFor={passwordId} className="text-foreground">
           Password
         </Label>
         <PasswordInput
@@ -59,7 +59,7 @@ export function LoginForm() {
         />
         <Link
           href="/forgot-password"
-          className="col-start-2 row-start-1 rounded-sm body-md text-on-surface-muted underline-offset-4 transition-colors hover:text-on-surface hover:underline"
+          className="col-start-2 row-start-1 rounded-md body-md text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
         >
           Forgot password?
         </Link>
@@ -67,7 +67,7 @@ export function LoginForm() {
 
       <div className="flex items-center gap-2.5">
         <Checkbox id={persistId} name="persist" defaultChecked />
-        <Label htmlFor={persistId} className="cursor-pointer body-md text-on-surface-secondary">
+        <Label htmlFor={persistId} className="cursor-pointer body-md text-foreground/80">
           Keep me signed in
         </Label>
       </div>

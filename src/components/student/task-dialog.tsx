@@ -39,7 +39,8 @@ export type TaskData = {
   assignedAt: string
   stage: Stage
   verdict: ReviewVerdict | null
-  completionPct: number
+  exerciseCount: number
+  exercisesDone: number
   materials: SignedFile[]
   /** Oldest first. */
   handIns: HandIn[]
@@ -104,19 +105,25 @@ export function TaskDialogBody({
           <TopicTags tags={task.topics} />
           <h2
             id={titleId}
-            className="font-display text-2xl leading-[1.33] font-medium text-pretty text-on-surface"
+            className="font-display text-2xl leading-[1.33] font-medium text-pretty text-foreground"
           >
             {task.title}
           </h2>
           <StatusLine task={task} phase={phase} timeZone={timeZone} />
-          {phase === "working" ? (
-            <ProgressReport assignmentId={task.id} value={task.completionPct} save={actions?.progress} />
+          {/* A single piece of work has nothing to count. */}
+          {phase === "working" && task.exerciseCount > 1 ? (
+            <ProgressReport
+              assignmentId={task.id}
+              done={task.exercisesDone}
+              total={task.exerciseCount}
+              save={actions?.progress}
+            />
           ) : null}
         </header>
 
         <div
           style={{ animationDelay: "200ms" }}
-          className="flex animate-slide-up-fade flex-col gap-5 border-t border-outline px-6 pt-5 pb-6 motion-reduce:animate-none sm:min-h-0 sm:flex-1 sm:overflow-y-auto sm:overscroll-contain">
+          className="flex animate-slide-up-fade flex-col gap-5 border-t border-border px-6 pt-5 pb-6 motion-reduce:animate-none sm:min-h-0 sm:flex-1 sm:overflow-y-auto sm:overscroll-contain">
           <TutorFeedback task={task} />
           <Brief task={task} />
           <TaskComments
@@ -144,11 +151,11 @@ function openAndOverdue(task: TaskData): boolean {
 /** Only the states the tray doesn't already make obvious get a pill. */
 function statusOf(task: TaskData, phase: Phase): { label: string; className: string } | null {
   if (phase === "approved")
-    return { label: "Approved", className: "border-[#bbf7d0] bg-success-container text-on-success-container" }
+    return { label: "Approved", className: "border-success/20 bg-success/10 text-success" }
   if (phase === "waiting")
-    return { label: "With your tutor", className: "border-[#bfdbfe] bg-info-container text-on-info-container" }
+    return { label: "With your tutor", className: "border-info/20 bg-info/10 text-info" }
   if (task.verdict === "changes_requested")
-    return { label: "Changes requested", className: "border-[#fed7aa] bg-warning-container text-on-warning-container" }
+    return { label: "Changes requested", className: "border-warning/20 bg-warning/10 text-warning" }
   return null
 }
 
@@ -165,14 +172,14 @@ function StatusLine({ task, phase, timeZone }: { task: TaskData; phase: Phase; t
         </span>
       ) : null}
       <span className="flex flex-wrap items-center gap-x-2 text-sm">
-        <span className="text-on-surface-muted">Due</span>
-        <time dateTime={task.dueAt} className="font-mono text-[13px] text-on-surface-secondary">
+        <span className="text-muted-foreground">Due</span>
+        <time dateTime={task.dueAt} className="font-mono text-[13px] text-foreground/80">
           {formatDue(task.dueAt, timeZone)}
         </time>
         {phase === "working" ? (
           <span
             suppressHydrationWarning
-            className={cn("text-xs", overdue ? "font-medium text-error" : "text-on-surface-muted")}
+            className={cn("text-xs", overdue ? "font-medium text-destructive" : "text-muted-foreground")}
           >
             {overdue ? relativeLate(task.dueAt) : relativeToNow(task.dueAt)}
           </span>
@@ -192,18 +199,18 @@ function StatusLine({ task, phase, timeZone }: { task: TaskData; phase: Phase; t
 function Brief({ task }: { task: TaskData }) {
   const files = task.materials.length > 0
   if (!files && !task.description) {
-    return <p className="text-sm text-on-surface-muted">No instructions yet.</p>
+    return <p className="text-sm text-muted-foreground">No instructions yet.</p>
   }
 
   return (
-    <div className="rounded-xl bg-surface-sunken p-1 ring-1 ring-outline ring-inset">
+    <div className="rounded-2xl bg-muted p-1 ring-1 ring-border ring-inset">
       {/* The card clips the tiles to its corners and draws its hairline over
           them, so image and border share one curve. */}
-      <div className="relative flex flex-col overflow-hidden rounded-lg bg-surface after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-1 after:ring-outline after:ring-inset">
+      <div className="relative flex flex-col overflow-hidden rounded-xl bg-background after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:ring-1 after:ring-border after:ring-inset">
         {files ? (
           <AttachmentTiles
             files={task.materials}
-            className={cn(task.description && "border-b border-outline")}
+            className={cn(task.description && "border-b border-border")}
           />
         ) : null}
         {task.description ? <MathProse className="px-4 pt-3.5 pb-4">{task.description}</MathProse> : null}
@@ -226,11 +233,11 @@ function TutorFeedback({ task }: { task: TaskData }) {
   return (
     <section
       className={cn(
-        "flex flex-col gap-2 rounded-md border px-4 py-3",
-        revise ? "border-[#fed7aa] bg-warning-container" : "border-outline bg-surface-sunken"
+        "flex flex-col gap-2 rounded-lg border px-4 py-3",
+        revise ? "border-warning/20 bg-warning/10" : "border-border bg-muted"
       )}
     >
-      <h3 className={cn("text-sm font-medium", revise ? "text-on-warning-container" : "text-on-surface")}>
+      <h3 className={cn("text-sm font-medium", revise ? "text-on-warning-container" : "text-foreground")}>
         {revise ? "What to change" : "Feedback from your tutor"}
       </h3>
       <MathProse>{feedback}</MathProse>
@@ -257,7 +264,7 @@ function Tray({
   return (
     <section
       aria-label="Your work"
-      className="flex shrink-0 flex-col gap-3 border-t border-outline bg-surface-muted px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4"
+      className="flex shrink-0 flex-col gap-3 border-t border-border bg-muted/50 px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4"
     >
       {phase === "working" ? <LateNotice dueAt={task.dueAt} /> : null}
 
@@ -279,7 +286,7 @@ function Tray({
             <UnsubmitControl assignmentId={task.id} action={actions?.unsubmit} />
           </div>
           {isOverdue(task.dueAt) ? (
-            <p className="text-xs text-on-surface-muted">Handing in again now will count as late.</p>
+            <p className="text-xs text-muted-foreground">Handing in again now will count as late.</p>
           ) : null}
         </>
       ) : null}
@@ -292,7 +299,7 @@ function Tray({
 /* ── Other states ──────────────────────────────────────────────────────────── */
 
 function Bar({ className }: { className: string }) {
-  return <span className={cn("block rounded-sm bg-surface-sunken motion-safe:animate-pulse", className)} />
+  return <span className={cn("block rounded-md bg-muted motion-safe:animate-pulse", className)} />
 }
 
 /** The dialog's shape while the task loads, so opening feels immediate. */
@@ -307,7 +314,7 @@ export function TaskDialogSkeleton() {
         <Bar className="h-5 w-72 max-w-[70%]" />
         <Bar className="h-4 w-48" />
       </div>
-      <div className="flex flex-col gap-3 border-t border-outline px-6 pt-5 pb-10">
+      <div className="flex flex-col gap-3 border-t border-border px-6 pt-5 pb-10">
         <div className="flex gap-2">
           <Bar className="h-9 w-40" />
           <Bar className="h-9 w-32" />
@@ -316,7 +323,7 @@ export function TaskDialogSkeleton() {
         <Bar className="h-4 w-5/6" />
         <Bar className="h-4 w-2/3" />
       </div>
-      <div className="flex items-center justify-between gap-3 border-t border-outline bg-surface-muted px-6 py-4">
+      <div className="flex items-center justify-between gap-3 border-t border-border bg-muted/50 px-6 py-4">
         <Bar className="h-9 w-44" />
         <Bar className="h-10 w-24" />
       </div>
@@ -327,10 +334,10 @@ export function TaskDialogSkeleton() {
 export function TaskUnavailable() {
   return (
     <header className="flex flex-col gap-1.5 px-6 pt-6 pr-16 pb-6">
-      <h2 id={TASK_TITLE_ID} className="font-display text-2xl leading-[1.33] font-medium text-on-surface">
+      <h2 id={TASK_TITLE_ID} className="font-display text-2xl leading-[1.33] font-medium text-foreground">
         This task isn&apos;t available
       </h2>
-      <p className="text-sm text-on-surface-muted">It may have been removed by your tutor.</p>
+      <p className="text-sm text-muted-foreground">It may have been removed by your tutor.</p>
     </header>
   )
 }

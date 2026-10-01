@@ -192,6 +192,8 @@ export type PlannedTopic = {
   /** The student's name, on the tutor's calendar. */
   person: string | null
   tag: TopicTag
+  /** The strand's name, which differs between IB and GCSE. */
+  strand: string
   plannedStart: DayKey | null
   plannedEnd: DayKey | null
   updatedAt: string
@@ -210,6 +212,7 @@ export type WeekPlan = {
   /** The Monday. */
   week: DayKey
   topic: number
+  strand: string
   topics: TopicTag[]
   /** The latest edit among its subtopics, for calendar feeds. */
   updatedAt: string
@@ -251,6 +254,7 @@ export function weekPlans(
           person: row.person,
           week,
           topic: row.tag.topic,
+          strand: row.strand,
           topics: [row.tag],
           updatedAt: row.updatedAt,
         })

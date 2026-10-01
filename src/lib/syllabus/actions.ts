@@ -11,6 +11,8 @@ import { isDayKey } from "@/lib/calendar/dates"
 import {
   COURSES,
   LEVELS,
+  PROGRAMME_COURSES,
+  PROGRAMME_LEVELS,
   PROGRAMMES,
   STATUSES,
   type Course,
@@ -47,6 +49,8 @@ export async function saveStudentCourse(
     if (!PROGRAMMES.includes(programme)) return { error: "Pick a programme." }
     if (!COURSES.includes(course)) return { error: "Pick a course." }
     if (!LEVELS.includes(level)) return { error: "Pick a level." }
+    if (!PROGRAMME_COURSES[programme]?.includes(course)) return { error: "Pick a course in this programme." }
+    if (!PROGRAMME_LEVELS[programme]?.includes(level)) return { error: "Pick a level in this programme." }
     values = { programme, course, level }
   }
 
@@ -226,8 +230,8 @@ export async function saveExam(studentId: string, input: ExamInput): Promise<{ e
   if (input.percent !== null && !(Number.isFinite(input.percent) && input.percent >= 0 && input.percent <= 100)) {
     return { error: "The score is a percentage, 0 to 100." }
   }
-  if (input.ibGrade !== null && !(Number.isInteger(input.ibGrade) && input.ibGrade >= 1 && input.ibGrade <= 7)) {
-    return { error: "IB grades go from 1 to 7." }
+  if (input.ibGrade !== null && !(Number.isInteger(input.ibGrade) && input.ibGrade >= 1 && input.ibGrade <= 9)) {
+    return { error: "Grades go from 1 to 9." }
   }
   const notes = input.notes?.trim() ?? ""
   if (notes.length > 2000) return { error: "Notes can be up to 2,000 characters." }

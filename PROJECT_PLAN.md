@@ -241,6 +241,30 @@
   3. Set a task with a deadline: the time shown matches your own clock, not London's (if you are elsewhere).
   4. Redeem the invite as the student: their deadlines also read in their own zone.
 
+### Phase 15 — GCSE Core Maths support (Cambridge IGCSE 0580)
+- **Status:** done (awaiting user verification)
+- **What it is:** Extends the syllabus tracker to support Cambridge IGCSE Mathematics (0580) Core curriculum (and Extended tier) alongside IB Diploma (AA and AI).
+- **Notes:**
+  - Migrations `0026_gcse_enums.sql` and `0027_gcse_syllabus.sql`:
+    - Enums extended: `ib_programme` (`gcse`), `ib_course` (`0580`), `ib_level` (`Core`, `Extended`), `syllabus_level` (`Core`, `Extended`).
+    - Constraints updated: `syllabus_topics_topic` widened from 1–5 to 1–9; `exams_ib_grade_range` widened from 1–7 to 1–9.
+    - Guard triggers (`guard_assignment_topic`, `guard_topic_progress`, `guard_exam_topic`) updated to enforce matching course and tier rules for both IB and GCSE (`Core` students only access `Core` topics; `Extended` access `Core` and `Extended`).
+    - Reference data: 60 subtopics across 9 strands for Cambridge IGCSE Mathematics 0580 (43 Core, 17 Extended).
+  - App code:
+    - `src/lib/syllabus/model.ts`: Programme, course, and level definitions, labels, and mappings (`PROGRAMME_COURSES`, `PROGRAMME_LEVELS`). `courseShortName` produces "GCSE Core Maths" for 0580 Core. `topicName(topic, course)` and 9 strand colors. `topicsForCourse` filters Core vs Extended. `GCSE_GRADES` (9–1).
+    - `src/components/syllabus/course-card.tsx`: Programme select dynamically updates available courses and levels.
+    - `src/components/syllabus/syllabus-tracker.tsx` & `src/components/syllabus/topic-picker.tsx`: Displays strand names according to course curriculum (e.g. Number, Algebra and graphs, Coordinate geometry, etc. for 0580).
+    - `src/components/syllabus/exams-section.tsx`: Shows 1–9 grades for GCSE students with proper band coloring (7–9 green, 4–6 yellow, 1–3 red).
+    - `src/lib/syllabus/csv.ts`: LLM prompt and guidance supports general curricula.
+    - `src/lib/assignments/actions.ts` & `src/lib/calendar/load.ts`: Respects `Core` and `Extended` syllabus level filtering.
+- **Verify by:**
+  1. Apply `0026_gcse_enums.sql` and `0027_gcse_syllabus.sql` in the Supabase project.
+  2. On a student's profile page as tutor, select Programme "Cambridge IGCSE", Course "0580 · Mathematics", Level "Core", and Save.
+  3. Header displays "GCSE Core Maths".
+  4. Syllabus tab renders 9 strands (Number, Algebra and graphs, Coordinate geometry, Geometry, Mensuration, Trigonometry, Transformations and vectors, Probability, Statistics) with 43 Core subtopics.
+  5. Tasks can be tagged with 0580 Core subtopics.
+  6. Exams section allows recording 1–9 grades.
+
 ## 6. Working Agreement
 
 - Implementation proceeds **one phase at a time**. Each phase is announced before it starts (what will and won't change).

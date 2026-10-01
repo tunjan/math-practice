@@ -16,7 +16,7 @@ import { FormMessage } from "@/components/auth/form-message"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardSection } from "@/components/ui/card"
-import { ConfirmDialog } from "@/components/ui/dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Input } from "@/components/ui/input"
 import { Field } from "@/components/ui/label"
 import { createInvite, revokeInvite, type InviteActionState } from "@/lib/invites/actions"
@@ -83,8 +83,8 @@ export function InviteForm() {
         </form>
 
         {state.link ? (
-          <div className="flex flex-col gap-2 border-t border-outline pt-4">
-            <label htmlFor={linkId} className="label-md text-on-surface-secondary">
+          <div className="flex flex-col gap-2 border-t border-border pt-4">
+            <label htmlFor={linkId} className="label-md text-foreground/80">
               Invite link
             </label>
             <div className="flex gap-2">
@@ -92,13 +92,12 @@ export function InviteForm() {
                 id={linkId}
                 readOnly
                 value={state.link}
-                variant="filled"
-                mono
+                className="border-transparent bg-muted"
                 onFocus={(event) => event.currentTarget.select()}
               />
               <CopyButton value={state.link} />
             </div>
-            <p className="body-sm text-on-surface-muted">
+            <p className="body-md text-muted-foreground">
               Send it to the student now. It won&apos;t be shown again after you leave this page.
             </p>
           </div>
@@ -134,17 +133,14 @@ function RevokeInvite({ invite }: { invite: OpenInvite }) {
           {invite.queued > 0
             ? ` The ${invite.queued === 1 ? "task" : `${invite.queued} tasks`} queued for them will be discarded.`
             : ""}
-          {state.error ? <span className="mt-2 block text-error">{state.error}</span> : null}
+          {state.error ? <span className="mt-2 block text-destructive">{state.error}</span> : null}
         </>
       }
-      confirm={
-        <form action={action}>
-          <input type="hidden" name="invite_id" value={invite.id} />
-          <Button type="submit" variant="primary" disabled={pending} className="w-full sm:w-auto">
-            {pending ? "Revoking" : "Revoke invite"}
-          </Button>
-        </form>
-      }
+      confirmLabel="Revoke invite"
+      pendingLabel="Revoking"
+      pending={pending}
+      action={action}
+      fields={{ invite_id: invite.id }}
     />
   )
 }
@@ -192,10 +188,10 @@ export function PendingInvites({
             {invites.map((invite) => (
               <TableRow key={invite.id}>
                 <TableCell className="w-full max-w-0">
-                  <span className="block truncate font-medium text-on-surface">{invite.fullName || "Unnamed student"}</span>
+                  <span className="block truncate font-medium text-foreground">{invite.fullName || "Unnamed student"}</span>
                 </TableCell>
                 <TableCell className="hidden whitespace-nowrap sm:table-cell">
-                  <span className="text-on-surface-muted tabular-nums">
+                  <span className="text-muted-foreground tabular-nums">
                     {date(invite.expiresAt)}
                   </span>
                 </TableCell>
@@ -205,7 +201,7 @@ export function PendingInvites({
                       {invite.queued} {invite.queued === 1 ? "task" : "tasks"}
                     </Badge>
                   ) : (
-                    <span className="text-on-surface-muted tabular-nums">0</span>
+                    <span className="text-muted-foreground tabular-nums">0</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right">

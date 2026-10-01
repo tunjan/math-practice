@@ -14,18 +14,18 @@ export function AuthCard({
   footer?: React.ReactNode
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-outline bg-surface">
+    <div className="overflow-hidden rounded-2xl border border-border bg-background">
       <div className="flex flex-col gap-6 p-6 sm:p-8">
         <div className="flex flex-col gap-1.5">
-          <h1 className="headline-md text-on-surface">{title}</h1>
+          <h1 className="headline-md text-foreground">{title}</h1>
           {description ? (
-            <p className="body-md text-on-surface-muted">{description}</p>
+            <p className="body-md text-muted-foreground">{description}</p>
           ) : null}
         </div>
         {children}
       </div>
       {footer ? (
-        <div className="border-t border-outline bg-surface-sunken px-6 py-4 body-sm text-on-surface-muted sm:px-8">
+        <div className="border-t border-border bg-muted px-6 py-4 body-md text-muted-foreground sm:px-8">
           {footer}
         </div>
       ) : null}
@@ -37,7 +37,7 @@ export function AuthLink({ href, children }: { href: string; children: React.Rea
   return (
     <Link
       href={href}
-      className="label-md text-on-surface underline decoration-outline-strong underline-offset-4 transition-colors hover:decoration-on-surface"
+      className="label-md text-foreground underline decoration-input underline-offset-4 transition-colors hover:decoration-foreground"
     >
       {children}
     </Link>

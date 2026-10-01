@@ -19,14 +19,14 @@ const Toaster = (props: ToasterProps) => {
         success: <CircleCheck className="size-4 text-success" aria-hidden />,
         info: <Info className="size-4 text-info" aria-hidden />,
         warning: <TriangleAlert className="size-4 text-on-warning-container" aria-hidden />,
-        error: <CircleAlert className="size-4 text-error" aria-hidden />,
-        loading: <LoaderCircle className="size-4 animate-spin text-on-surface-muted" aria-hidden />,
+        error: <CircleAlert className="size-4 text-destructive" aria-hidden />,
+        loading: <LoaderCircle className="size-4 animate-spin text-muted-foreground" aria-hidden />,
       }}
       style={
         {
-          "--normal-bg": "var(--surface)",
-          "--normal-text": "var(--on-surface)",
-          "--normal-border": "var(--outline)",
+          "--normal-bg": "var(--background)",
+          "--normal-text": "var(--foreground)",
+          "--normal-border": "var(--border)",
           "--border-radius": "8px",
           "--width": "380px",
         } as React.CSSProperties
@@ -34,10 +34,10 @@ const Toaster = (props: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: "gap-3! px-4! py-3! font-sans! shadow-lg!",
-          title: "label-md! text-on-surface!",
-          description: "body-sm! mt-0.5! text-on-surface-muted!",
+          title: "label-md! text-foreground!",
+          description: "body-md! mt-0.5! text-muted-foreground!",
           actionButton:
-            "h-8! rounded-md! bg-primary! px-3! label-sm! text-on-primary! hover:bg-primary-hover!",
+            "h-8! rounded-lg! bg-primary! px-3! label-sm! text-primary-foreground! hover:bg-primary/90!",
           icon: "mt-0.5! self-start!",
         },
       }}

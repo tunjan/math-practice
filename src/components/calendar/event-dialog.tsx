@@ -1,15 +1,16 @@
 "use client"
 
 import * as React from "react"
+import { Toggle as TogglePrimitive } from "@base-ui/react/toggle"
 import {
-  AlignLeft,
   BookOpen,
-  ChevronsUpDown,
-  CircleEllipsis,
+  Check,
   Clock,
+  CircleEllipsis,
   GraduationCap,
   Lock,
   PencilLine,
+  Sun,
   Trash2,
   Users,
 } from "lucide-react"
@@ -18,8 +19,9 @@ import { toast } from "sonner"
 
 import { FormMessage } from "@/components/auth/form-message"
 import { Button } from "@/components/ui/button"
+import { chipClass, chipOnClass, composerField } from "@/components/ui/chip"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
-  ConfirmDialog,
   Dialog,
   DialogBody,
   DialogClose,
@@ -28,8 +30,6 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog"
 import { DateField } from "@/components/ui/date-field"
-import { Input } from "@/components/ui/input"
-import { SegmentedControl } from "@/components/ui/segmented-control"
 import {
   Select,
   SelectContent,
@@ -39,7 +39,6 @@ import {
   SelectSeparator,
   SelectTrigger,
 } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import type { DeleteEventState, EventFormState } from "@/lib/calendar/actions"
 import {
   addDays,
@@ -78,10 +77,9 @@ type OpenChangeDetails = Parameters<
 /**
  * Add or edit one of your own calendar events.
  *
- * A composer, like New task: the title is the heading, the type sits under
- * it, and the details are one hairline card of icon-led rows (when, who sees
- * it, notes). Labels are for screen readers; the icons and values carry the
- * meaning on screen.
+ * A composer, like New task: a title line and notes, then a row of property
+ * chips (when, type, who sees it). Each chip shows its value, so the controls
+ * explain themselves without labels or helper text.
  *
  * Times are wall-clock values in the person's profile timezone, the clock the
  * grid is drawn in. The zone is only named when it differs from the device's,
@@ -130,8 +128,7 @@ export function EventDialog({
   return (
     <Dialog open={draft !== null} onOpenChange={handleOpenChange}>
       <DialogContent
-        scope="dub"
-        className="sm:w-[min(540px,calc(100vw-4rem))] sm:rounded-2xl"
+        className="sm:w-[min(520px,calc(100vw-4rem))]"
         // Straight into the title by keyboard or mouse; on touch, don't throw
         // the on-screen keyboard over the sheet before it has arrived.
         initialFocus={(openType) => (openType === "touch" ? true : (titleRef.current ?? true))}
@@ -154,23 +151,16 @@ export function EventDialog({
         ) : null}
 
         <ConfirmDialog
-          scope="dub"
           open={confirmingDiscard}
           onOpenChange={setConfirmingDiscard}
           title={editing ? "Discard changes?" : "Discard event?"}
           description={editing ? "The event stays as it was." : undefined}
           cancelLabel="Keep editing"
-          confirm={
-            <Button
-              variant="danger"
-              onClick={() => {
-                setConfirmingDiscard(false)
-                onClose()
-              }}
-            >
-              Discard
-            </Button>
-          }
+          confirmLabel="Discard"
+          onConfirm={() => {
+            setConfirmingDiscard(false)
+            onClose()
+          }}
         />
       </DialogContent>
     </Dialog>
@@ -256,14 +246,11 @@ function useDeviceTimeZone() {
   )
 }
 
+/** A native time field inside a chip: no box of its own, no browser clock icon. */
+const timeInput =
+  "field-sizing-content bg-transparent tabular-nums outline-none [&::-webkit-calendar-picker-indicator]:hidden"
+
 type FieldErrors = Partial<Record<"title" | "end", string>>
-
-/** Borderless: the dialog is the field. The caret marks focus. */
-const composerField =
-  "w-full bg-transparent text-on-surface outline-none placeholder:text-on-surface-muted"
-
-/** Compact recessed inputs for the date and time values inside a row. */
-const valueField = "h-9 w-auto rounded-lg px-2.5"
 
 function EventForm({
   ref,
@@ -303,10 +290,8 @@ function EventForm({
   const ids = {
     title: React.useId(),
     titleMessage: React.useId(),
-    when: React.useId(),
     end: React.useId(),
     endMessage: React.useId(),
-    share: React.useId(),
   }
 
   React.useImperativeHandle(
@@ -390,6 +375,7 @@ function EventForm({
     })
   }
 
+  const kind = KIND_OPTIONS.find((option) => option.value === values.kind) ?? KIND_OPTIONS[0]
   const sharedStudent = role === "tutor" ? students.find((s) => s.id === values.share) : undefined
   const showZone = !values.allDay && deviceZone !== null && deviceZone !== timeZone
   // A tutor with no students has nobody to share with: the row would be a
@@ -406,155 +392,157 @@ function EventForm({
     >
       {draft.mode === "edit" ? <input type="hidden" name="event_id" value={draft.event.id} /> : null}
       {values.allDay ? <input type="hidden" name="all_day" value="on" /> : null}
+      <input type="hidden" name="kind" value={values.kind} />
 
-      <DialogBody className="flex flex-col gap-5 pt-1 pb-6">
+      <DialogBody className="flex flex-col gap-2 pt-2 pb-5">
         {serverError ? <FormMessage key={serverError.attempt} error={serverError.message} /> : null}
 
-        <div className="flex flex-col gap-1">
-          <input
-            ref={titleRef}
-            data-composer
-            id={ids.title}
-            name="title"
-            value={values.title}
-            onChange={(e) => set("title", e.target.value)}
-            maxLength={200}
-            autoComplete="off"
-            aria-label="Title"
-            placeholder={role === "tutor" ? "Lesson: circle theorems" : "Mock exam, paper 2"}
-            aria-required
-            aria-invalid={errors.title ? true : undefined}
-            aria-describedby={errors.title ? ids.titleMessage : undefined}
-            className={cn(composerField, "headline-md")}
-          />
-          {errors.title ? (
-            <p id={ids.titleMessage} className="body-sm text-error">
-              {errors.title}
-            </p>
-          ) : null}
-        </div>
+        <input
+          ref={titleRef}
+          id={ids.title}
+          name="title"
+          aria-label="Title"
+          placeholder="Event title"
+          value={values.title}
+          onChange={(e) => set("title", e.target.value)}
+          maxLength={200}
+          autoComplete="off"
+          aria-required
+          aria-invalid={errors.title ? true : undefined}
+          aria-describedby={errors.title ? ids.titleMessage : undefined}
+          className={cn(composerField, "headline-md")}
+        />
+        {errors.title ? (
+          <p id={ids.titleMessage} className="-mt-1 body-md text-destructive">
+            {errors.title}
+          </p>
+        ) : null}
 
-        <SegmentedControl
-          legend="Type"
-          hideLegend
-          name="kind"
-          value={values.kind}
-          onValueChange={(kind) => set("kind", kind)}
-          options={KIND_OPTIONS}
+        <textarea
+          name="notes"
+          aria-label="Notes"
+          placeholder="Add notes"
+          value={values.notes}
+          onChange={(e) => set("notes", e.target.value)}
+          maxLength={2000}
+          rows={2}
+          className={cn(composerField, "field-sizing-content max-h-48 min-h-14 resize-none body-md")}
         />
 
-        <div className="divide-y divide-outline rounded-xl border border-outline">
-          {/* When */}
-          <fieldset className="min-w-0">
-            <legend className="sr-only">When</legend>
-            <Row icon={Clock}>
-              <div className="flex flex-col gap-2.5">
-                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2">
-                  <DateField
-                    name="date"
-                    variant="filled"
-                    mono
-                    aria-label={values.allDay ? "First day" : "Date"}
-                    value={values.date}
-                    onChange={(date) => set("date", date)}
-                    className={valueField}
-                  />
-                  {values.allDay ? (
-                    <>
-                      <Dash />
-                      <DateField
-                        name="end_date"
-                        variant="filled"
-                        mono
-                        aria-label="Last day"
-                        min={values.date}
-                        max={addDays(values.date, 30)}
-                        value={values.endDate}
-                        onChange={(date) => set("endDate", date)}
-                        className={valueField}
-                      />
-                    </>
-                  ) : (
-                    <span className="flex items-center gap-1.5">
-                      <Input
-                        name="start_time"
-                        type="time"
-                        variant="filled"
-                        mono
-                        required
-                        aria-label="Starts"
-                        value={values.start}
-                        onChange={(e) => e.target.value && set("start", e.target.value)}
-                        className={valueField}
-                      />
-                      <Dash />
-                      <Input
-                        id={ids.end}
-                        name="end_time"
-                        type="time"
-                        variant="filled"
-                        mono
-                        required
-                        aria-label="Ends"
-                        value={values.end}
-                        onChange={(e) => e.target.value && set("end", e.target.value)}
-                        aria-invalid={errors.end ? true : undefined}
-                        aria-describedby={errors.end ? ids.endMessage : undefined}
-                        className={valueField}
-                      />
-                    </span>
-                  )}
-                </div>
-
-                {errors.end ? (
-                  <p id={ids.endMessage} className="body-sm text-error">
-                    {errors.end}
-                  </p>
-                ) : null}
-
-                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-                  <label className="flex cursor-pointer items-center gap-2.5 body-md text-on-surface-secondary">
-                    <Switch checked={values.allDay} onCheckedChange={(checked) => set("allDay", checked)} />
-                    All day
-                  </label>
-                  {showZone ? <span className="mono-data-sm text-on-surface-muted">{timeZone}</span> : null}
-                </div>
+        <div className="flex flex-col gap-2 pt-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <DateField
+              variant="chip"
+              name="date"
+              aria-label={`${values.allDay ? "Start date" : "Date"}, ${formatDayShort(values.date)}`}
+              format={formatDayShort}
+              value={values.date}
+              onChange={(date) => set("date", date)}
+            />
+            {values.allDay ? (
+              <>
+                <span aria-hidden className="text-muted-foreground">-</span>
+                <DateField
+                  variant="chip"
+                  name="end_date"
+                  aria-label={`End date, ${formatDayShort(values.endDate)}`}
+                  format={formatDayShort}
+                  min={values.date}
+                  max={addDays(values.date, 30)}
+                  value={values.endDate}
+                  onChange={(date) => set("endDate", date)}
+                />
+              </>
+            ) : (
+              <div
+                className={cn(
+                  chipClass,
+                  "pr-1.5 focus-within:border-ring focus-within:ring-4 focus-within:ring-border",
+                  errors.end && "border-destructive"
+                )}
+              >
+                <Clock aria-hidden />
+                <input
+                  type="time"
+                  name="start_time"
+                  aria-label="Start time"
+                  required
+                  value={values.start}
+                  onChange={(e) => e.target.value && set("start", e.target.value)}
+                  className={timeInput}
+                />
+                <span aria-hidden className="text-muted-foreground">-</span>
+                <input
+                  id={ids.end}
+                  type="time"
+                  name="end_time"
+                  aria-label="End time"
+                  required
+                  value={values.end}
+                  onChange={(e) => e.target.value && set("end", e.target.value)}
+                  aria-invalid={errors.end ? true : undefined}
+                  aria-describedby={errors.end ? ids.endMessage : undefined}
+                  className={timeInput}
+                />
               </div>
-            </Row>
-          </fieldset>
+            )}
+            <TogglePrimitive
+              pressed={values.allDay}
+              onPressedChange={(pressed) => set("allDay", pressed)}
+              className={cn(chipClass, chipOnClass)}
+            >
+              {values.allDay ? <Check aria-hidden /> : <Sun aria-hidden />}
+              All day
+            </TogglePrimitive>
+          </div>
+          {errors.end ? (
+            <p id={ids.endMessage} className="body-md text-destructive">
+              {errors.end}
+            </p>
+          ) : showZone ? (
+            <p className="body-md text-muted-foreground">Times in {timeZone}</p>
+          ) : null}
 
-          {/* Who sees it */}
-          {showShare ? (
-            role === "tutor" ? (
-              <Row icon={sharedStudent ? Users : Lock}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={values.kind}
+              onValueChange={(next) => next && set("kind", next as EventKind)}
+            >
+              <SelectTrigger aria-label="Type" className={chipClass}>
+                <kind.icon aria-hidden />
+                <span className="truncate">{kind.label}</span>
+              </SelectTrigger>
+              <SelectContent className="min-w-48">
+                {KIND_OPTIONS.map(({ value, label, icon: Icon }) => (
+                  <SelectItem key={value} value={value}>
+                    <Icon aria-hidden />
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {showShare && role === "tutor" ? (
+              <>
                 <input type="hidden" name="share" value={values.share} />
                 <Select
                   value={values.share || ONLY_YOU}
                   onValueChange={(next) => set("share", next && next !== ONLY_YOU ? (next as string) : "")}
                 >
-                  <SelectTrigger
-                    id={ids.share}
-                    aria-label="Who can see this"
-                    className={cn(
-                      "-mx-2.5 flex h-9 w-[calc(100%+1.25rem)] items-center gap-2 rounded-lg px-2.5 text-left body-md text-on-surface outline-none",
-                      "transition-colors duration-150 hover:bg-surface-sunken data-popup-open:bg-surface-sunken"
-                    )}
-                  >
-                    <span className="min-w-0 flex-1 truncate">{sharedStudent?.name ?? "Only you"}</span>
-                    <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-on-surface-muted" />
+                  <SelectTrigger aria-label="Visible to" className={chipClass}>
+                    {sharedStudent ? <Users aria-hidden /> : <Lock aria-hidden />}
+                    <span className="truncate">{sharedStudent?.name ?? "Only you"}</span>
                   </SelectTrigger>
-                  <SelectContent className="dub min-w-(--anchor-width) rounded-lg p-1">
-                    <SelectItem value={ONLY_YOU} className="h-9 rounded-md text-sm">
+                  <SelectContent className="min-w-56">
+                    <SelectItem value={ONLY_YOU}>
                       <Lock aria-hidden />
                       Only you
                     </SelectItem>
-                    <SelectSeparator className="-mx-1 my-1" />
+                    <SelectSeparator />
                     <SelectGroup>
-                      <SelectGroupLabel className="px-2 pt-1.5 pb-1 text-xs font-medium tracking-normal normal-case">
-                        Share with
-                      </SelectGroupLabel>
+                      <SelectGroupLabel>Share with</SelectGroupLabel>
                       {students.map((student) => (
-                        <SelectItem key={student.id} value={student.id} className="h-9 rounded-md text-sm">
+                        <SelectItem key={student.id} value={student.id}>
                           <Users aria-hidden />
                           {student.name}
                         </SelectItem>
@@ -562,42 +550,29 @@ function EventForm({
                     </SelectGroup>
                   </SelectContent>
                 </Select>
-              </Row>
-            ) : (
-              <Row icon={values.share === "tutor" ? Users : Lock}>
-                <label className="flex h-9 cursor-pointer items-center justify-between gap-4 body-md text-on-surface">
-                  Share with your tutor
-                  <Switch
-                    checked={values.share === "tutor"}
-                    onCheckedChange={(checked) => set("share", checked ? "tutor" : "")}
-                  />
-                </label>
-                {values.share === "tutor" ? <input type="hidden" name="share" value="tutor" /> : null}
-              </Row>
-            )
-          ) : null}
+              </>
+            ) : null}
 
-          {/* Notes */}
-          <Row icon={AlignLeft}>
-            <textarea
-              name="notes"
-              data-composer
-              aria-label="Notes"
-              placeholder="Notes"
-              value={values.notes}
-              onChange={(e) => set("notes", e.target.value)}
-              maxLength={2000}
-              rows={1}
-              className={cn(composerField, "field-sizing-content block max-h-48 min-h-9 resize-none py-2 body-md")}
-            />
-          </Row>
+            {role === "student" ? (
+              <>
+                {values.share === "tutor" ? <input type="hidden" name="share" value="tutor" /> : null}
+                <TogglePrimitive
+                  pressed={values.share === "tutor"}
+                  onPressedChange={(pressed) => set("share", pressed ? "tutor" : "")}
+                  className={cn(chipClass, chipOnClass)}
+                >
+                  {values.share === "tutor" ? <Check aria-hidden /> : <Users aria-hidden />}
+                  Share with tutor
+                </TogglePrimitive>
+              </>
+            ) : null}
+          </div>
         </div>
       </DialogBody>
 
       <DialogFooter className="py-3">
         {draft.mode === "edit" ? (
           <ConfirmDialog
-            scope="dub"
             open={confirmingDelete}
             onOpenChange={setConfirmingDelete}
             trigger={
@@ -612,49 +587,25 @@ function EventForm({
                 ? `It also disappears from ${role === "tutor" ? draft.event.sharedWith.name + "'s" : "your tutor's"} calendar.`
                 : "This can't be undone."
             }
-            confirm={
-              <Button variant="danger" onClick={handleDelete} disabled={deleting}>
-                {deleting ? "Deleting" : "Delete"}
-              </Button>
-            }
+            confirmLabel="Delete event"
+            pendingLabel="Deleting"
+            pending={deleting}
+            onConfirm={handleDelete}
           />
         ) : null}
         <div className="ml-auto flex items-center gap-2">
-          <DialogClose render={<Button variant="secondary" className="border-outline" />}>Cancel</DialogClose>
+          <DialogClose render={<Button variant="secondary" />}>Cancel</DialogClose>
           <Button
             type="submit"
             variant="primary"
-            disabled={pending}
+            loading={pending}
             aria-keyshortcuts={isMac ? "Meta+Enter" : "Control+Enter"}
+            shortcut={`${isMac ? "⌘" : "Ctrl"} ↵`}
           >
             {pending ? "Saving" : draft.mode === "edit" ? "Save" : "Add event"}
-            <kbd
-              aria-hidden
-              className="-mr-1.5 hidden h-5 items-center rounded-xs bg-on-primary/15 px-1.5 font-sans text-[11px] leading-none text-on-primary/80 md:inline-flex"
-            >
-              {isMac ? "⌘" : "Ctrl"} ↵
-            </kbd>
           </Button>
         </div>
       </DialogFooter>
     </form>
-  )
-}
-
-/** One line of the details card: a 16px icon in a fixed gutter, then its control. */
-function Row({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
-  return (
-    <div className="flex gap-3 px-4 py-3">
-      <Icon aria-hidden className="mt-2.5 size-4 shrink-0 text-on-surface-muted" />
-      <div className="min-w-0 flex-1">{children}</div>
-    </div>
-  )
-}
-
-function Dash() {
-  return (
-    <span aria-hidden className="text-on-surface-muted">
-      –
-    </span>
   )
 }

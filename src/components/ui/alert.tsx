@@ -9,7 +9,7 @@ import { cn } from "cn"
  */
 const alertVariants = cva(
   [
-    "group/alert relative grid w-full items-start gap-x-2.5 gap-y-1 rounded-md px-3 py-2.5 body-sm",
+    "group/alert relative grid w-full items-start gap-x-2.5 gap-y-1 rounded-lg px-3 py-2.5 body-md",
     "has-[>svg]:grid-cols-[--spacing(4)_1fr] [&>svg]:mt-px [&>svg]:size-4 [&>svg]:shrink-0",
   ].join(" "),
   {

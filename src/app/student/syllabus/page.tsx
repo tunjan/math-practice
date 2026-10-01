@@ -32,7 +32,7 @@ export default async function StudentSyllabusPage() {
       width="wide"
       header={<PageHeader title="Syllabus" description={courseShortName(profile.course)} />}
     >
-      <p className="body-md max-w-[70ch] text-on-surface-muted">
+      <p className="body-md max-w-[70ch] text-muted-foreground">
         Every subtopic, where you are with it and when it&apos;s planned. Your tutor keeps the tracker up
         to date; your exams are yours to add.
       </p>

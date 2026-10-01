@@ -55,7 +55,7 @@ function FieldValue({ field, progress }: { field: keyof TopicProgress; progress:
   if (field === "status") return <Badge variant={STATUS_COLOR[progress.status]}>{STATUS_LABEL[progress.status]}</Badge>
   if (field === "stars") return <span className="font-mono tabular-nums">{progress.stars} ★</span>
   const value = progress[field]
-  if (value === null || value === "") return <span className="text-on-surface-muted">empty</span>
+  if (value === null || value === "") return <span className="text-muted-foreground">empty</span>
   return (
     <span className="max-w-48 truncate font-mono text-xs tabular-nums" title={String(value)}>
       {String(value)}
@@ -121,7 +121,7 @@ export function ImportCsvDialog({ studentId, rows }: { studentId: string; rows: 
       <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
         <Upload aria-hidden /> Import CSV
       </Button>
-      <DialogContent scope="dub" className="sm:w-[min(760px,calc(100vw-4rem))]">
+      <DialogContent className="sm:w-[min(760px,calc(100vw-4rem))]">
         <DialogHeader
           title="Import CSV"
           description="Columns: code, title, level, status, stars, planned_start, planned_end, notes. Only code is required; a missing column leaves that field as it is."
@@ -144,7 +144,7 @@ export function ImportCsvDialog({ studentId, rows }: { studentId: string; rows: 
             <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
               <Upload aria-hidden /> Choose a file
             </Button>
-            <span className="text-sm text-on-surface-muted">or paste it below</span>
+            <span className="text-sm text-muted-foreground">or paste it below</span>
           </div>
           <Textarea
             value={text}
@@ -187,21 +187,21 @@ export function ImportCsvDialog({ studentId, rows }: { studentId: string; rows: 
                 </Alert>
               ) : null}
               {result.warnings.map((warning) => (
-                <p key={warning} className="text-sm text-on-surface-muted">
+                <p key={warning} className="text-sm text-muted-foreground">
                   {warning}
                 </p>
               ))}
               {!blocked && count === 0 ? (
-                <p className="rounded-md border border-outline px-3 py-6 text-center text-sm text-on-surface-muted">
+                <p className="rounded-lg border border-border px-3 py-6 text-center text-sm text-muted-foreground">
                   {result.rows} row{result.rows === 1 ? "" : "s"} read. Nothing would change.
                 </p>
               ) : null}
               {!blocked && count > 0 ? (
-                <div className="overflow-x-auto rounded-lg border border-outline">
+                <div className="overflow-x-auto rounded-xl border border-border">
                   <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
                     <caption className="sr-only">Changes the import would make</caption>
                     <thead>
-                      <tr className="h-8 border-b border-outline bg-surface-sunken/70 text-xs text-on-surface-muted">
+                      <tr className="h-8 border-b border-border bg-muted/70 text-xs text-muted-foreground">
                         <th scope="col" className="w-16 px-3 font-medium">Code</th>
                         <th scope="col" className="px-3 font-medium">Subtopic</th>
                         <th scope="col" className="px-3 font-medium">Changes</th>
@@ -209,18 +209,18 @@ export function ImportCsvDialog({ studentId, rows }: { studentId: string; rows: 
                     </thead>
                     <tbody>
                       {result.changes.map((change) => (
-                        <tr key={change.topicId} className="border-b border-outline align-top last:border-b-0">
+                        <tr key={change.topicId} className="border-b border-border align-top last:border-b-0">
                           <td className="px-3 py-2 font-mono tabular-nums">{change.code}</td>
-                          <td className="max-w-48 truncate px-3 py-2 text-on-surface-secondary" title={change.title}>
+                          <td className="max-w-48 truncate px-3 py-2 text-foreground/80" title={change.title}>
                             {change.title}
                           </td>
                           <td className="px-3 py-2">
                             <ul className="flex flex-col gap-1">
                               {change.fields.map((field) => (
                                 <li key={field} className="flex flex-wrap items-center gap-1.5">
-                                  <span className="w-12 text-xs text-on-surface-muted">{FIELD_LABEL[field]}</span>
+                                  <span className="w-12 text-xs text-muted-foreground">{FIELD_LABEL[field]}</span>
                                   <FieldValue field={field} progress={change.before} />
-                                  <ArrowRight aria-label="to" className="size-3 text-on-surface-muted" />
+                                  <ArrowRight aria-label="to" className="size-3 text-muted-foreground" />
                                   <FieldValue field={field} progress={change.after} />
                                 </li>
                               ))}
@@ -237,7 +237,7 @@ export function ImportCsvDialog({ studentId, rows }: { studentId: string; rows: 
         </DialogBody>
         <DialogFooter className="py-3">
           <div className="ml-auto flex items-center gap-2">
-            <DialogClose render={<Button variant="secondary" className="border-outline" />}>Cancel</DialogClose>
+            <DialogClose render={<Button variant="secondary" className="border-border" />}>Cancel</DialogClose>
             {result && !blocked && count > 0 ? (
               <Button variant="primary" onClick={apply} disabled={pending}>
                 {pending ? "Applying" : `Apply ${count} change${count === 1 ? "" : "s"}`}
@@ -289,17 +289,17 @@ export function CopyPromptButton({
       <PopoverTrigger render={<Button variant="secondary" size="sm" />}>
         <Sparkles aria-hidden /> LLM prompt
       </PopoverTrigger>
-      <PopoverContent className="dub w-80" align="end">
+      <PopoverContent className="w-80" align="end">
         <form className="flex flex-col gap-3 p-1" onSubmit={copy}>
-          <p className="text-sm text-on-surface-secondary">
+          <p className="text-sm text-foreground/80">
             Copies a prompt that asks an LLM to plan every subtopic not yet seen, as a CSV you can import.
           </p>
           <div className="grid grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               From
               <DateField value={from} onChange={setFrom} className="h-9 text-sm" />
             </label>
-            <label className="flex flex-col gap-1 text-xs text-on-surface-muted">
+            <label className="flex flex-col gap-1 text-xs text-muted-foreground">
               To
               <DateField
                 value={to}
@@ -310,7 +310,7 @@ export function CopyPromptButton({
               />
             </label>
           </div>
-          {from && to && from > to ? <p className="text-xs text-error">The end must be on or after the start.</p> : null}
+          {from && to && from > to ? <p className="text-xs text-destructive">The end must be on or after the start.</p> : null}
           <div className="flex justify-end">
             <Button type="submit" variant="primary" size="sm" disabled={invalid}>
               Copy prompt

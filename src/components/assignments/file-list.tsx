@@ -31,7 +31,7 @@ export function FileList({
   emptyLabel?: string
 }) {
   if (files.length === 0) {
-    return <p className="px-4 py-4 body-md text-on-surface-muted">{emptyLabel}</p>
+    return <p className="px-4 py-4 body-md text-muted-foreground">{emptyLabel}</p>
   }
 
   return (
@@ -39,32 +39,32 @@ export function FileList({
       {files.map((file) => {
         const Icon = file.mimeType === "application/pdf" ? FileText : ImageIcon
         const meta = (
-          <span className="mono-data-sm text-on-surface-muted">
+          <span className="caption tabular-nums text-muted-foreground">
             {formatLabel(file.mimeType)}
             {file.sizeBytes ? ` · ${formatBytes(file.sizeBytes)}` : ""}
           </span>
         )
 
         return (
-          <li key={file.id} className="border-t border-outline first:border-t-0">
+          <li key={file.id} className="border-t border-border first:border-t-0">
             {file.url ? (
               <a
                 href={file.url}
                 target="_blank"
                 rel="noreferrer"
-                className="group flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-surface-muted"
+                className="group flex min-h-14 items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
               >
                 <IconTile>
                   <Icon />
                 </IconTile>
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate label-md text-on-surface">
+                  <span className="truncate label-md text-foreground">
                     {file.fileName || "Attachment"}
                   </span>
                   {meta}
                 </span>
                 <ArrowUpRight
-                  className="size-4 shrink-0 text-on-surface-muted transition-colors group-hover:text-on-surface"
+                  className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground"
                   aria-hidden
                 />
                 <span className="sr-only">Opens in a new tab</span>
@@ -75,10 +75,10 @@ export function FileList({
                   <Icon />
                 </IconTile>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="truncate body-md text-on-surface-muted">
+                  <span className="truncate body-md text-muted-foreground">
                     {file.fileName || "Attachment"}
                   </span>
-                  <span className="body-sm text-on-surface-muted">
+                  <span className="body-md text-muted-foreground">
                     Unavailable right now
                   </span>
                 </span>

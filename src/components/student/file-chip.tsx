@@ -11,7 +11,7 @@ import { formatBytes } from "@/lib/assignments/files"
  * yours in the tray below.
  */
 export const chipClass =
-  "flex h-10 min-w-0 max-w-full items-center gap-2 rounded-md border border-outline-strong bg-surface pl-2.5 text-on-surface"
+  "flex h-10 min-w-0 max-w-full items-center gap-2 rounded-lg border border-input bg-background pl-2.5 text-foreground"
 
 /**
  * Middle-ellipsis that always keeps the extension: the part a human checks
@@ -64,26 +64,26 @@ export function ChipContent({
       {preview && !busy ? (
         // blob: and signed storage URLs can't go through next/image.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview} alt="" className="size-6 shrink-0 rounded-sm object-cover" />
+        <img src={preview} alt="" className="size-6 shrink-0 rounded-md object-cover" />
       ) : (
         <Icon
           aria-hidden
-          className={cn("size-4 shrink-0 text-on-surface-secondary", busy && "motion-safe:animate-spin")}
+          className={cn("size-4 shrink-0 text-foreground/80", busy && "motion-safe:animate-spin")}
         />
       )}
       <span
         title={shown}
         className={cn(
-          "min-w-0 max-w-56 truncate mono-data-sm decoration-outline-strong underline-offset-4 group-hover:underline",
-          failed && "text-on-surface-muted line-through"
+          "min-w-0 max-w-56 truncate caption tabular-nums decoration-input underline-offset-4 group-hover:underline",
+          failed && "text-muted-foreground line-through"
         )}
       >
         {truncateFileName(shown)}
       </span>
       {failed ? (
-        <span className="shrink-0 mono-data-sm text-error">Failed</span>
+        <span className="shrink-0 caption tabular-nums text-destructive">Failed</span>
       ) : sizeBytes ? (
-        <span className="shrink-0 mono-data-sm text-on-surface-muted">{formatBytes(sizeBytes)}</span>
+        <span className="shrink-0 caption tabular-nums text-muted-foreground">{formatBytes(sizeBytes)}</span>
       ) : null}
     </>
   )
@@ -105,7 +105,7 @@ export function FileLink({ file }: { file: SignedFile }) {
     // Solid but muted: dashed outlines are reserved for the add/drop affordance,
     // so a chip never looks like a button waiting for a file.
     return (
-      <span title="Unavailable right now" className={cn(chipClass, "border-outline pr-2.5 text-on-surface-muted")}>
+      <span title="Unavailable right now" className={cn(chipClass, "border-border pr-2.5 text-muted-foreground")}>
         {content}
         <span className="sr-only">, unavailable right now</span>
       </span>
@@ -117,12 +117,12 @@ export function FileLink({ file }: { file: SignedFile }) {
       href={file.url}
       target="_blank"
       rel="noreferrer"
-      className={cn(chipClass, "group pr-2 transition-colors hover:border-on-surface-muted")}
+      className={cn(chipClass, "group pr-2 transition-colors hover:border-muted-foreground")}
     >
       {content}
       <ArrowUpRight
         aria-hidden
-        className="size-3.5 shrink-0 text-on-surface-secondary transition-transform group-hover:translate-x-px group-hover:-translate-y-px group-hover:text-on-surface"
+        className="size-3.5 shrink-0 text-foreground/80 transition-transform group-hover:translate-x-px group-hover:-translate-y-px group-hover:text-foreground"
       />
       <span className="sr-only">, opens in a new tab</span>
     </a>
@@ -180,12 +180,12 @@ function AttachmentTile({ file }: { file: SignedFile }) {
       ) : (
         <span
           aria-hidden
-          className="relative flex h-14 w-11 flex-col gap-1 rounded-[3px] bg-surface px-2 pt-3 shadow-[0_1px_2px_rgb(0_0_0/0.06)] ring-1 ring-outline transition-transform duration-200 ease-out group-hover/file:-translate-y-0.5"
+          className="relative flex h-14 w-11 flex-col gap-1 rounded-[3px] bg-background px-2 pt-3 shadow-[0_1px_2px_rgb(0_0_0/0.06)] ring-1 ring-border transition-transform duration-200 ease-out group-hover/file:-translate-y-0.5"
         >
-          <span className="h-0.5 w-full rounded-full bg-outline" />
-          <span className="h-0.5 w-full rounded-full bg-outline" />
-          <span className="h-0.5 w-2/3 rounded-full bg-outline" />
-          <span className="absolute right-1 bottom-1 font-mono text-[8px] leading-none font-medium text-on-surface-muted">
+          <span className="h-0.5 w-full rounded-full bg-border" />
+          <span className="h-0.5 w-full rounded-full bg-border" />
+          <span className="h-0.5 w-2/3 rounded-full bg-border" />
+          <span className="absolute right-1 bottom-1 font-mono text-[8px] leading-none font-medium text-muted-foreground">
             {extensionOf(name, file.mimeType)}
           </span>
         </span>
@@ -194,7 +194,7 @@ function AttachmentTile({ file }: { file: SignedFile }) {
   )
 
   // Square: the card it sits in clips the corners, so they share its curve.
-  const tile = "relative flex h-36 items-center justify-center overflow-hidden bg-surface-sunken"
+  const tile = "relative flex h-36 items-center justify-center overflow-hidden bg-muted"
 
   return (
     <div className="group/file relative">
@@ -214,8 +214,8 @@ function AttachmentTile({ file }: { file: SignedFile }) {
           href={downloadUrl(file.url, file.fileName || name)}
           aria-label={`Download ${name}`}
           className={cn(
-            "absolute top-2.5 right-2.5 z-20 flex size-8 items-center justify-center rounded-lg bg-surface/90 text-on-surface-secondary shadow-[0_1px_2px_rgb(0_0_0/0.05)] ring-1 ring-outline backdrop-blur-sm",
-            "transition-[opacity,translate,color] duration-150 hover:text-on-surface",
+            "absolute top-2.5 right-2.5 z-20 flex size-8 items-center justify-center rounded-xl bg-background/90 text-foreground/80 shadow-[0_1px_2px_rgb(0_0_0/0.05)] ring-1 ring-border backdrop-blur-sm",
+            "transition-[opacity,translate,color] duration-150 hover:text-foreground",
             "translate-y-0.5 opacity-0 group-hover/file:translate-y-0 group-hover/file:opacity-100",
             "focus-visible:translate-y-0 focus-visible:opacity-100 pointer-coarse:translate-y-0 pointer-coarse:opacity-100"
           )}

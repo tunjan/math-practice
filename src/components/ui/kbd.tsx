@@ -2,9 +2,9 @@ import * as React from "react"
 import { cn } from "cn"
 
 /**
- * DESIGN.md › kbd
+ * DESIGN.md › kbd-on-secondary
  *
- * 28px `surface-sunken` keycap with an `outline` border. Keyboard shortcuts are
+ * A 4px-radius neutral chip with 12px light figures. Keyboard shortcuts are
  * shown this way on the surface they belong to, never hidden in a tooltip.
  */
 function Kbd({ className, ...props }: React.ComponentProps<"kbd">) {
@@ -12,7 +12,7 @@ function Kbd({ className, ...props }: React.ComponentProps<"kbd">) {
     <kbd
       data-slot="kbd"
       className={cn(
-        "inline-flex h-7 min-w-7 items-center justify-center rounded-sm border border-outline bg-surface-sunken px-1.5 font-sans label-sm text-on-surface-muted",
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-sm bg-border px-1.5 font-sans text-xs leading-none font-light text-muted-foreground select-none [&_svg:not([class*='size-'])]:size-3",
         className
       )}
       {...props}

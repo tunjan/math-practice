@@ -24,7 +24,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("border-b border-outline bg-surface-muted", className)}
+      className={cn("border-b border-border bg-muted/50", className)}
       {...props}
     />
   )
@@ -45,8 +45,8 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "group/row h-14 border-b border-outline bg-surface transition-colors duration-100",
-        "hover:bg-surface-muted data-[selected=true]:bg-surface-muted",
+        "group/row h-14 border-b border-border bg-background transition-colors duration-100",
+        "hover:bg-muted/50 data-[selected=true]:bg-muted/50",
         className
       )}
       {...props}
@@ -59,7 +59,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 px-3 text-left align-middle label-caps whitespace-nowrap text-on-surface-muted first:pl-4 last:pr-4",
+        "h-10 px-3 text-left align-middle label-sm whitespace-nowrap text-muted-foreground first:pl-4 last:pr-4",
         className
       )}
       {...props}
@@ -72,7 +72,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "px-3 py-2 align-middle body-md text-on-surface-secondary first:pl-4 last:pr-4",
+        "px-3 py-2 align-middle body-md text-foreground/80 first:pl-4 last:pr-4",
         className
       )}
       {...props}
@@ -96,9 +96,9 @@ function TableIdentity({
     <div className={cn("flex min-w-0 items-center gap-3", className)}>
       {leading}
       <div className="flex min-w-0 flex-col">
-        <span className="truncate text-sm leading-6 font-semibold text-on-surface">{primary}</span>
+        <span className="truncate text-sm leading-6 font-semibold text-foreground">{primary}</span>
         {secondary ? (
-          <span className="truncate body-md text-on-surface-muted">{secondary}</span>
+          <span className="truncate body-md text-muted-foreground">{secondary}</span>
         ) : null}
       </div>
     </div>

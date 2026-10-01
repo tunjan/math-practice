@@ -14,8 +14,13 @@ import {
   COURSES,
   LEVEL_LABEL,
   LEVELS,
+  PROGRAMME_COURSES,
   PROGRAMME_LABEL,
+  PROGRAMME_LEVELS,
   PROGRAMMES,
+  type Course,
+  type Level,
+  type Programme,
   type StudentCourse,
 } from "@/lib/syllabus/model"
 
@@ -32,6 +37,21 @@ export function CourseCard({ studentId, current }: { studentId: string; current:
   React.useEffect(() => {
     if (state.saved) toast.success(state.saved.cleared ? "Course removed" : "Course saved")
   }, [state.saved])
+
+  const handleProgrammeChange = (newProgramme: string) => {
+    setProgramme(newProgramme)
+    const validCourses = PROGRAMME_COURSES[newProgramme as Programme] ?? COURSES
+    const validLevels = PROGRAMME_LEVELS[newProgramme as Programme] ?? LEVELS
+    if (!validCourses.includes(course as Course)) {
+      setCourse(validCourses[0] ?? "")
+    }
+    if (!validLevels.includes(level as Level)) {
+      setLevel(validLevels[0] ?? "")
+    }
+  }
+
+  const availableCourses = PROGRAMME_COURSES[programme as Programme] ?? COURSES
+  const availableLevels = PROGRAMME_LEVELS[programme as Programme] ?? LEVELS
 
   const dirty =
     programme !== (current?.programme ?? "ib_dp") ||
@@ -59,7 +79,7 @@ export function CourseCard({ studentId, current }: { studentId: string; current:
                 id="programme"
                 name="programme"
                 value={programme}
-                onChange={(e) => setProgramme(e.target.value)}
+                onChange={(e) => handleProgrammeChange(e.target.value)}
               >
                 {PROGRAMMES.map((p) => (
                   <option key={p} value={p}>
@@ -73,7 +93,7 @@ export function CourseCard({ studentId, current }: { studentId: string; current:
                 <option value="" disabled>
                   Choose…
                 </option>
-                {COURSES.map((c) => (
+                {availableCourses.map((c) => (
                   <option key={c} value={c}>
                     {c} · {COURSE_LABEL[c]}
                   </option>
@@ -85,7 +105,7 @@ export function CourseCard({ studentId, current }: { studentId: string; current:
                 <option value="" disabled>
                   Choose…
                 </option>
-                {LEVELS.map((l) => (
+                {availableLevels.map((l) => (
                   <option key={l} value={l}>
                     {l} · {LEVEL_LABEL[l]}
                   </option>

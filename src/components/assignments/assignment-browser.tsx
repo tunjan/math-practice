@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ConfirmDialog } from "@/components/ui/dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -150,7 +150,7 @@ export function AssignmentBrowser({
             {FILTERS.map((option) => (
               <ToggleGroupItem key={option} value={option} title={FILTER_HINT[option]}>
                 {FILTER_LABEL[option]}
-                <span className="text-xs font-normal text-on-surface-muted tabular-nums">{counts[option]}</span>
+                <span className="text-xs font-normal text-muted-foreground tabular-nums">{counts[option]}</span>
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
@@ -158,7 +158,7 @@ export function AssignmentBrowser({
           <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
             <div className="relative sm:w-72">
               <Search
-                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-on-surface-muted"
+                className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                 aria-hidden
               />
               <Input
@@ -167,7 +167,7 @@ export function AssignmentBrowser({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search tasks, students, topics"
                 aria-label="Search tasks"
-                className="rounded-md border-outline pl-9"
+                className="rounded-lg border-border pl-9"
               />
             </div>
             <NativeSelect
@@ -175,7 +175,7 @@ export function AssignmentBrowser({
               onChange={(event) => setSort(event.target.value as Sort)}
               aria-label="Sort tasks"
               wrapperClassName="sm:w-44"
-              className="rounded-md border-outline"
+              className="rounded-lg border-border"
             >
               {SORTS.map((option) => (
                 <option key={option} value={option}>
@@ -244,7 +244,7 @@ export function AssignmentBrowser({
                     <TableCell className="w-full max-w-0 md:min-w-56">
                       <Link
                         href={`/tutor/assignments/${row.id}`}
-                        className="rounded-sm after:absolute after:inset-0"
+                        className="rounded-md after:absolute after:inset-0"
                       >
                         <TableIdentity
                           primary={row.title}
@@ -259,16 +259,16 @@ export function AssignmentBrowser({
                       </div>
                     </TableCell>
                     <TableCell className="hidden whitespace-nowrap xl:table-cell">
-                      <span className="text-on-surface-muted">
+                      <span className="text-muted-foreground">
                         {TYPE_LABEL[row.type]}
                       </span>
                     </TableCell>
                     <TableCell className="hidden whitespace-nowrap md:table-cell">
                       <div className="flex flex-col">
-                        <span className="text-on-surface-secondary tabular-nums">
+                        <span className="text-foreground/80 tabular-nums">
                           {formatDue(row.dueAt, timeZone)}
                         </span>
-                        <span className="text-xs leading-4 text-on-surface-muted">
+                        <span className="text-xs leading-4 text-muted-foreground">
                           {relativeToNow(row.dueAt, now)}
                         </span>
                       </div>
@@ -299,7 +299,7 @@ export function AssignmentBrowser({
             {queued.map((task) => (
               <li
                 key={task.id}
-                className="flex min-h-14 items-center justify-between gap-4 border-t border-outline px-4 py-3 first:border-t-0"
+                className="flex min-h-14 items-center justify-between gap-4 border-t border-border px-4 py-3 first:border-t-0"
               >
                 <TableIdentity
                   primary={task.title}
@@ -316,17 +316,17 @@ export function AssignmentBrowser({
         <div
           role="region"
           aria-label="Bulk actions"
-          className="fixed bottom-6 left-1/2 z-40 flex h-12 -translate-x-1/2 items-center gap-1 rounded-lg bg-surface-inverse px-2 text-on-surface-inverse shadow-lg animate-in fade-in-0 slide-in-from-bottom-2 duration-150 lg:left-[calc(50%+130px)]"
+          className="fixed bottom-6 left-1/2 z-40 flex h-12 -translate-x-1/2 items-center gap-1 rounded-xl bg-foreground px-2 text-background shadow-lg animate-in fade-in-0 slide-in-from-bottom-2 duration-150 lg:left-[calc(50%+130px)]"
         >
           <span className="px-2 text-sm whitespace-nowrap tabular-nums">
             {selected.size} selected
           </span>
-          <span aria-hidden className="mx-1 h-5 w-px bg-on-surface-inverse/20" />
-          <Button variant="inverse" size="sm" onClick={() => setSelected(new Set())}>
+          <span aria-hidden className="mx-1 h-5 w-px bg-background/20" />
+          <Button variant="ghost" className="text-background hover:bg-background/10 hover:text-background" size="sm" onClick={() => setSelected(new Set())}>
             <X aria-hidden />
             Clear
           </Button>
-          <Button variant="inverse" size="sm" onClick={() => setConfirmIds([...selected])}>
+          <Button variant="ghost" className="text-background hover:bg-background/10 hover:text-background" size="sm" onClick={() => setConfirmIds([...selected])}>
             <Trash2 aria-hidden />
             Delete
           </Button>
@@ -340,16 +340,11 @@ export function AssignmentBrowser({
         }}
         title={confirmCount === 1 ? "Delete this task?" : `Delete ${confirmCount} tasks?`}
         description="The task, its materials and any hand-ins are removed for you and the student. This can't be undone."
-        confirm={
-          <form action={deleteAction}>
-            {(confirmIds ?? []).map((id) => (
-              <input key={id} type="hidden" name="assignment_ids" value={id} />
-            ))}
-            <Button type="submit" variant="primary" disabled={deleting} className="w-full sm:w-auto">
-              {deleting ? "Deleting" : confirmCount === 1 ? "Delete task" : "Delete tasks"}
-            </Button>
-          </form>
-        }
+        confirmLabel={confirmCount === 1 ? "Delete task" : "Delete tasks"}
+        pendingLabel="Deleting"
+        pending={deleting}
+        action={deleteAction}
+        fields={{ assignment_ids: confirmIds ?? [] }}
       />
     </div>
   )
@@ -360,7 +355,7 @@ function RowMenu({ row, onDelete }: { row: AssignmentRow; onDelete: () => void }
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Actions for ${row.title}`}
-        className="flex size-8 items-center justify-center rounded-md text-on-surface-muted transition-[opacity,background-color] hover:bg-surface-hover hover:text-on-surface data-popup-open:bg-surface-hover data-popup-open:opacity-100 md:opacity-0 md:group-hover/row:opacity-100 md:focus-visible:opacity-100"
+        className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-[opacity,background-color] hover:bg-accent hover:text-foreground data-popup-open:bg-accent data-popup-open:opacity-100 md:opacity-0 md:group-hover/row:opacity-100 md:focus-visible:opacity-100"
       >
         <MoreHorizontal className="size-4" aria-hidden />
       </DropdownMenuTrigger>

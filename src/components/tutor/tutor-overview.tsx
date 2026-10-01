@@ -49,19 +49,19 @@ export function TutorOverview({
         </>
       }
     >
-      <dl className="grid grid-cols-2 rounded-lg border border-outline lg:grid-cols-4">
+      <dl className="grid grid-cols-2 rounded-xl border border-border lg:grid-cols-4">
         {stats.map((stat, index) => (
           <div
             key={stat.label}
             className={cn(
               "flex min-w-0 flex-col gap-1 p-4",
-              index % 2 === 1 && "border-l border-outline",
-              index >= 2 && "border-t border-outline lg:border-t-0",
+              index % 2 === 1 && "border-l border-border",
+              index >= 2 && "border-t border-border lg:border-t-0",
               index > 0 && "lg:border-l"
             )}
           >
-            <dt className="truncate text-sm leading-5 text-on-surface-muted">{stat.label}</dt>
-            <dd className="text-2xl leading-8 font-semibold text-on-surface tabular-nums">
+            <dt className="truncate text-sm leading-5 text-muted-foreground">{stat.label}</dt>
+            <dd className="text-2xl leading-8 font-semibold text-foreground tabular-nums">
               {stat.value}
             </dd>
           </div>
@@ -97,7 +97,7 @@ export function TutorOverview({
             <CardList>
               {attention.map((row) => (
                 <CardRow key={row.id} row={row}>
-                  <span className="hidden shrink-0 text-sm text-on-surface-muted tabular-nums md:block">
+                  <span className="hidden shrink-0 text-sm text-muted-foreground tabular-nums md:block">
                     {formatDue(row.dueAt, timeZone)}
                   </span>
                   <StatusBadge stage={row.stage} verdict={row.verdict} overdue={row.overdue} />
@@ -115,10 +115,10 @@ export function TutorOverview({
               {upcoming.map((row) => (
                 <CardRow key={row.id} row={row}>
                   <span className="flex shrink-0 flex-col items-end">
-                    <span className="text-sm leading-6 text-on-surface-secondary tabular-nums">
+                    <span className="text-sm leading-6 text-foreground/80 tabular-nums">
                       {formatDue(row.dueAt, timeZone)}
                     </span>
-                    <span className="text-xs leading-4 text-on-surface-muted">
+                    <span className="text-xs leading-4 text-muted-foreground">
                       {relativeToNow(row.dueAt, now)}
                     </span>
                   </span>
@@ -156,25 +156,25 @@ export function TutorWelcome({ firstName }: { firstName?: string }) {
     <OverviewFrame>
       <div className="flex max-w-2xl flex-col gap-6 pt-3 sm:pt-7">
         <header className="flex flex-col gap-2">
-          <h2 className="font-display text-3xl leading-[1.2] font-medium text-balance text-on-surface">
+          <h2 className="font-display text-3xl leading-[1.2] font-medium text-balance text-foreground">
             {firstName ? `Welcome, ${firstName}` : "Welcome"}
           </h2>
-          <p className="text-base leading-6 text-on-surface-muted">
+          <p className="text-base leading-6 text-muted-foreground">
             Your workspace is ready. Three steps take it from empty to a marked task.
           </p>
         </header>
-        <ol role="list" className="divide-y divide-outline rounded-lg border border-outline">
+        <ol role="list" className="divide-y divide-border rounded-xl border border-border">
           {FIRST_STEPS.map((step, index) => (
             <li key={step.title} className="flex gap-3 px-4 py-3">
               <span
                 aria-hidden
-                className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-xs font-medium text-on-surface-secondary tabular-nums"
+                className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-foreground/80 tabular-nums"
               >
                 {index + 1}
               </span>
               <div className="flex min-w-0 flex-col">
-                <p className="text-sm leading-6 font-semibold text-on-surface">{step.title}</p>
-                <p className="text-sm leading-5 text-on-surface-muted">{step.description}</p>
+                <p className="text-sm leading-6 font-semibold text-foreground">{step.title}</p>
+                <p className="text-sm leading-5 text-muted-foreground">{step.description}</p>
               </div>
             </li>
           ))}
@@ -214,7 +214,7 @@ function Section({
   return (
     <section className="flex min-w-0 flex-col gap-3">
       <div className="flex min-h-8 items-center justify-between gap-4">
-        <h2 className="text-base leading-6 font-medium text-on-surface">{title}</h2>
+        <h2 className="text-base leading-6 font-medium text-foreground">{title}</h2>
         {action}
       </div>
       {children}
@@ -225,7 +225,7 @@ function Section({
 /** Rows that share borders to read as one 12px block (DESIGN.md › Card list). */
 function CardList({ children }: { children: React.ReactNode }) {
   return (
-    <ul role="list" className="divide-y divide-outline rounded-lg border border-outline">
+    <ul role="list" className="divide-y divide-border rounded-xl border border-border">
       {children}
     </ul>
   )
@@ -236,11 +236,11 @@ function CardRow({ row, children }: { row: OverviewRow; children: React.ReactNod
     <li className="first:*:rounded-t-[11px] last:*:rounded-b-[11px]">
       <Link
         href={`/tutor/assignments/${row.id}`}
-        className="flex items-center gap-4 px-4 py-3 transition-colors duration-100 hover:bg-surface-muted"
+        className="flex items-center gap-4 px-4 py-3 transition-colors duration-100 hover:bg-muted/50"
       >
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-sm leading-6 font-semibold text-on-surface">{row.title}</span>
-          <span className="truncate text-sm leading-5 text-on-surface-muted">{row.studentName}</span>
+          <span className="truncate text-sm leading-6 font-semibold text-foreground">{row.title}</span>
+          <span className="truncate text-sm leading-5 text-muted-foreground">{row.studentName}</span>
         </span>
         {children}
       </Link>
@@ -249,5 +249,5 @@ function CardRow({ row, children }: { row: OverviewRow; children: React.ReactNod
 }
 
 function Empty(props: { icon: React.ReactNode; title: string; description?: string }) {
-  return <EmptyState {...props} className="rounded-lg border border-outline" />
+  return <EmptyState {...props} className="rounded-xl border border-border" />
 }

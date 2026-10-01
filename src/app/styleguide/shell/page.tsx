@@ -9,12 +9,12 @@ const NAV: NavItem[] = [
 
 export default function Page() {
   return (
-    <WorkspaceShell className="dub" home="/student" items={NAV}
-      person={{ name: "Lucía Fernández", email: "lucia@example.com", role: "Student" }}>
-      <div className="flex h-16 items-center border-b border-outline bg-surface px-6">
-        <h1 className="headline-md">Tasks</h1>
+    <WorkspaceShell home="/student" items={NAV}
+      person={{ name: "Lucía Fernández", email: "lucia@example.com", role: "Student", timeZone: "Europe/Madrid" }}>
+      <div className="flex h-16 items-center border-b border-border bg-background px-6">
+        <h1 className="font-heading text-lg font-medium">Tasks</h1>
       </div>
-      <div className="p-6 text-on-surface-muted">Content</div>
+      <div className="p-6 text-muted-foreground">Content</div>
     </WorkspaceShell>
   )
 }

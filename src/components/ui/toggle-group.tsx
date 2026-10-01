@@ -30,7 +30,7 @@ function ToggleGroup({
         "flex w-fit items-center",
         variant === "chips" && "flex-wrap gap-1",
         variant === "track" &&
-          "h-10 max-w-full gap-1 overflow-x-auto rounded-lg border border-outline bg-surface p-1 [scrollbar-width:none]",
+          "h-10 max-w-full gap-1 overflow-x-auto rounded-xl border border-border bg-background p-1 [scrollbar-width:none]",
         className
       )}
       {...props}

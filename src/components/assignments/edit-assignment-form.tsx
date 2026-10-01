@@ -8,7 +8,7 @@ import { IconTile } from "@/components/brand/primitives"
 import { FormMessage } from "@/components/auth/form-message"
 import { Button, ButtonLink } from "@/components/ui/button"
 import { Card, CardFooter } from "@/components/ui/card"
-import { ConfirmDialog } from "@/components/ui/dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Input } from "@/components/ui/input"
 import { Field } from "@/components/ui/label"
 import {
@@ -19,6 +19,7 @@ import {
 import { formatBytes, type UploadedFile } from "@/lib/assignments/files"
 import type { AssignmentType } from "@/lib/assignments/model"
 import type { Difficulty } from "@/lib/assignments/difficulty"
+import { MAX_EXERCISES } from "@/lib/assignments/exercises"
 
 import {
   DifficultyChoice,
@@ -54,16 +55,16 @@ function ExistingFile({ file, assignmentId }: { file: SignedFile; assignmentId: 
   const Icon = file.mimeType === "application/pdf" ? FileText : ImageIcon
 
   return (
-    <li className="flex min-h-14 items-center gap-3 border-t border-outline px-3 py-2 first:border-t-0">
+    <li className="flex min-h-14 items-center gap-3 border-t border-border px-3 py-2 first:border-t-0">
       <IconTile className="size-8 [&_svg]:size-4">
         <Icon />
       </IconTile>
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate body-md text-on-surface">{file.fileName || "Attachment"}</span>
-        {state.error ? <span className="body-sm text-error">{state.error}</span> : null}
+        <span className="truncate body-md text-foreground">{file.fileName || "Attachment"}</span>
+        {state.error ? <span className="body-md text-destructive">{state.error}</span> : null}
       </span>
       {file.sizeBytes ? (
-        <span className="shrink-0 mono-data-sm text-on-surface-muted">
+        <span className="shrink-0 caption tabular-nums text-muted-foreground">
           {formatBytes(file.sizeBytes)}
         </span>
       ) : null}
@@ -78,15 +79,11 @@ function ExistingFile({ file, assignmentId }: { file: SignedFile; assignmentId: 
         }
         title="Remove this file?"
         description={`${file.fileName || "The file"} is deleted from the task straight away, for you and the student.`}
-        confirm={
-          <form action={action}>
-            <input type="hidden" name="file_id" value={file.id} />
-            <input type="hidden" name="assignment_id" value={assignmentId} />
-            <Button type="submit" variant="primary" disabled={pending} className="w-full sm:w-auto">
-              {pending ? "Removing" : "Remove file"}
-            </Button>
-          </form>
-        }
+        confirmLabel="Remove file"
+        pendingLabel="Removing"
+        pending={pending}
+        action={action}
+        fields={{ file_id: file.id, assignment_id: assignmentId }}
       />
     </li>
   )
@@ -98,6 +95,7 @@ export function EditAssignmentForm({
   existingFiles,
   topics,
   syllabus,
+  student,
 }: {
   assignmentId: string
   initial: {
@@ -105,6 +103,7 @@ export function EditAssignmentForm({
     description: string
     type: AssignmentType
     difficulty: Difficulty
+    exerciseCount: number
     dueAt: string
     categoryId: string | null
     syllabusTopicIds: string[]
@@ -113,6 +112,8 @@ export function EditAssignmentForm({
   topics: Topic[]
   /** The student's subtopics; empty when they have no course. */
   syllabus: SyllabusTopic[]
+  /** Whose clock the deadline is on; null if the student has left. */
+  student: { name: string; timeZone: string } | null
 }) {
   const [state, action, pending] = useActionState<UpdateAssignmentState, FormData>(
     updateAssignment,
@@ -138,6 +139,26 @@ export function EditAssignmentForm({
           </Field>
           <TypeChoice defaultValue={initial.type} />
           <DifficultyChoice defaultValue={initial.difficulty} />
+          <Field
+            label="Exercises"
+            htmlFor="exercise_count"
+            hint="How many the student ticks off as they go. Leave at 1 for a single piece of work."
+            messageId="exercise_count-hint"
+          >
+            <Input
+              id="exercise_count"
+              name="exercise_count"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={MAX_EXERCISES}
+              step={1}
+              required
+              defaultValue={initial.exerciseCount}
+              aria-describedby="exercise_count-hint"
+              className="w-28 tabular-nums"
+            />
+          </Field>
         </FormSection>
 
         <FormSection title="Instructions">
@@ -146,7 +167,7 @@ export function EditAssignmentForm({
 
         <FormSection title="Materials" description="Removing a file takes effect straight away.">
           {existingFiles.length > 0 ? (
-            <ul role="list" className="overflow-hidden rounded-md border border-outline">
+            <ul role="list" className="overflow-hidden rounded-lg border border-border">
               {existingFiles.map((file) => (
                 <ExistingFile key={file.id} file={file} assignmentId={assignmentId} />
               ))}
@@ -168,7 +189,7 @@ export function EditAssignmentForm({
               />
             </Field>
           ) : null}
-          <DuePicker name="due_at" defaultValue={initial.dueAt} />
+          <DuePicker name="due_at" defaultValue={initial.dueAt} student={student} />
         </FormSection>
 
         <CardFooter className="justify-end">

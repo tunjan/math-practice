@@ -37,7 +37,8 @@ export type BoardTask = {
   difficulty: Difficulty
   dueAt: string
   column: BoardColumn
-  completionPct: number
+  exerciseCount: number
+  exercisesDone: number
   openedAt: string | null
   submittedAt: string | null
   reviewedAt: string | null
@@ -82,11 +83,11 @@ const LANES: Lane[] = [
  * yellow (pending) waits on the tutor, green (success) is done.
  */
 const LANE_COLOUR: Record<BoardColumn, { dot: string }> = {
-  assigned: { dot: "bg-blue-600" },
-  in_progress: { dot: "bg-purple-600" },
-  revise: { dot: "bg-orange-600" },
-  submitted: { dot: "bg-yellow-600" },
-  finished: { dot: "bg-green-600" },
+  assigned: { dot: "bg-info" },
+  in_progress: { dot: "bg-violet" },
+  revise: { dot: "bg-warning" },
+  submitted: { dot: "bg-warning" },
+  finished: { dot: "bg-success" },
 }
 
 /**
@@ -103,8 +104,8 @@ const noop = () => () => {}
 
 /** The drop highlight, in the lane's own hue. */
 const LANE_DROP: Partial<Record<BoardColumn, string>> = {
-  in_progress: "bg-purple-50 outline-purple-400",
-  submitted: "bg-yellow-50 outline-yellow-500",
+  in_progress: "bg-violet-container/50 outline-violet/40",
+  submitted: "bg-warning/10 outline-warning/60",
 }
 
 type DropState = "idle" | "target" | "blocked"
@@ -230,11 +231,11 @@ export function TaskList({
         ? null
         : createPortal(
             <DragOverlay
-              className="dub"
+             
               dropAnimation={{ duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}
             >
               {dragging ? (
-                <div className="cursor-grabbing rounded-md shadow-overlay">
+                <div className="cursor-grabbing rounded-lg shadow-lg">
                   <Card task={dragging} timeZone={timeZone} />
                 </div>
               ) : null}
@@ -249,9 +250,9 @@ export function TaskList({
 function Turn({ label, count, className }: { label: string; count: number; className?: string }) {
   return (
     <div className={cn("flex items-center gap-2 px-1", className)}>
-      <span className="text-xs font-medium whitespace-nowrap text-on-surface-secondary">{label}</span>
-      <span className="font-mono text-xs text-on-surface-muted">{count}</span>
-      <span aria-hidden className="h-2 flex-1 translate-y-1 rounded-tr-sm border-t border-r border-outline-strong" />
+      <span className="text-xs font-medium whitespace-nowrap text-foreground/80">{label}</span>
+      <span className="font-mono text-xs text-muted-foreground">{count}</span>
+      <span aria-hidden className="h-2 flex-1 translate-y-1 rounded-tr-md border-t border-r border-input" />
     </div>
   )
 }
@@ -284,24 +285,24 @@ function LaneColumn({
       ref={setNodeRef}
       aria-labelledby={id}
       className={cn(
-        "flex min-h-72 snap-start flex-col gap-2 rounded-xl bg-surface-sunken p-2",
+        "flex min-h-72 snap-start flex-col gap-2 rounded-2xl bg-muted p-2",
         "outline-2 -outline-offset-2 outline-transparent transition-[background-color,outline-color,opacity] duration-150",
-        dropState === "target" && "outline-dashed outline-outline-strong",
+        dropState === "target" && "outline-dashed outline-input",
         dropState === "target" && isOver && cn("outline-solid", LANE_DROP[lane.key]),
         dropState === "blocked" && "opacity-50"
       )}
     >
       <div className="flex h-8 items-center gap-2 px-2">
         <span aria-hidden className={cn("size-2 shrink-0 rounded-full", LANE_COLOUR[lane.key].dot)} />
-        <h2 id={id} className="text-sm font-medium text-on-surface">
+        <h2 id={id} className="text-sm font-medium text-foreground">
           {lane.title}
         </h2>
         <span
           className={cn(
             "rounded-full border px-1.5 py-px font-mono text-xs font-medium",
             tasks.length > 0
-              ? "border-outline bg-surface-sunken text-on-surface-muted"
-              : "border-transparent text-on-surface-muted"
+              ? "border-border bg-muted text-muted-foreground"
+              : "border-transparent text-muted-foreground"
           )}
         >
           {tasks.length}
@@ -310,7 +311,7 @@ function LaneColumn({
       </div>
 
       {tasks.length === 0 ? (
-        <p className="px-2 py-1 text-sm text-pretty text-on-surface-muted">{lane.empty}</p>
+        <p className="px-2 py-1 text-sm text-pretty text-muted-foreground">{lane.empty}</p>
       ) : (
         <ul role="list" className="flex flex-col gap-2">
           {shown.map((task) => (
@@ -323,7 +324,7 @@ function LaneColumn({
 
       {older.length > 0 ? (
         <Collapsible className="group/more">
-          <CollapsibleTrigger className="flex h-10 w-full items-center justify-center rounded-md text-sm font-medium text-on-surface-muted transition-colors duration-150 outline-none hover:bg-surface-hover hover:text-on-surface focus-visible:ring-2 focus-visible:ring-on-surface/25">
+          <CollapsibleTrigger className="flex h-10 w-full items-center justify-center rounded-lg text-sm font-medium text-muted-foreground transition-colors duration-150 outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-foreground/25">
             <span className="group-data-open/more:hidden">Show {older.length} older</span>
             <span className="hidden group-data-open/more:inline">Show fewer</span>
           </CollapsibleTrigger>
@@ -345,8 +346,8 @@ function LaneColumn({
 /** A state worth naming beside the title. The lane says the rest; overdue is carried by the date. */
 function stateOf(task: BoardTask): React.ReactNode {
   if (task.column === "assigned" && task.openedAt === null) return (
-      <span className="inline-flex h-5 shrink-0 items-center gap-1.5 text-xs font-medium text-blue-700">
-        <span aria-hidden className="size-1.5 rounded-full bg-blue-600" />
+      <span className="inline-flex h-5 shrink-0 items-center gap-1.5 text-xs font-medium text-info">
+        <span aria-hidden className="size-1.5 rounded-full bg-info" />
         New
       </span>
     )
@@ -401,9 +402,9 @@ function Moment({ task, timeZone, className }: { task: BoardTask; timeZone: stri
         dateTime={moment.iso}
         className={cn(
           "flex min-w-0 items-center gap-1.5 text-xs whitespace-nowrap",
-          moment.urgency === "late" && "font-medium text-error",
-          moment.urgency === "soon" && "font-medium text-amber-700",
-          moment.urgency === "none" && "text-on-surface-muted",
+          moment.urgency === "late" && "font-medium text-destructive",
+          moment.urgency === "soon" && "font-medium text-warning",
+          moment.urgency === "none" && "text-muted-foreground",
           className
         )}
       >
@@ -418,7 +419,7 @@ function Moment({ task, timeZone, className }: { task: BoardTask; timeZone: stri
 function DifficultyIndicator({ task }: { task: BoardTask }) {
   return (
     <Hint label={DIFFICULTY_LABEL[task.difficulty]}>
-      <span className="inline-flex shrink-0 items-center text-on-surface-muted">
+      <span className="inline-flex shrink-0 items-center text-muted-foreground">
         <DifficultyMeter difficulty={task.difficulty} />
         <span className="sr-only">{DIFFICULTY_LABEL[task.difficulty]}</span>
       </span>
@@ -460,7 +461,7 @@ function Hint({ label, children }: { label: string; children: React.ReactElement
   return (
     <Tooltip>
       <TooltipTrigger render={children} />
-      <TooltipContent className="dub">
+      <TooltipContent>
         <span className="whitespace-pre-line">{label}</span>
       </TooltipContent>
     </Tooltip>
@@ -532,21 +533,24 @@ function Card({
         aria-haspopup="dialog"
         data-task-card={task.id}
         className={cn(
-          "flex w-full cursor-pointer flex-col gap-3 rounded-md border bg-surface p-3 text-left",
+          "flex w-full cursor-pointer flex-col gap-3 rounded-lg border bg-background p-3 text-left",
           "transition-[border-color,filter] duration-150 hover:drop-shadow-[0_2px_4px_#222A350D]",
-          late ? "border-error/40 hover:border-error/60" : "border-outline hover:border-outline-strong"
+          late ? "border-destructive/40 hover:border-destructive/60" : "border-border hover:border-input"
         )}
       >
         <span className="flex items-start justify-between gap-2">
-          <span className="line-clamp-3 text-sm leading-5 font-medium text-pretty text-on-surface">{task.title}</span>
+          <span className="line-clamp-3 text-sm leading-5 font-medium text-pretty text-foreground">{task.title}</span>
           {state}
         </span>
 
-        {task.column === "in_progress" ? <Progress value={task.completionPct} label="Done" hideLabel /> : null}
+        {/* A single piece of work has nothing to count. */}
+        {task.column === "in_progress" && task.exerciseCount > 1 ? (
+          <Progress value={task.exercisesDone} max={task.exerciseCount} label="Exercises done" hideLabel />
+        ) : null}
 
         <CoverageTag task={task} />
 
-        <span className="-mx-3 flex items-center justify-between gap-2 border-t border-outline px-3 pt-3">
+        <span className="-mx-3 flex items-center justify-between gap-2 border-t border-border px-3 pt-3">
           <Moment task={task} timeZone={timeZone} />
           <span className="flex shrink-0 items-center gap-2">
             <DifficultyIndicator task={task} />
@@ -561,7 +565,7 @@ function Card({
           onClick={() => onStart?.(task.id)}
           onMouseDown={stopPress}
           onTouchStart={stopPress}
-          className="absolute right-1.5 bottom-1.5 h-7 w-12 rounded-xs px-0 text-xs after:absolute after:-inset-1.5"
+          className="absolute right-1.5 bottom-1.5 h-7 w-12 rounded-sm px-0 text-xs after:absolute after:-inset-1.5"
         >
           Start
         </Button>
@@ -573,13 +577,13 @@ function Card({
 /* ── Loading ───────────────────────────────────────────────────────────────── */
 
 function Bar({ className }: { className: string }) {
-  return <span className={cn("block rounded-sm bg-surface-sunken motion-safe:animate-pulse", className)} />
+  return <span className={cn("block rounded-md bg-muted motion-safe:animate-pulse", className)} />
 }
 
 /** The page's shape while it loads. */
 export function TaskPageSkeleton() {
   return (
-    <div className="dub flex flex-1 flex-col bg-surface">
+    <div className=" flex flex-1 flex-col bg-background">
       <div aria-busy="true" className="mx-auto flex w-full max-w-screen-xl flex-col gap-10 overflow-hidden px-4 pt-10 pb-20 sm:px-8 sm:pt-14">
         <div className="flex flex-col gap-3">
           <Bar className="h-9 w-64 sm:h-[41px]" />
@@ -588,10 +592,10 @@ export function TaskPageSkeleton() {
         <div className="grid min-w-[68rem] grid-cols-5 gap-3 xl:min-w-0">
           <Bar className="col-span-5 mx-1 h-4 w-24" />
           {[2, 1, 1, 1, 2].map((cards, lane) => (
-            <div key={lane} className="flex min-h-72 flex-col gap-2 rounded-xl bg-surface-sunken p-2">
-              <Bar className="mx-2 my-2.5 h-3 w-20 bg-outline" />
+            <div key={lane} className="flex min-h-72 flex-col gap-2 rounded-2xl bg-muted p-2">
+              <Bar className="mx-2 my-2.5 h-3 w-20 bg-border" />
               {Array.from({ length: cards }, (_, index) => (
-                <div key={index} className="flex flex-col gap-2 rounded-md border border-outline bg-surface p-3">
+                <div key={index} className="flex flex-col gap-2 rounded-lg border border-border bg-background p-3">
                   <Bar className="h-4 w-full" />
                   <Bar className="h-3 w-24" />
                   <Bar className="mt-2 h-3 w-20" />

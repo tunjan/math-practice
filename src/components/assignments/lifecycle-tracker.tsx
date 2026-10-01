@@ -21,9 +21,9 @@ function Node({ index, state }: { index: number; state: "past" | "current" | "fu
       aria-hidden
       className={cn(
         "relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full",
-        state === "past" && "bg-primary text-on-primary",
-        state === "current" && "bg-primary text-on-primary ring-4 ring-outline",
-        state === "future" && "border border-outline-strong bg-surface text-on-surface-muted"
+        state === "past" && "bg-primary text-primary-foreground",
+        state === "current" && "bg-primary text-primary-foreground ring-4 ring-border",
+        state === "future" && "border border-input bg-background text-muted-foreground"
       )}
     >
       {state === "past" ? (
@@ -71,7 +71,7 @@ export function LifecycleTracker({
                   aria-hidden
                   className={cn(
                     "absolute top-6 bottom-0 left-[11px] w-0.5",
-                    index < current ? "bg-primary" : "bg-outline"
+                    index < current ? "bg-primary" : "bg-border"
                   )}
                 />
               ) : null}
@@ -80,12 +80,12 @@ export function LifecycleTracker({
                 <span
                   className={cn(
                     "label-md",
-                    state === "future" ? "text-on-surface-muted" : "text-on-surface"
+                    state === "future" ? "text-muted-foreground" : "text-foreground"
                   )}
                 >
                   {STAGE_LABEL[step]}
                 </span>
-                {at ? <span className="mono-data-sm text-on-surface-muted">{at}</span> : null}
+                {at ? <span className="caption tabular-nums text-muted-foreground">{at}</span> : null}
               </div>
             </li>
           )
@@ -114,7 +114,7 @@ export function LifecycleTracker({
                     aria-hidden
                     className={cn(
                       "mx-2 hidden h-0.5 flex-1 @lg:block",
-                      index < current ? "bg-primary" : "bg-outline"
+                      index < current ? "bg-primary" : "bg-border"
                     )}
                   />
                 ) : null}
@@ -123,12 +123,12 @@ export function LifecycleTracker({
                 <span
                   className={cn(
                     "label-md",
-                    state === "future" ? "text-on-surface-muted" : "text-on-surface"
+                    state === "future" ? "text-muted-foreground" : "text-foreground"
                   )}
                 >
                   {STAGE_LABEL[step]}
                 </span>
-                <span className="mono-data-sm text-on-surface-muted">
+                <span className="caption tabular-nums text-muted-foreground">
                   {at ?? (state === "future" ? "Not yet" : "")}
                 </span>
               </div>

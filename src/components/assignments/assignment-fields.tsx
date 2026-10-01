@@ -35,11 +35,11 @@ export function FormSection({
   children: React.ReactNode
 }) {
   return (
-    <section className="grid gap-5 border-t border-outline p-4 first:border-t-0 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8">
+    <section className="grid gap-5 border-t border-border p-4 first:border-t-0 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8">
       <div className="flex flex-col gap-1">
-        <h2 className="title-md text-on-surface">{title}</h2>
+        <h2 className="title-md text-foreground">{title}</h2>
         {description ? (
-          <p className="body-sm text-on-surface-muted">{description}</p>
+          <p className="body-md text-muted-foreground">{description}</p>
         ) : null}
       </div>
       <div className="flex min-w-0 flex-col gap-5">{children}</div>
@@ -54,10 +54,10 @@ function RadioMark({ checked }: { checked: boolean }) {
       aria-hidden
       className={cn(
         "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors",
-        checked ? "border-[#3b82f6] bg-[#3b82f6]" : "border-outline-strong bg-surface"
+        checked ? "border-tertiary-strong bg-tertiary-strong" : "border-input bg-background"
       )}
     >
-      {checked ? <span className="size-1.5 rounded-full bg-surface" /> : null}
+      {checked ? <span className="size-1.5 rounded-full bg-background" /> : null}
     </span>
   )
 }
@@ -89,7 +89,7 @@ export function TypeChoice({ defaultValue = "problem_set" }: { defaultValue?: As
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 label-md text-on-surface-secondary">Type</legend>
+      <legend className="mb-2 label-md text-foreground/80">Type</legend>
       <div className="grid gap-3 sm:grid-cols-2">
         {TYPES.map((option) => {
           const Icon = option.icon
@@ -98,11 +98,11 @@ export function TypeChoice({ defaultValue = "problem_set" }: { defaultValue?: As
             <label
               key={option.value}
               className={cn(
-                "flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3 transition-colors",
-                "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-on-surface",
+                "flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition-colors",
+                "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-foreground",
                 checked
-                  ? "border-on-surface bg-surface-sunken"
-                  : "border-outline-strong bg-surface hover:bg-surface-sunken"
+                  ? "border-foreground bg-muted"
+                  : "border-input bg-background hover:bg-muted"
               )}
             >
               <input
@@ -113,10 +113,10 @@ export function TypeChoice({ defaultValue = "problem_set" }: { defaultValue?: As
                 onChange={() => setValue(option.value)}
                 className="sr-only"
               />
-              <Icon className="size-5 shrink-0 text-on-surface-secondary" aria-hidden />
+              <Icon className="size-5 shrink-0 text-foreground/80" aria-hidden />
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="label-md text-on-surface">{option.label}</span>
-                <span className="body-sm text-on-surface-muted">{option.hint}</span>
+                <span className="label-md text-foreground">{option.label}</span>
+                <span className="body-md text-muted-foreground">{option.hint}</span>
               </span>
               <RadioMark checked={checked} />
             </label>
@@ -140,11 +140,11 @@ export function InstructionsField({ defaultValue = "" }: { defaultValue?: string
         <Label htmlFor={id} className="sr-only">
           Instructions
         </Label>
-        <span className="body-sm text-on-surface-muted">Markdown and LaTeX</span>
+        <span className="body-md text-muted-foreground">Markdown and LaTeX</span>
         <div
           role="group"
           aria-label="Editor mode"
-          className="flex h-8 items-center rounded-md bg-surface-sunken p-1"
+          className="flex h-8 items-center rounded-lg bg-muted p-1"
         >
           {(["write", "preview"] as const).map((option) => (
             <button
@@ -153,8 +153,8 @@ export function InstructionsField({ defaultValue = "" }: { defaultValue?: string
               aria-pressed={mode === option}
               onClick={() => setMode(option)}
               className={cn(
-                "h-6 rounded-sm px-3 label-sm capitalize transition-colors",
-                mode === option ? "bg-surface text-on-surface" : "text-on-surface-muted hover:text-on-surface"
+                "h-6 rounded-md px-3 label-sm capitalize transition-colors",
+                mode === option ? "bg-background text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >
               {option}
@@ -174,16 +174,16 @@ export function InstructionsField({ defaultValue = "" }: { defaultValue?: string
         className={cn(mode === "preview" && "hidden")}
       />
       {mode === "preview" ? (
-        <div className="min-h-40 rounded-md border border-outline bg-surface-sunken px-4 py-3">
+        <div className="min-h-40 rounded-lg border border-border bg-muted px-4 py-3">
           {text.trim() ? (
             <MathProse>{text}</MathProse>
           ) : (
-            <p className="body-sm text-on-surface-muted">Nothing to preview yet.</p>
+            <p className="body-md text-muted-foreground">Nothing to preview yet.</p>
           )}
         </div>
       ) : null}
 
-      <p className="body-sm text-on-surface-muted">
+      <p className="body-md text-muted-foreground">
         Use <Code>$x^2$</Code> for inline maths and <Code>$$…$$</Code> for a display block.
       </p>
     </div>
@@ -192,7 +192,7 @@ export function InstructionsField({ defaultValue = "" }: { defaultValue?: string
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded-xs border border-outline bg-surface-sunken px-1 py-0.5 font-mono text-[12px] text-on-surface-secondary">
+    <code className="rounded-sm border border-border bg-muted px-1 py-0.5 font-mono text-[12px] text-foreground/80">
       {children}
     </code>
   )
@@ -216,7 +216,7 @@ export function TopicField({
 
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 label-md text-on-surface-secondary">Topic</legend>
+      <legend className="mb-2 label-md text-foreground/80">Topic</legend>
 
       {adding ? (
         <div className="flex gap-2">
@@ -241,11 +241,11 @@ export function TopicField({
               <label
                 key={topic.id || "none"}
                 className={cn(
-                  "inline-flex h-8 cursor-pointer items-center gap-2 rounded-md border px-3 label-sm transition-colors",
-                  "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-on-surface",
+                  "inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-3 label-sm transition-colors",
+                  "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-foreground",
                   checked
-                    ? "border-on-surface bg-surface-sunken text-on-surface"
-                    : "border-outline-strong bg-surface text-on-surface-secondary hover:bg-surface-sunken"
+                    ? "border-foreground bg-muted text-foreground"
+                    : "border-input bg-background text-foreground/80 hover:bg-muted"
                 )}
               >
                 <input

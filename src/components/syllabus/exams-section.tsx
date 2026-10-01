@@ -9,8 +9,8 @@ import { TopicPicker } from "@/components/syllabus/topic-picker"
 import { TopicTags } from "@/components/syllabus/topic-tags"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import {
-  ConfirmDialog,
   Dialog,
   DialogBody,
   DialogClose,
@@ -25,7 +25,7 @@ import { NativeSelect } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { DayKey } from "@/lib/calendar/dates"
 import { deleteExam, saveExam } from "@/lib/syllabus/actions"
-import { formatPercent, IB_GRADES, type Exam, type SyllabusTopic } from "@/lib/syllabus/model"
+import { formatPercent, GCSE_GRADES, IB_GRADES, type Exam, type SyllabusTopic } from "@/lib/syllabus/model"
 
 const DAY = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
 
@@ -33,8 +33,10 @@ function formatDate(day: string): string {
   return DAY.format(new Date(`${day}T00:00:00Z`))
 }
 
-/** 7 and 6 read as green, 4 and 5 as yellow, lower as red: the usual IB bands. */
-function gradeColor(grade: number) {
+function gradeColor(grade: number, isGcse?: boolean) {
+  if (isGcse) {
+    return grade >= 7 ? "green" : grade >= 4 ? "yellow" : "red"
+  }
   return grade >= 6 ? "green" : grade >= 4 ? "yellow" : "red"
 }
 
@@ -58,6 +60,7 @@ export function ExamsSection({
   topics: SyllabusTopic[]
   today: DayKey
 }) {
+  const isGcse = topics.some((t) => t.course === "0580")
   const [draft, setDraft] = React.useState<Draft | null>(null)
   // Keeps the last draft on screen while the dialog animates out.
   const [shown, setShown] = React.useState(draft)
@@ -66,7 +69,7 @@ export function ExamsSection({
   return (
     <section aria-labelledby="exams-title" className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="exams-title" className="text-base font-semibold text-on-surface">
+        <h2 id="exams-title" className="text-base font-semibold text-foreground">
           Exams
         </h2>
         <Button variant="secondary" size="sm" onClick={() => setDraft({ mode: "create" })}>
@@ -75,19 +78,19 @@ export function ExamsSection({
       </div>
 
       {exams.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-outline px-4 py-8 text-center text-sm text-on-surface-muted">
+        <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
           No exams yet. Add class tests and mocks to keep their results next to the syllabus.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-outline bg-surface">
+        <div className="overflow-x-auto rounded-xl border border-border bg-background">
           <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
             <thead>
-              <tr className="h-9 border-b border-outline bg-surface-sunken/70 text-xs font-medium text-on-surface-muted">
-                <th scope="col" className="w-32 border-r border-outline px-3 font-medium">Date</th>
-                <th scope="col" className="border-r border-outline px-3 font-medium">Exam</th>
-                <th scope="col" className="w-56 border-r border-outline px-3 font-medium">Topics</th>
-                <th scope="col" className="w-20 border-r border-outline px-3 text-right font-medium">Score</th>
-                <th scope="col" className="w-20 border-r border-outline px-3 font-medium">Grade</th>
+              <tr className="h-9 border-b border-border bg-muted/70 text-xs font-medium text-muted-foreground">
+                <th scope="col" className="w-32 border-r border-border px-3 font-medium">Date</th>
+                <th scope="col" className="border-r border-border px-3 font-medium">Exam</th>
+                <th scope="col" className="w-56 border-r border-border px-3 font-medium">Topics</th>
+                <th scope="col" className="w-20 border-r border-border px-3 text-right font-medium">Score</th>
+                <th scope="col" className="w-20 border-r border-border px-3 font-medium">Grade</th>
                 <th scope="col" className="w-56 px-3 font-medium">Notes</th>
               </tr>
             </thead>
@@ -95,42 +98,42 @@ export function ExamsSection({
               {exams.map((exam) => {
                 const upcoming = exam.date >= today
                 return (
-                  <tr key={exam.id} className="h-10 border-b border-outline last:border-b-0 hover:bg-surface-muted/60">
-                    <td className="border-r border-outline px-3 whitespace-nowrap tabular-nums text-on-surface-secondary">
+                  <tr key={exam.id} className="h-10 border-b border-border last:border-b-0 hover:bg-muted/60">
+                    <td className="border-r border-border px-3 whitespace-nowrap tabular-nums text-foreground/80">
                       {formatDate(exam.date)}
                     </td>
-                    <td className="max-w-0 border-r border-outline px-3">
+                    <td className="max-w-0 border-r border-border px-3">
                       <button
                         type="button"
                         onClick={() => setDraft({ mode: "edit", exam })}
-                        className="-mx-1 flex max-w-full items-center gap-2 rounded-md px-1 text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-on-surface/20"
+                        className="-mx-1 flex max-w-full items-center gap-2 rounded-lg px-1 text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-foreground/20"
                       >
                         <span className="sr-only">Edit </span>
-                        <span className="truncate font-medium text-on-surface">{exam.title}</span>
+                        <span className="truncate font-medium text-foreground">{exam.title}</span>
                         {upcoming ? <Badge variant="blue">Upcoming</Badge> : null}
                       </button>
                     </td>
-                    <td className="border-r border-outline px-3 py-1.5">
+                    <td className="border-r border-border px-3 py-1.5">
                       {exam.topics.length ? (
                         <TopicTags tags={exam.topics} max={4} />
                       ) : (
-                        <span className="text-on-surface-muted">–</span>
+                        <span className="text-muted-foreground">–</span>
                       )}
                     </td>
-                    <td className="border-r border-outline px-3 text-right font-mono tabular-nums text-on-surface">
-                      {exam.percent === null ? <span className="text-on-surface-muted">–</span> : formatPercent(exam.percent)}
+                    <td className="border-r border-border px-3 text-right font-mono tabular-nums text-foreground">
+                      {exam.percent === null ? <span className="text-muted-foreground">–</span> : formatPercent(exam.percent)}
                     </td>
-                    <td className="border-r border-outline px-3">
+                    <td className="border-r border-border px-3">
                       {exam.ibGrade === null ? (
-                        <span className="text-on-surface-muted">–</span>
+                        <span className="text-muted-foreground">–</span>
                       ) : (
-                        <Badge variant={gradeColor(exam.ibGrade)} className="font-mono">
+                        <Badge variant={gradeColor(exam.ibGrade, isGcse)} className="font-mono">
                           {exam.ibGrade}
                         </Badge>
                       )}
                     </td>
                     <td className="max-w-0 px-3">
-                      <span className="block truncate text-on-surface-secondary" title={exam.notes ?? undefined}>
+                      <span className="block truncate text-foreground/80" title={exam.notes ?? undefined}>
                         {exam.notes ?? ""}
                       </span>
                     </td>
@@ -143,7 +146,7 @@ export function ExamsSection({
       )}
 
       <Dialog open={draft !== null} onOpenChange={(open) => !open && setDraft(null)}>
-        <DialogContent scope="dub" className="sm:w-[min(560px,calc(100vw-4rem))]">
+        <DialogContent className="sm:w-[min(560px,calc(100vw-4rem))]">
           <DialogHeader title={shown?.mode === "edit" ? "Edit exam" : "New exam"} />
           {shown ? (
             <ExamForm
@@ -152,6 +155,7 @@ export function ExamsSection({
               exam={shown.mode === "edit" ? shown.exam : null}
               topics={topics}
               today={today}
+              isGcse={isGcse}
               onDone={() => setDraft(null)}
             />
           ) : null}
@@ -166,12 +170,14 @@ function ExamForm({
   exam,
   topics,
   today,
+  isGcse,
   onDone,
 }: {
   studentId: string
   exam: Exam | null
   topics: SyllabusTopic[]
   today: DayKey
+  isGcse?: boolean
   onDone: () => void
 }) {
   const [title, setTitle] = React.useState(exam?.title ?? "")
@@ -254,10 +260,10 @@ function ExamForm({
               aria-invalid={percentInvalid || undefined}
             />
           </Field>
-          <Field label="IB grade" htmlFor="exam-grade">
+          <Field label={isGcse ? "Grade" : "IB grade"} htmlFor="exam-grade">
             <NativeSelect id="exam-grade" value={grade} onChange={(e) => setGrade(e.target.value)}>
               <option value="">Not marked</option>
-              {IB_GRADES.map((g) => (
+              {(isGcse ? GCSE_GRADES : IB_GRADES).map((g) => (
                 <option key={g} value={g}>
                   {g}
                 </option>
@@ -284,7 +290,6 @@ function ExamForm({
       <DialogFooter className="py-3">
         {exam ? (
           <ConfirmDialog
-            scope="dub"
             open={confirmingDelete}
             onOpenChange={setConfirmingDelete}
             trigger={
@@ -295,15 +300,14 @@ function ExamForm({
             }
             title="Delete exam?"
             description="Its result and notes go with it. This can't be undone."
-            confirm={
-              <Button variant="danger" onClick={remove} disabled={deleting}>
-                {deleting ? "Deleting" : "Delete"}
-              </Button>
-            }
+            confirmLabel="Delete exam"
+            pendingLabel="Deleting"
+            pending={deleting}
+            onConfirm={remove}
           />
         ) : null}
         <div className="ml-auto flex items-center gap-2">
-          <DialogClose render={<Button variant="secondary" className="border-outline" />}>Cancel</DialogClose>
+          <DialogClose render={<Button variant="secondary" className="border-border" />}>Cancel</DialogClose>
           <Button type="submit" variant="primary" disabled={pending}>
             {pending ? "Saving" : exam ? "Save" : "Add exam"}
           </Button>

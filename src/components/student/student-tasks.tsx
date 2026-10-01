@@ -79,17 +79,17 @@ export function StudentTasks({
   }, [openId, tasks])
 
   return (
-    <div className="dub flex flex-1 flex-col bg-surface">
+    <div className=" flex flex-1 flex-col bg-background">
       <div className="mx-auto flex w-full max-w-screen-xl flex-1 flex-col gap-10 px-4 pt-10 pb-20 sm:px-8 sm:pt-14">
         <div className="flex items-start justify-between gap-6">
           <header className="flex min-w-0 flex-col gap-3">
-            <h1 className="animate-slide-up-fade font-display text-3xl leading-[1.2] font-medium text-pretty text-on-surface sm:text-4xl sm:leading-[1.15]">
+            <h1 className="animate-slide-up-fade font-display text-3xl leading-[1.2] font-medium text-pretty text-foreground sm:text-4xl sm:leading-[1.15]">
               {firstName ? `Hello, ${firstName}` : "Your tasks"}
             </h1>
             <p
               suppressHydrationWarning
               style={{ animationDelay: "80ms" }}
-              className="max-w-lg animate-slide-up-fade text-base text-pretty text-on-surface-muted sm:text-lg sm:leading-7"
+              className="max-w-lg animate-slide-up-fade text-base text-pretty text-muted-foreground sm:text-lg sm:leading-7"
             >
               {summarise(tasks)}
             </p>
@@ -127,7 +127,8 @@ function toBoardTask(task: StudentTask): BoardTask {
     difficulty: task.difficulty,
     dueAt: task.dueAt,
     column: task.column,
-    completionPct: task.completionPct,
+    exerciseCount: task.exerciseCount,
+    exercisesDone: task.exercisesDone,
     openedAt: task.openedAt,
     submittedAt: task.submittedAt,
     reviewedAt: task.reviewedAt,

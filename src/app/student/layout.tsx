@@ -13,13 +13,13 @@ export default async function StudentLayout({ children, task }: LayoutProps<"/st
 
   return (
     <WorkspaceShell
-      className="dub"
       home="/student"
       items={nav}
       person={{
         name: profile.fullName || "Student",
         email: profile.email,
         role: "Student",
+        timeZone: profile.timezone,
       }}
     >
       {children}

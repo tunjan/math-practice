@@ -6,6 +6,7 @@ import { after } from "next/server"
 
 import { requireRole } from "@/lib/auth/session"
 import { asDifficulty } from "@/lib/assignments/difficulty"
+import { asExerciseCount } from "@/lib/assignments/exercises"
 import { notifyFeedback, notifyNewTask } from "@/lib/email/notify"
 import { requestOrigin } from "@/lib/request-origin"
 import { createClient } from "@/lib/supabase/server"
@@ -93,6 +94,7 @@ async function resolveSyllabusTopics(
 
   let query = supabase.from("syllabus_topics").select("id").in("id", ids).eq("course", student.course)
   if (student.level === "SL") query = query.eq("level", "SL")
+  else if (student.level === "Core") query = query.eq("level", "Core")
   const { data } = await query
   return (data ?? []).map((row) => row.id)
 }
@@ -121,6 +123,8 @@ export async function createAssignment(
     return { error: "Pick a task type." }
   }
   if (!difficulty) return { error: "Pick a difficulty." }
+  const exerciseCount = asExerciseCount(formData.get("exercise_count"))
+  if (!exerciseCount) return { error: "Exercises is a whole number from 1 to 500." }
 
   const dueAt = new Date(dueAtIso)
   if (!dueAtIso || Number.isNaN(dueAt.getTime())) {
@@ -171,6 +175,7 @@ export async function createAssignment(
       description: description || null,
       category_id: resolvedCategoryId,
       due_at: dueAt.toISOString(),
+      exercise_count: exerciseCount,
     })
     if (error) return { error: error.message }
 
@@ -215,6 +220,7 @@ export async function createAssignment(
       description: description || null,
       category_id: resolvedCategoryId,
       due_at: dueAt.toISOString(),
+      exercise_count: exerciseCount,
     })
     if (error) return { error: error.message }
 
@@ -252,7 +258,7 @@ const MAX_FEEDBACK_LENGTH = 5000
 
 /**
  * Records the tutor's verdict. Deliberately separate from the student's
- * self-reported completion_pct: one is an evaluation, the other is a progress
+ * self-reported exercises_done: one is an evaluation, the other is a progress
  * note, and the database keeps them in different columns for that reason.
  */
 export async function setVerdict(
@@ -426,6 +432,12 @@ export async function updateAssignment(
     if (!parsed) return { error: "Pick a difficulty." }
     difficulty = { difficulty: parsed }
   }
+  let exercises: { exercise_count: number } | object = {}
+  if (formData.has("exercise_count")) {
+    const parsed = asExerciseCount(formData.get("exercise_count"))
+    if (!parsed) return { error: "Exercises is a whole number from 1 to 500." }
+    exercises = { exercise_count: parsed }
+  }
 
   const { error } = await supabase
     .from("assignments")
@@ -436,6 +448,7 @@ export async function updateAssignment(
       due_at: dueAt.toISOString(),
       category_id: resolvedCategoryId,
       ...difficulty,
+      ...exercises,
     })
     .eq("id", assignmentId)
 

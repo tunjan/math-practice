@@ -27,8 +27,8 @@ export function LateNotice({ dueAt }: { dueAt: string }) {
   // A quiet line, not a banner: the header already shows how late it is in
   // red, so this only says what handing in now means.
   return (
-    <p role="status" className="flex items-center gap-2 text-xs text-on-surface-muted">
-      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-error" />
+    <p role="status" className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-destructive" />
       Past the deadline. You can still hand in; it will be marked late.
     </p>
   )

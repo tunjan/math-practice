@@ -39,7 +39,7 @@ export default async function AssignmentDetailPage({
     .from("assignments")
     .select(
       `id, student_id, title, description, type, due_at, stage, verdict, feedback, reviewed_at,
-       student_opened_at, submitted_at, created_at, completion_pct,
+       student_opened_at, submitted_at, created_at, exercise_count, exercises_done,
        categories(name), assignment_topics(syllabus_topics(code, title, topic, subtopic)),
        profiles!assignments_student_id_fkey(id, full_name, email)`
     )
@@ -126,7 +126,7 @@ export default async function AssignmentDetailPage({
             }}
           />
           {!assignment.student_opened_at ? (
-            <p className="body-sm text-on-surface-muted">
+            <p className="body-md text-muted-foreground">
               {studentName} hasn&apos;t opened this task yet.
             </p>
           ) : null}
@@ -138,15 +138,15 @@ export default async function AssignmentDetailPage({
           <Card>
             <CardHeader title="Hand-ins" description={revisions.length === 0 ? undefined : `${revisions.length} ${revisions.length === 1 ? "revision" : "revisions"}`} />
             {revisions.length === 0 ? (
-              <p className="px-4 py-4 body-md text-on-surface-muted">Nothing handed in yet.</p>
+              <p className="px-4 py-4 body-md text-muted-foreground">Nothing handed in yet.</p>
             ) : (
               revisions.map((revision) => (
-                <section key={revision.revision} className="border-t border-outline first:border-t-0">
-                  <div className="flex h-10 items-center justify-between gap-4 bg-surface-muted px-4">
-                    <span className="label-caps text-on-surface-muted">
+                <section key={revision.revision} className="border-t border-border first:border-t-0">
+                  <div className="flex h-10 items-center justify-between gap-4 bg-muted/50 px-4">
+                    <span className="label-sm text-muted-foreground">
                       Revision {revision.revision}
                     </span>
-                    <span className="mono-data-sm text-on-surface-muted">
+                    <span className="caption tabular-nums text-muted-foreground">
                       {formatDue(revision.handedInAt, tz)}
                     </span>
                   </div>
@@ -162,7 +162,7 @@ export default async function AssignmentDetailPage({
               {assignment.description ? (
                 <MathProse>{assignment.description}</MathProse>
               ) : (
-                <p className="body-sm text-on-surface-muted">No written instructions.</p>
+                <p className="body-md text-muted-foreground">No written instructions.</p>
               )}
             </CardSection>
           </Card>
@@ -214,11 +214,15 @@ export default async function AssignmentDetailPage({
                 },
               ]}
             />
-            <Progress
-              value={assignment.completion_pct}
-              label="Student’s estimate"
-              className="border-t border-outline px-4 py-3"
-            />
+            {/* A single piece of work has nothing to count. */}
+            {assignment.exercise_count > 1 ? (
+              <Progress
+                value={assignment.exercises_done}
+                max={assignment.exercise_count}
+                label="Exercises done, by the student"
+                className="border-t border-border px-4 py-3"
+              />
+            ) : null}
           </Card>
         </aside>
       </div>

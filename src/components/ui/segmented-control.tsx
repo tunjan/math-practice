@@ -7,11 +7,11 @@ import { cn } from "cn"
 /**
  * DESIGN.md › segmented-control
  *
- * A `surface-sunken` track with the active segment raised to `surface`, held
- * at the 40px control height so it lines up with inputs beside it. Real radios
+ * DESIGN.md › Toggle group: a white 12px track with a hairline and 4px padding;
+ * the active segment is an 8px `muted/50` chip with its own hairline. Held at
+ * the 40px control height so it lines up with inputs beside it. Real radios
  * underneath, so arrow keys move between options and the value posts with the
- * form. The active segment also takes a hairline: white on `surface-sunken`
- * alone is too faint to read as selected.
+ * form.
  */
 export function SegmentedControl<T extends string>({
   legend,
@@ -36,13 +36,13 @@ export function SegmentedControl<T extends string>({
 }) {
   return (
     <fieldset className={cn("flex min-w-0 flex-col", className)}>
-      <legend className={hideLegend ? "sr-only" : "mb-2 label-md text-on-surface-secondary"}>
+      <legend className={hideLegend ? "sr-only" : "mb-2 label-md text-foreground/80"}>
         {legend}
       </legend>
       <div
         data-slot="segmented-control"
         className={cn(
-          "grid rounded-full bg-surface-sunken",
+          "grid rounded-xl border border-border bg-background",
           size === "sm" ? "h-8 gap-0.5 p-0.5" : "h-10 gap-1 p-1"
         )}
         style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}
@@ -56,13 +56,13 @@ export function SegmentedControl<T extends string>({
               data-slot="segmented-control-item"
               data-checked={checked || undefined}
               className={cn(
-                "flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-full border px-2",
+                "flex min-w-0 cursor-pointer items-center justify-center gap-2 rounded-lg border px-3",
                 size === "sm" ? "label-sm" : "label-md",
                 "transition-[background-color,border-color,color] duration-150",
-                "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-on-surface",
+                "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-foreground/50",
                 checked
-                  ? "border-outline-strong bg-surface text-on-surface"
-                  : "border-transparent text-on-surface-muted hover:text-on-surface"
+                  ? "border-border bg-muted/50 text-foreground shadow-xs"
+                  : "border-transparent text-foreground/80 hover:text-foreground"
               )}
             >
               <input
